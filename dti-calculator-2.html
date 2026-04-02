@@ -298,7 +298,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 
 <!-- THEME TOGGLE -->
-<button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+<button class="theme-btn" id="theme-btn">☀️ Light</button>
 
 <!-- APM BRAND HEADER — client view only -->
 <div class="apm-header" id="apm-header">
@@ -1372,6 +1372,9 @@ document.getElementById('sl-ins').addEventListener('input',()=>{document.getElem
 document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
+
+// ── EVENT LISTENERS ──
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
 
 // ── INIT ──
 initTheme();
