@@ -275,6 +275,11 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .ts{background:rgba(62,207,142,0.08);color:#3ecf8e;border:1px solid rgba(62,207,142,0.2);}
 .td{background:rgba(224,85,85,0.08);color:#e05555;border:1px solid rgba(224,85,85,0.2);}
 
+/* Pre-hide lender panel if opened via client link */
+[data-client-link="true"] #lender-panel { display: none !important; }
+[data-client-link="true"] #tab-lender { display: none !important; }
+[data-client-link="true"] .apm-header { display: flex !important; }
+
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .fadein{animation:fadeUp 0.4s ease both;}
 
@@ -297,6 +302,17 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </style>
 </head>
 <body>
+
+<!-- EARLY URL CHECK — runs before page renders -->
+<script>
+(function(){
+  const p = new URLSearchParams(window.location.search);
+  if (p.has('income') || p.has('debts')) {
+    // Mark body so CSS can pre-hide lender panel
+    document.documentElement.setAttribute('data-client-link', 'true');
+  }
+})();
+</script>
 
 <!-- STICKY DTI BAR -->
 <div class="sticky-dti" id="sticky-dti">
@@ -1406,14 +1422,28 @@ documdocument.getElementById('ins-override').addEventListener('input',update);
 
 // ── INIT ──
 initTheme();
+// Load URL params first — populates hidden lender fields
 const hasParams = loadFromURL();
 if (hasParams) {
+  // Use longer delay to ensure DOM is fully ready
   setTimeout(()=>{
-    setMode('client');
+    try {
+      setMode('client');
+    } catch(e) {
+      // fallback — manually switch tabs
+      document.getElementById('lender-panel').style.display = 'none';
+      document.getElementById('client-summary').style.display = 'block';
+      document.getElementById('scenario-box').style.display = 'block';
+      document.getElementById('tab-lender').style.display = 'none';
+      document.getElementById('tab-client').classList.add('active');
+      document.getElementById('tab-lender').classList.remove('active');
+      document.getElementById('apm-header').className = 'apm-header visible';
+      toggleShowRate();
+    }
     const countySet = document.getElementById('sl-county').value !== '';
-    if (!countySet) lockSliders();
+    if (countySet) { unlockSliders(); } else { lockSliders(); }
     update();
-  },50);
+  }, 150);
 } else {
   update();
 }
