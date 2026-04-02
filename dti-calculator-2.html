@@ -239,35 +239,7 @@
     <!-- ══ LENDER PANEL ══ -->
     <div id="lender-panel" class="panel fadein">
 
-      <div class="master-rule">
-        <div class="master-rule-title">📋 Encompass DTI Rules — Read Before Entering Data</div>
-        <div class="master-rule-body">
-          For every client debt ask: <strong>Is this secured by the departing property?</strong><br>
-          If yes → Departing Expenses field. If no → Other Monthly Debts. <strong>Never both.</strong>
-        </div>
-        <div class="rule-divider"></div>
-        <div class="rule-cols">
-          <div class="rule-col yes-col">
-            <div class="rule-col-title green">Departing Property Expenses</div>
-            <ul>
-              <li>1st mortgage on departing home</li>
-              <li>2nd mortgage (pool, HELOC, etc.)</li>
-              <li>Any other lien on that property</li>
-              <li>Its tax, insurance &amp; HOA</li>
-            </ul>
-          </div>
-          <div class="rule-col no-col">
-            <div class="rule-col-title red">Other Monthly Debts</div>
-            <ul>
-              <li>Car loans</li>
-              <li>Student loans</li>
-              <li>Credit cards (minimums)</li>
-              <li>Personal / installment loans</li>
-              <li>Mortgages on other properties</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+
 
       <div class="section-title">Client Financial Profile <span class="badge badge-lender">Lender Only</span></div>
       <div class="field-grid">
@@ -282,37 +254,94 @@
           <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-debts" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
         </div>
         <div class="field-group full">
-          <div class="field-label">Interest Rate <small>Not shown to client</small></div>
+          <div class="field-label">Interest Rate</div>
           <div class="input-wrap"><input type="number" id="in-rate" value="7.0" min="1" max="20" step="0.125" style="text-align:right;"><span class="sfx">%</span></div>
         </div>
+
+        <!-- SHOW RATE TO CLIENT TOGGLE -->
+        <div class="field-group full">
+          <div style="display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 14px; cursor:pointer;" onclick="toggleShowRate()">
+            <input type="checkbox" id="show-rate-check" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation(); toggleShowRate()">
+            <div>
+              <div style="font-size:12px; color:var(--muted); font-weight:500;">Show interest rate to client</div>
+              <div style="font-size:10px; color:var(--border); margin-top:1px;">By default the rate is hidden — check to display it on the client view</div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="rental-block">
-        <div class="rental-block-title">🏡 Departing Residence Rental Income</div>
-        <div class="rental-block-sub">
-          Fill in if the client is keeping their current home and renting it out. Leave at $0 if not applicable.<br><br>
-          <strong>Encompass FM0132:</strong> (Gross Rent × 75%) − Expenses (all mortgage payments + that property's own tax + insurance + HOA). If negative, shortfall is added to back-end DTI automatically.
-        </div>
-        <div class="field-grid">
-          <div class="field-group">
-            <div class="field-label">Gross Monthly Rental Income <small>Leave at $0 if no rental</small></div>
-            <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-rent" value="0" min="0" step="50"><span class="sfx">/ mo</span></div>
+      <!-- DEPARTING HOME CHECKBOX — collapses everything if not needed -->
+      <div style="background:rgba(138,100,200,0.06); border:1px solid rgba(138,100,200,0.2); border-radius:12px; padding:14px 16px; margin-top:20px;">
+        <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="toggleRentalSection()">
+          <input type="checkbox" id="rental-enabled" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation(); toggleRentalSection()">
+          <div>
+            <div style="font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--purple); margin-bottom:2px;">🏡 Client is keeping their current home</div>
+            <div style="font-size:11px; color:var(--muted);">Check this if they are holding onto their departing property — rental income fields and debt rules will appear</div>
           </div>
-          <div class="field-group">
-            <div class="field-label">Departing Property Total Expenses
-              <small>All mortgage payments (1st + 2nd + any liens) + that property's own tax + insurance + HOA.</small>
+        </div>
+
+        <!-- Everything below only shows when checked -->
+        <div id="rental-fields-wrap" style="display:none; margin-top:18px;">
+
+          <!-- YELLOW WARNING -->
+          <div style="background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.25); border-radius:9px; padding:11px 14px; margin-bottom:16px;">
+            <div style="font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--yellow); margin-bottom:5px;">⚠ Departing Residence Active</div>
+            <div style="font-size:11px; color:var(--muted); line-height:1.6;">Rental shortfall will be automatically added to back-end DTI per Encompass FM0132. Make sure debts secured by the departing property are entered in the Expenses field below — NOT in Other Monthly Debts above.</div>
+          </div>
+
+          <!-- ENCOMPASS RULES -->
+          <div style="background:rgba(201,168,76,0.05); border:1px solid rgba(201,168,76,0.2); border-radius:9px; padding:14px; margin-bottom:16px;">
+            <div style="font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--gold-light); margin-bottom:10px;">📋 What Goes Where</div>
+            <div class="rule-cols">
+              <div class="rule-col yes-col">
+                <div class="rule-col-title green">Departing Property Expenses ↓</div>
+                <ul>
+                  <li>1st mortgage on departing home</li>
+                  <li>2nd mortgage (pool, HELOC, etc.)</li>
+                  <li>Any other lien on that property</li>
+                  <li>Its tax, insurance &amp; HOA</li>
+                </ul>
+              </div>
+              <div class="rule-col no-col">
+                <div class="rule-col-title red">Other Monthly Debts ↑</div>
+                <ul>
+                  <li>Car loans</li>
+                  <li>Student loans</li>
+                  <li>Credit cards (minimums)</li>
+                  <li>Personal / installment loans</li>
+                </ul>
+              </div>
             </div>
-            <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-pitia" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
           </div>
+
+          <!-- RENTAL FIELDS -->
+          <div class="field-grid">
+            <div class="field-group">
+              <div class="field-label">Gross Monthly Rental Income
+                <small>Expected rent on the departing property</small>
+              </div>
+              <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-rent" value="0" min="0" step="50"><span class="sfx">/ mo</span></div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">Departing Property Total Expenses
+                <small>All mortgage payments (1st + 2nd + any liens) + that property's own tax + insurance + HOA</small>
+              </div>
+              <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-pitia" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
+            </div>
+          </div>
+
+          <!-- FM0132 LIVE CALC -->
+          <div class="rental-math" id="rental-math" style="display:none; margin-top:12px;">
+            <div class="rental-math-title">Encompass FM0132 — Auto-Applied to Back-End DTI</div>
+            <div class="rental-math-row"><span class="rk">Gross Rental Income</span><span class="rv" id="rr-gross">—</span></div>
+            <div class="rental-math-row"><span class="rk">× Percentage of Rental (75%)</span><span class="rv" id="rr-75">—</span></div>
+            <div class="rental-math-row"><span class="rk">− Expenses (mortgages + tax + ins + HOA)</span><span class="rv" id="rr-pitia">—</span></div>
+            <div class="rental-math-row"><span class="rk">Net Monthly Rental Income / (Loss)</span><span class="rv" id="rr-net">—</span></div>
+          </div>
+          <div class="no-rental-note" id="no-rental-note" style="margin-top:8px;">Enter rent and expenses above to see the FM0132 calculation.</div>
+
         </div>
-        <div class="rental-math" id="rental-math" style="display:none;">
-          <div class="rental-math-title">Encompass FM0132 — Auto-Applied to Back-End DTI</div>
-          <div class="rental-math-row"><span class="rk">Gross Rental Income</span><span class="rv" id="rr-gross">—</span></div>
-          <div class="rental-math-row"><span class="rk">× Percentage of Rental (75%)</span><span class="rv" id="rr-75">—</span></div>
-          <div class="rental-math-row"><span class="rk">− Expenses (mortgages + tax + ins + HOA)</span><span class="rv" id="rr-pitia">—</span></div>
-          <div class="rental-math-row"><span class="rk">Net Monthly Rental Income / (Loss)</span><span class="rv" id="rr-net">—</span></div>
-        </div>
-        <div class="no-rental-note" id="no-rental-note">No rental situation — fields are $0, no adjustment applied.</div>
       </div>
 
       <button class="generate-link-btn" onclick="generateLink()">
@@ -330,6 +359,11 @@
     <div id="client-summary">
       <div class="summary-label">Your Financial Profile (set by your lender)</div>
       <div class="summary-chips" id="summary-chips"></div>
+      <!-- Rate display — only shows if lender enabled it -->
+      <div id="rate-display-row" style="display:none; margin-top:10px; padding:10px 14px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); border-radius:9px; display:none;">
+        <span style="font-size:12px; color:var(--muted);">Interest Rate</span>
+        <strong style="font-family:'DM Mono',monospace; color:var(--gold-light); font-size:14px; margin-left:8px;" id="rate-display-val">—</strong>
+      </div>
     </div>
 
     <!-- ══ CLIENT SLIDERS ══ -->
@@ -790,8 +824,9 @@ function update() {
   const housing = pi + tax + ins + flood + hoa + pmi;
 
   // RENTAL
-  const grossRent = getLenderVal('in-rent')  || 0;
-  const pitia     = getLenderVal('in-pitia') || 0;
+  const rentalEnabled = document.getElementById('rental-enabled') && document.getElementById('rental-enabled').checked;
+  const grossRent = rentalEnabled ? (getLenderVal('in-rent')  || 0) : 0;
+  const pitia     = rentalEnabled ? (getLenderVal('in-pitia') || 0) : 0;
   let   rentalShortfall = 0;
   const rentalActive = grossRent > 0 || pitia > 0;
   if (rentalActive) {
@@ -893,6 +928,34 @@ function calcPI(price, downPct, rate, termYrs) {
   return loan * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
 }
 
+// ── TOGGLE SHOW RATE ──
+function toggleShowRate() {
+  const show = document.getElementById('show-rate-check').checked;
+  const rateRow = document.getElementById('rate-display-row');
+  if (rateRow) {
+    rateRow.style.display = show ? 'flex' : 'none';
+    rateRow.style.alignItems = 'center';
+    rateRow.style.justifyContent = 'space-between';
+  }
+  const rate = +document.getElementById('in-rate').value || 7.0;
+  const rateVal = document.getElementById('rate-display-val');
+  if (rateVal) rateVal.textContent = rate.toFixed(3) + '%';
+}
+
+// ── TOGGLE RENTAL SECTION ──
+function toggleRentalSection() {
+  const enabled = document.getElementById('rental-enabled').checked;
+  document.getElementById('rental-fields-wrap').style.display = enabled ? 'block' : 'none';
+  document.getElementById('rental-warning').style.display     = enabled ? 'block' : 'none';
+  if (!enabled) {
+    document.getElementById('in-rent').value  = 0;
+    document.getElementById('in-pitia').value = 0;
+    delete urlParams.rent;
+    delete urlParams.pitia;
+  }
+  update();
+}
+
 // ── GENERATE CLIENT LINK ──
 function generateLink() {
   const income = document.getElementById('in-income').value;
@@ -984,6 +1047,7 @@ function setMode(mode) {
     tabLender.style.display     = 'none'; // hidden from client
     tabLender.classList.remove('active'); tabClient.classList.add('active');
     hint.textContent = 'Select your county, move the sliders, and explore how different homes affect your DTI.';
+    toggleShowRate(); // sync rate display
   }
   update();
 }
@@ -1137,7 +1201,8 @@ async function saveScenario() {
 }
 
 // ── EVENTS ──
-['in-income','in-debts','in-rate','in-rent','in-pitia'].forEach(id =>
+document.getElementById('in-rate').addEventListener('input', () => { update(); toggleShowRate(); });
+['in-income','in-debts','in-rent','in-pitia'].forEach(id =>
   document.getElementById(id).addEventListener('input', update));
 
 ['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id => {
