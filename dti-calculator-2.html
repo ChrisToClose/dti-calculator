@@ -3,225 +3,342 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Buyer DTI Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Buyer DTI Calculator — Chris Greenidge · APM</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
-  /* ── THEME VARIABLES ── */
-  :root {
-    --bg: #0e1117; --surface: #161b25; --surface2: #1e2535; --border: #2a3347;
-    --gold: #c9a84c; --gold-light: #e8c97a; --green: #3ecf8e;
-    --yellow: #f5a623; --red: #e05555; --text: #e8eaf0; --muted: #7a8499;
-    --purple: #b8a0e8; --shadow: rgba(0,0,0,0.3);
-  }
-  [data-theme="light"] {
-    --bg: #f4f6fa; --surface: #ffffff; --surface2: #eef1f7; --border: #d0d7e8;
-    --gold: #a07a20; --gold-light: #c49a30; --green: #1a9e65;
-    --yellow: #c47a10; --red: #c0392b; --text: #1a2035; --muted: #5a6480;
-    --purple: #6b4db0; --shadow: rgba(0,0,0,0.08);
-  }
+/* ══ APM COLOR SYSTEM ══ */
+:root{
+  /* APM Brand */
+  --navy:#1B3A6B; --navy2:#142d54; --navy3:#0d2040;
+  --teal:#2B7FA4; --teal2:#1f6080;
+  --yellow:#F5A623; --yellow2:#e09510;
+  /* Dark mode surfaces */
+  --bg:#0f1923; --surface:#162030; --surface2:#1c2a3e;
+  --border:#2a3f5a; --text:#eef2f8; --muted:#7a93b0;
+  --shadow:rgba(0,0,0,0.4);
+  /* Gauge colors — NEVER change these */
+  --gauge-green:#3ecf8e; --gauge-yellow:#f5a623; --gauge-red:#e05555;
+}
+[data-theme="light"]{
+  --bg:#f0f4f9; --surface:#ffffff; --surface2:#e8eef6;
+  --border:#c5d4e8; --text:#0f1923; --muted:#4a6080;
+  --shadow:rgba(27,58,107,0.12);
+}
 
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 60px; transition: background 0.3s, color 0.3s; }
-  body[data-theme="dark"] { background-image: radial-gradient(ellipse 60% 40% at 80% 10%, rgba(201,168,76,0.06) 0%, transparent 70%), radial-gradient(ellipse 50% 50% at 10% 90%, rgba(62,100,200,0.05) 0%, transparent 70%); }
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 0 60px;transition:background 0.3s,color 0.3s;}
 
-  /* ── THEME TOGGLE ── */
-  .theme-toggle {
-    position: fixed; top: 16px; right: 16px; z-index: 100;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 100px; padding: 6px 14px;
-    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
-    cursor: pointer; display: flex; align-items: center; gap: 6px;
-    box-shadow: 0 2px 8px var(--shadow); transition: all 0.2s;
-  }
-  .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+/* ══ THEME TOGGLE ══ */
+.theme-btn{position:fixed;top:12px;right:12px;z-index:200;background:var(--navy);color:#fff;border:none;border-radius:100px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px var(--shadow);transition:all 0.2s;}
+.theme-btn:hover{background:var(--teal);}
 
-  .header { text-align: center; margin-bottom: 28px; }
-  .header-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
-  .header h1 { font-family: 'Playfair Display', serif; font-size: clamp(24px, 4vw, 38px); font-weight: 700; }
-  .header h1 span { color: var(--gold); }
+/* ══ APM BRAND HEADER ══ */
+.apm-header{width:100%;display:none;flex-direction:column;margin-bottom:0;}
+.apm-header.visible{display:flex;}
+.apm-stripe{background:var(--yellow);padding:6px 24px;text-align:center;}
+.apm-stripe-text{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--navy);font-weight:700;}
+.apm-body{background:var(--navy);display:flex;align-items:center;gap:20px;padding:20px 32px;}
+.apm-photo{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--yellow);box-shadow:0 0 0 4px rgba(245,166,35,0.25);flex-shrink:0;}
+.apm-info{flex:1;min-width:0;}
+.apm-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:3px;}
+.apm-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
+.apm-nmls{font-size:10px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-bottom:10px;}
+.apm-contacts{display:flex;flex-wrap:wrap;gap:14px;}
+.apm-contact{font-size:13px;color:rgba(255,255,255,0.9);display:flex;align-items:center;gap:5px;text-decoration:none;transition:color 0.15s;white-space:nowrap;}
+.apm-contact:hover{color:var(--yellow);}
+.apm-right{flex-shrink:0;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.apm-brand-line{font-family:'DM Mono',monospace;font-size:18px;font-weight:700;letter-spacing:3px;line-height:1.15;}
+.apm-brand-line.l1{color:var(--teal);}
+.apm-brand-line.l2{color:#fff;}
+.apm-brand-line.l3{color:var(--yellow);}
+.apm-tagline{font-size:10px;color:rgba(255,255,255,0.35);font-style:italic;margin-top:2px;}
+.apm-apply{margin-top:10px;background:var(--yellow);color:var(--navy);padding:9px 18px;border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;text-decoration:none;text-transform:uppercase;transition:all 0.2s;white-space:nowrap;}
+.apm-apply:hover{background:#fff;}
+@media(max-width:640px){
+  .apm-body{flex-wrap:wrap;padding:16px;}
+  .apm-right{width:100%;flex-direction:row;align-items:center;justify-content:space-between;}
+  .apm-name{font-size:20px;}
+  .apm-contact{font-size:12px;}
+}
 
-  .mode-bar { width: 100%; max-width: 1060px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
-  .mode-tabs { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; gap: 4px; box-shadow: 0 2px 8px var(--shadow); }
-  .mode-tab { padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--muted); transition: all 0.2s; white-space: nowrap; }
-  .mode-tab.active { background: var(--gold); color: #fff; font-weight: 600; }
-  .mode-hint { font-size: 12px; color: var(--muted); font-style: italic; }
+/* ══ WRAPPER ══ */
+.page-wrap{width:100%;max-width:1060px;padding:24px 20px 0;}
 
-  .layout { display: grid; grid-template-columns: 1fr 310px; gap: 20px; width: 100%; max-width: 1060px; }
-  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+/* ══ TITLE ══ */
+.header{text-align:center;margin-bottom:24px;}
+.header-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--teal);margin-bottom:6px;}
+.header h1{font-family:'DM Sans',sans-serif;font-size:clamp(18px,3vw,26px);font-weight:600;color:var(--text);}
+.header h1 span{color:var(--yellow);}
 
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px; box-shadow: 0 2px 12px var(--shadow); transition: background 0.3s, border-color 0.3s; }
+/* ══ MODE BAR ══ */
+.mode-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;}
+.mode-tabs{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;gap:4px;box-shadow:0 2px 8px var(--shadow);}
+.mode-tab{padding:8px 18px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;white-space:nowrap;}
+.mode-tab.active{background:var(--navy);color:#fff;font-weight:600;}
+.mode-hint{font-size:12px;color:var(--muted);font-style:italic;}
 
-  .section-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .badge { font-size: 9px; padding: 2px 8px; border-radius: 100px; letter-spacing: 1px; white-space: nowrap; }
-  .badge-lender { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
-  .badge-client { background: rgba(62,207,142,0.12); color: var(--green); border: 1px solid rgba(62,207,142,0.25); }
+/* ══ LAYOUT ══ */
+.layout{display:grid;grid-template-columns:1fr 310px;gap:20px;}
+@media(max-width:760px){.layout{grid-template-columns:1fr;}}
 
-  /* FIELDS */
-  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 500px) { .field-grid { grid-template-columns: 1fr; } }
-  .field-group { display: flex; flex-direction: column; gap: 6px; }
-  .field-group.full { grid-column: 1 / -1; }
-  .field-label { font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.4; }
-  .field-label small { font-size: 10px; color: var(--border); display: block; margin-top: 2px; font-weight: 400; }
-  .input-wrap { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; transition: border-color 0.2s; }
-  .input-wrap:focus-within { border-color: var(--gold); }
-  .input-wrap .pfx { font-family: 'DM Mono', monospace; color: var(--gold); font-size: 14px; }
-  .input-wrap .sfx { font-family: 'DM Mono', monospace; color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .input-wrap input, .input-wrap select { background: transparent; border: none; outline: none; color: var(--gold-light); font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; width: 100%; min-width: 0; }
-  .input-wrap select { cursor: pointer; }
-  .input-wrap select option { background: var(--surface2); color: var(--text); }
+/* ══ PANEL ══ */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:0 2px 12px var(--shadow);transition:background 0.3s,border-color 0.3s;}
+.section-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.badge{font-size:9px;padding:2px 8px;border-radius:100px;letter-spacing:1px;white-space:nowrap;}
+.badge-lender{background:rgba(43,127,164,0.15);color:var(--teal);border:1px solid rgba(43,127,164,0.3);}
+.badge-client{background:rgba(245,166,35,0.15);color:var(--yellow);border:1px solid rgba(245,166,35,0.3);}
 
-  /* MASTER RULE */
-  .master-rule { background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.25); border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; }
-  .master-rule-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-light); margin-bottom: 10px; }
-  .master-rule-body { font-size: 12px; color: var(--muted); line-height: 1.8; }
-  .master-rule-body strong { color: var(--text); }
-  .rule-divider { height: 1px; background: var(--border); margin: 10px 0; }
-  .rule-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
-  @media (max-width: 500px) { .rule-cols { grid-template-columns: 1fr; } }
-  .rule-col-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
-  .rule-col-title.green { color: var(--green); }
-  .rule-col-title.red   { color: var(--red); }
-  .rule-col ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-  .rule-col ul li { font-size: 11px; color: var(--muted); display: flex; gap: 6px; line-height: 1.4; }
-  .rule-col ul li::before { flex-shrink: 0; margin-top: 1px; }
-  .yes-col ul li::before { content: '✓'; color: var(--green); font-weight: 700; }
-  .no-col  ul li::before { content: '✗'; color: var(--red);   font-weight: 700; }
+/* ══ FIELDS ══ */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:500px){.field-grid{grid-template-columns:1fr;}}
+.field-group{display:flex;flex-direction:column;gap:6px;}
+.field-group.full{grid-column:1/-1;}
+.field-label{font-size:12px;color:var(--muted);font-weight:500;line-height:1.4;}
+.field-label small{font-size:10px;color:var(--border);display:block;margin-top:2px;font-weight:400;line-height:1.5;}
+.input-wrap{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;transition:border-color 0.2s;}
+.input-wrap:focus-within{border-color:var(--teal);}
+.input-wrap .pfx{font-family:'DM Mono',monospace;color:var(--yellow);font-size:14px;}
+.input-wrap .sfx{font-family:'DM Mono',monospace;color:var(--muted);font-size:12px;white-space:nowrap;}
+.input-wrap input,.input-wrap select{background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:15px;font-weight:500;width:100%;min-width:0;}
+.input-wrap select{cursor:pointer;}
+.input-wrap select option{background:var(--surface2);color:var(--text);}
 
-  /* RENTAL BLOCK */
-  .rental-block { background: rgba(138,100,200,0.06); border: 1px solid rgba(138,100,200,0.2); border-radius: 12px; padding: 18px; margin-top: 20px; }
-  .rental-block-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; }
-  .rental-block-sub { font-size: 11px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
-  .rental-block-sub strong { color: var(--purple); }
-  .rental-math { margin-top: 14px; background: var(--surface2); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
-  .rental-math-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--purple); margin-bottom: 10px; }
-  .rental-math-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid var(--border); }
-  .rental-math-row:last-child { border-bottom: none; font-weight: 600; font-size: 13px; padding-top: 8px; margin-top: 4px; }
-  .rental-math-row .rk { color: var(--muted); }
-  .rental-math-row .rv { font-family: 'DM Mono', monospace; }
-  .rv-pos { color: var(--green); }
-  .rv-neg { color: var(--red); }
-  .no-rental-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 6px; }
+/* ══ RENTAL BLOCK ══ */
+.rental-block{background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;margin-top:20px;}
+.rental-toggle-header{display:flex;align-items:center;gap:12px;cursor:pointer;}
+.rental-toggle-header input[type="checkbox"]{width:17px;height:17px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.rental-toggle-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:2px;}
+.rental-toggle-sub{font-size:11px;color:var(--muted);}
+.rental-fields-wrap{display:none;margin-top:16px;}
+.rental-warning{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:9px;padding:11px 14px;margin-bottom:14px;}
+.rental-warning-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
+.rental-warning-body{font-size:11px;color:var(--muted);line-height:1.6;}
+.rules-box{background:rgba(27,58,107,0.15);border:1px solid rgba(27,58,107,0.3);border-radius:9px;padding:14px;margin-bottom:14px;}
+[data-theme="light"] .rules-box{background:rgba(27,58,107,0.05);border-color:rgba(27,58,107,0.15);}
+.rules-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:10px;}
+.rules-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.rules-col-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;}
+.rules-col-title.g{color:#3ecf8e;} .rules-col-title.r{color:#e05555;}
+.rules-col ul{list-style:none;display:flex;flex-direction:column;gap:4px;}
+.rules-col ul li{font-size:11px;color:var(--muted);display:flex;gap:6px;line-height:1.4;}
+.yes-col ul li::before{content:'✓';color:#3ecf8e;font-weight:700;flex-shrink:0;}
+.no-col ul li::before{content:'✗';color:#e05555;font-weight:700;flex-shrink:0;}
+.rental-math{background:var(--surface2);border-radius:10px;padding:14px;border:1px solid var(--border);margin-top:12px;}
+.rental-math-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;}
+.rental-math-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
+.rental-math-row:last-child{border-bottom:none;font-weight:600;font-size:13px;padding-top:8px;}
+.rk{color:var(--muted);} .rv{font-family:'DM Mono',monospace;}
+.rv-pos{color:#3ecf8e;} .rv-neg{color:#e05555;}
+.no-rental-note{font-size:11px;color:var(--muted);font-style:italic;margin-top:8px;}
 
-  /* GENERATE LINK */
-  .generate-link-btn { width: 100%; margin-top: 14px; background: var(--surface2); color: var(--gold-light); border: 1px solid var(--gold); border-radius: 10px; padding: 12px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .generate-link-btn:hover { background: rgba(201,168,76,0.1); }
-  .link-copied { margin-top: 10px; padding: 10px 14px; border-radius: 9px; font-size: 12px; background: rgba(62,207,142,0.1); color: var(--green); border: 1px solid rgba(62,207,142,0.25); display: none; word-break: break-all; line-height: 1.6; }
+/* ══ GENERATE LINK ══ */
+.gen-link-btn{width:100%;margin-top:14px;background:transparent;color:var(--teal);border:1px solid var(--teal);border-radius:10px;padding:11px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;font-weight:600;cursor:pointer;transition:all 0.2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;}
+.gen-link-btn:hover{background:var(--teal);color:#fff;}
+.link-copied{margin-top:10px;padding:10px 14px;border-radius:9px;font-size:12px;background:rgba(43,127,164,0.1);color:var(--teal);border:1px solid rgba(43,127,164,0.3);display:none;word-break:break-all;line-height:1.6;}
+.go-client-btn{width:100%;margin-top:12px;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1.5px;font-weight:600;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.go-client-btn:hover{background:var(--teal);}
 
-  .lock-btn { width: 100%; margin-top: 14px; background: var(--gold); color: #0e1117; border: none; border-radius: 10px; padding: 12px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1.5px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-transform: uppercase; }
-  .lock-btn:hover { background: var(--gold-light); }
+/* ══ CLIENT SUMMARY ══ */
+#client-summary{display:none;background:var(--navy);border-radius:12px;padding:14px 18px;margin-bottom:20px;}
+.summary-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:10px;}
+.summary-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,0.7);}
+.chip strong{color:#fff;font-family:'DM Mono',monospace;font-size:13px;}
+#rate-display-row{display:none;margin-top:10px;padding:8px 12px;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.3);border-radius:8px;align-items:center;justify-content:space-between;}
+.rate-display-label{font-size:12px;color:rgba(255,255,255,0.7);}
+.rate-display-val{font-family:'DM Mono',monospace;color:var(--yellow);font-size:14px;font-weight:600;}
 
-  /* CLIENT SUMMARY */
-  #client-summary { display: none; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; }
-  .summary-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
-  .summary-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; color: var(--muted); }
-  .chip strong { color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; }
+/* ══ SLIDERS ══ */
+.slider-row{margin-bottom:20px;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.slider-label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.slider-value{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text);}
+.slider-track{position:relative;height:6px;border-radius:3px;background:var(--surface2);border:1px solid var(--border);}
+.slider-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--navy),var(--teal));pointer-events:none;}
+input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:transparent;border-radius:3px;cursor:pointer;position:relative;z-index:1;margin:0;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--yellow);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(245,166,35,0.25);cursor:grab;margin-top:-7px;}
+input[type="range"]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.15);}
+input[type="range"]::-webkit-slider-runnable-track{background:transparent;height:6px;}
+.slider-range-labels{display:flex;justify-content:space-between;margin-top:4px;}
+.slider-range-labels span{font-family:'DM Mono',monospace;font-size:10px;color:var(--border);}
 
-  /* SLIDERS */
-  .slider-row { margin-bottom: 20px; }
-  .slider-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
-  .slider-label { font-size: 13px; font-weight: 500; color: var(--muted); }
-  .slider-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--gold-light); text-align: right; }
-  .slider-track { position: relative; height: 6px; border-radius: 3px; background: var(--surface2); }
-  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); pointer-events: none; }
-  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: transparent; border-radius: 3px; cursor: pointer; position: relative; z-index: 1; margin: 0; }
-  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); border: 2px solid var(--bg); box-shadow: 0 0 0 3px rgba(201,168,76,0.2); cursor: grab; margin-top: -7px; }
-  input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
-  input[type="range"]::-webkit-slider-runnable-track { background: transparent; height: 6px; }
-  .slider-range-labels { display: flex; justify-content: space-between; margin-top: 4px; }
-  .slider-range-labels span { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--border); }
+/* ══ ZIP/COUNTY ══ */
+.zip-county-wrap{margin-bottom:20px;}
+.loc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.loc-label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.loc-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;}
+.loc-tab{padding:4px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.2s;font-family:'DM Mono',monospace;letter-spacing:0.5px;}
+.loc-tab.active{background:var(--navy);color:#fff;}
+.zip-status{font-size:11px;font-style:italic;margin-top:5px;}
+.zip-status.found{color:#3ecf8e;} .zip-status.notfound{color:#e05555;}
+.county-select-wrap{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;}
+.county-select-wrap select{background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;font-weight:500;width:100%;cursor:pointer;}
+.county-select-wrap select option{background:var(--surface2);color:var(--text);}
 
-  /* COUNTY DROPDOWN */
-  .county-row { margin-bottom: 20px; }
-  .county-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 8px; display: block; }
-  .county-select-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; transition: border-color 0.2s; }
-  .county-select-wrap:focus-within { border-color: var(--gold); }
-  .county-select-wrap select { background: transparent; border: none; outline: none; color: var(--gold-light); font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 100%; cursor: pointer; }
-  .county-select-wrap select option { background: var(--surface2); color: var(--text); }
+/* ══ AUTO ESTIMATE ROWS (TAX/INS) ══ */
+.auto-row{margin-bottom:20px;}
+.auto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.auto-label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.auto-right{display:flex;align-items:center;gap:8px;}
+.auto-value{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--text);}
+.auto-badge{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:1px;padding:2px 7px;border-radius:100px;background:rgba(43,127,164,0.15);color:var(--teal);border:1px solid rgba(43,127,164,0.3);}
+.pencil-btn{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;color:var(--muted);font-size:13px;transition:all 0.15s;line-height:1;}
+.pencil-btn:hover{color:var(--yellow);background:rgba(245,166,35,0.1);}
+.auto-override-wrap{display:none;margin-top:4px;}
+.auto-override-wrap input{width:100%;background:var(--surface2);border:1px solid var(--teal);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:15px;outline:none;}
+.auto-note{font-size:10px;color:var(--muted);font-style:italic;margin-top:4px;}
+.auto-relock{font-size:10px;color:var(--yellow);font-style:italic;margin-top:3px;display:none;}
+.auto-relock.show{display:block;}
 
-  /* PENCIL EDIT ROWS */
-  .auto-row { margin-bottom: 20px; }
-  .auto-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .auto-label { font-size: 13px; font-weight: 500; color: var(--muted); }
-  .auto-right { display: flex; align-items: center; gap: 8px; }
-  .auto-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--gold-light); }
-  .auto-badge { font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 1px; padding: 2px 7px; border-radius: 100px; background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
-  .pencil-btn { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: var(--muted); font-size: 14px; transition: all 0.15s; line-height: 1; display: flex; align-items: center; justify-content: center; }
-  .pencil-btn:hover { color: var(--gold); background: rgba(201,168,76,0.1); }
-  .pencil-btn title { display: none; }
-  .auto-track-wrap { margin-bottom: 4px; }
-  .auto-override-wrap { display: none; margin-top: 4px; }
-  .auto-override-wrap input { width: 100%; background: var(--surface2); border: 1px solid var(--gold); border-radius: 9px; padding: 9px 12px; color: var(--gold-light); font-family: 'DM Mono', monospace; font-size: 15px; outline: none; }
-  .auto-note { font-size: 10px; color: var(--muted); font-style: italic; margin-top: 4px; }
-  .auto-relock { font-size: 10px; color: var(--yellow); font-style: italic; margin-top: 3px; display: none; }
-  .auto-relock.show { display: block; }
+/* ══ FLOOD ZONE ══ */
+.flood-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px 14px;background:rgba(27,58,107,0.15);border:1px solid rgba(43,127,164,0.3);border-radius:10px;cursor:pointer;}
+[data-theme="light"] .flood-row{background:rgba(27,58,107,0.06);}
+.flood-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.flood-label{font-size:13px;color:var(--text);cursor:pointer;line-height:1.4;flex:1;}
+.flood-label small{font-size:11px;color:var(--muted);display:block;}
+.flood-info-btn{background:var(--yellow);border:none;cursor:pointer;width:20px;height:20px;border-radius:50%;color:var(--navy);font-size:11px;font-weight:700;font-family:serif;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+.flood-info-btn:hover{transform:scale(1.1);}
+.flood-slider-wrap{display:none;margin-bottom:16px;}
 
-  /* FLOOD ZONE */
-  .flood-toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 14px; background: rgba(62,120,220,0.06); border: 1px solid rgba(62,120,220,0.2); border-radius: 10px; cursor: pointer; }
-  .flood-toggle-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #5b9cf6; cursor: pointer; flex-shrink: 0; }
-  .flood-toggle-label { font-size: 13px; color: var(--text); cursor: pointer; line-height: 1.4; }
-  .flood-toggle-label small { font-size: 11px; color: var(--muted); display: block; }
-  .flood-slider-wrap { display: none; margin-top: 4px; }
+/* ══ INFO BUTTONS & DROPDOWNS ══ */
+.info-btn{background:none;border:1.5px solid var(--teal);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:var(--teal);font-size:10px;font-weight:700;font-family:serif;line-height:1;transition:all 0.15s;flex-shrink:0;vertical-align:middle;}
+.info-btn:hover{background:var(--teal);color:#fff;}
+.info-dropdown{display:none;margin-top:8px;background:var(--navy);color:#fff;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.7;box-shadow:0 4px 20px rgba(0,0,0,0.3);border:1px solid rgba(43,127,164,0.4);position:relative;z-index:10;}
+.info-dropdown::before{content:'';position:absolute;top:-6px;left:16px;width:12px;height:12px;background:var(--navy);transform:rotate(45deg);border-radius:2px;border-top:1px solid rgba(43,127,164,0.4);border-left:1px solid rgba(43,127,164,0.4);}
+.info-dropdown.open{display:block;animation:fadeUp 0.2s ease;}
+.info-dropdown strong{color:var(--yellow);}
+.info-close{float:right;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px;line-height:1;margin-left:8px;transition:color 0.15s;}
+.info-close:hover{color:#fff;}
 
-  /* SCENARIO SAVE */
-  .scenario-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; margin-top: 20px; box-shadow: 0 2px 12px var(--shadow); }
-  .scenario-fields { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-  .scenario-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-  .save-btn { width: 100%; background: var(--green); color: #0a1a12; border: none; border-radius: 10px; padding: 13px; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1.5px; font-weight: 700; cursor: pointer; transition: all 0.2s; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .save-btn:hover { filter: brightness(1.1); }
-  .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .save-status { margin-top: 12px; padding: 10px 14px; border-radius: 9px; font-size: 12px; display: none; }
-  .save-status.ok { background: rgba(62,207,142,0.1); color: var(--green); border: 1px solid rgba(62,207,142,0.25); }
-  .save-status.err { background: rgba(224,85,85,0.1); color: var(--red); border: 1px solid rgba(224,85,85,0.25); }
+/* ══ SHOW RATE CHECKBOX ══ */
+.show-rate-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;cursor:pointer;}
+.show-rate-row input[type="checkbox"]{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.show-rate-text{font-size:12px;color:var(--muted);font-weight:500;}
+.show-rate-sub{font-size:11px;color:var(--muted);opacity:0.8;margin-top:1px;}
 
-  /* RESULTS */
-  .results-col { display: flex; flex-direction: column; gap: 16px; }
-  .gauge-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; text-align: center; box-shadow: 0 2px 12px var(--shadow); }
-  .gauge-eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
-  .gauge-svg-wrap { width: 180px; height: 100px; margin: 0 auto 12px; }
-  .gauge-svg-wrap svg { overflow: visible; }
-  .dti-dual { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .dti-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; text-align: center; }
-  .dti-box-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .dti-box-num { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; transition: color 0.3s; }
-  .dti-box-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
-  .dti-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 500; transition: all 0.3s; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .b-safe { background: rgba(62,207,142,0.15); color: var(--green); } .b-safe .dot { background: var(--green); }
-  .b-warn { background: rgba(245,166,35,0.15); color: var(--yellow); } .b-warn .dot { background: var(--yellow); }
-  .b-danger { background: rgba(224,85,85,0.15); color: var(--red); } .b-danger .dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+/* ══ SCENARIO SAVE ══ */
+.scenario-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;margin-top:20px;box-shadow:0 2px 12px var(--shadow);}
+.scenario-label{font-size:12px;color:var(--muted);margin-bottom:5px;}
+.scenario-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;}
+.save-btn{width:100%;background:var(--teal);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1.5px;font-weight:700;cursor:pointer;transition:all 0.2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;}
+.save-btn:hover{background:var(--navy);}
+.save-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.save-status{margin-top:12px;padding:10px 14px;border-radius:9px;font-size:12px;display:none;}
+.save-status.ok{background:rgba(62,207,142,0.1);color:#3ecf8e;border:1px solid rgba(62,207,142,0.25);}
+.save-status.err{background:rgba(224,85,85,0.1);color:#e05555;border:1px solid rgba(224,85,85,0.25);}
 
-  .breakdown-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px var(--shadow); }
-  .brow { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-  .brow:last-of-type { border-bottom: none; }
-  .bk { color: var(--muted); }
-  .bv { font-family: 'DM Mono', monospace; color: var(--text); font-size: 12px; }
-  .brow.total .bk { color: var(--text); font-weight: 600; font-size: 13px; }
-  .brow.total .bv { color: var(--gold-light); font-size: 14px; font-weight: 600; }
-  .brow.head-row .bk { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); }
-  .brow.rental-row .bk { color: var(--purple); }
-  .brow.rental-row .bv { color: var(--purple); }
-  .brow.flood-row .bk { color: #5b9cf6; }
-  .brow.flood-row .bv { color: #5b9cf6; }
-  .thresh-bar { margin-top: 12px; padding: 10px 12px; border-radius: 9px; font-size: 11px; display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
-  .ts { background: rgba(62,207,142,0.08); color: var(--green); border: 1px solid rgba(62,207,142,0.2); }
-  .td { background: rgba(224,85,85,0.08); color: var(--red); border: 1px solid rgba(224,85,85,0.2); }
+/* ══ STICKY DTI METER ══ */
+.sticky-dti{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);border-bottom:2px solid var(--teal);padding:8px 20px;display:none;align-items:center;justify-content:center;gap:20px;box-shadow:0 2px 16px rgba(0,0,0,0.3);}
+.sticky-dti.visible{display:flex;}
+.sticky-dti-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.5);}
+.sticky-dti-box{display:flex;align-items:center;gap:10px;}
+.sticky-dti-name{font-size:11px;color:rgba(255,255,255,0.6);}
+.sticky-dti-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:700;}
+.sticky-divider{width:1px;height:24px;background:rgba(255,255,255,0.15);}
+.sticky-badge{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:600;}
+.sticky-badge.safe{background:rgba(62,207,142,0.2);color:#3ecf8e;}
+.sticky-badge.warn{background:rgba(245,166,35,0.2);color:#f5a623;}
+.sticky-badge.danger{background:rgba(224,85,85,0.2);color:#e05555;}
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-  .fadein { animation: fadeUp 0.4s ease both; }
+/* ══ RESULTS ══ */
+.results-col{display:flex;flex-direction:column;gap:16px;}
+.gauge-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px;text-align:center;box-shadow:0 2px 12px var(--shadow);}
+.gauge-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.gauge-svg-wrap{width:180px;height:100px;margin:0 auto 12px;}
+.gauge-svg-wrap svg{overflow:visible;}
+.dti-dual{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.dti-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;}
+.dti-box-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.dti-box-num{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;transition:color 0.3s;}
+.dti-box-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.dti-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;transition:all 0.3s;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.b-safe{background:rgba(62,207,142,0.15);color:#3ecf8e;} .b-safe .dot{background:#3ecf8e;}
+.b-warn{background:rgba(245,166,35,0.15);color:#f5a623;} .b-warn .dot{background:#f5a623;}
+.b-danger{background:rgba(224,85,85,0.15);color:#e05555;} .b-danger .dot{background:#e05555;box-shadow:0 0 6px #e05555;}
+.breakdown-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 12px var(--shadow);}
+.brow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.brow:last-of-type{border-bottom:none;}
+.bk{color:var(--muted);}
+.bv{font-family:'DM Mono',monospace;color:var(--text);font-size:12px;}
+.brow.total .bk{color:var(--text);font-weight:600;font-size:13px;}
+.brow.total .bv{color:var(--yellow);font-size:14px;font-weight:600;}
+.brow.head-row .bk{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);}
+.brow.rental-row .bk{color:var(--teal);}
+.brow.rental-row .bv{color:var(--teal);}
+.brow.flood-row .bk{color:#5b9cf6;}
+.brow.flood-row .bv{color:#5b9cf6;}
+.thresh-bar{margin-top:12px;padding:10px 12px;border-radius:9px;font-size:11px;display:flex;align-items:flex-start;gap:7px;line-height:1.4;}
+.ts{background:rgba(62,207,142,0.08);color:#3ecf8e;border:1px solid rgba(62,207,142,0.2);}
+.td{background:rgba(224,85,85,0.08);color:#e05555;border:1px solid rgba(224,85,85,0.2);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.fadein{animation:fadeUp 0.4s ease both;}
 </style>
 </head>
 <body>
 
+<!-- STICKY DTI BAR -->
+<div class="sticky-dti" id="sticky-dti">
+  <span class="sticky-dti-label">DTI</span>
+  <div class="sticky-dti-box">
+    <span class="sticky-dti-name">Front</span>
+    <span class="sticky-dti-val" id="sticky-front">—</span>
+  </div>
+  <div class="sticky-divider"></div>
+  <div class="sticky-dti-box">
+    <span class="sticky-dti-name">Back</span>
+    <span class="sticky-dti-val" id="sticky-back">—</span>
+  </div>
+  <div class="sticky-divider"></div>
+  <span class="sticky-badge safe" id="sticky-badge">Awaiting input</span>
+</div>
+
 <!-- THEME TOGGLE -->
-<button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">☀️ Light Mode</button>
+<button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+
+<!-- APM BRAND HEADER — client view only -->
+<div class="apm-header" id="apm-header">
+  <div class="apm-stripe">
+    <span class="apm-stripe-text">This calculator was brought to you by</span>
+  </div>
+  <div class="apm-body">
+    <img class="apm-photo" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAB4AHgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3YadjtR/Z+O1dL9lHpQbYelYXNrHNfYPakNj7V0htR6UxrYelO4rHOGyHpTDZ/wCzXRNbD0qNrYelFxWOea0H92opLQY+7XRNbD0qKS246UmNHJ3NnnoKybuybnBYfjXaz2vtWfc2YOeKxmjaDORsbJzKdxY/U1t21kOPlq5bWWJDxWpbWvtURRbZJpVvttcY71aMI9Kt2UGIOnentF7V6VN+6jzai95meYh6UVcaPFFa3MrHQ+VxQYqtFQOpFJtB6Vw2O65UMXtTDF7VdMdNMdMCi0QxzgV538Vvit4S+HsVsuqTvc3d2jSQW1thmZRwWJJwozxz34qH48fGHQPh5YmwMcep6tMdrWnmlFijIyzSNg44PCjk57CvgHxXr91rfiW41SdmkaRsoHYthSSQMnnjP9aErge5eNv2m/F15Mkmgx2emW8cm9QI/MLkDlCW6rzzwMnnjpW14e/as1BbFYda8MWN7dRkCSa3ujbhhjrsKt+h/Cvl6HzX6RvIoBGBnip7TT9RumZLKJ5d+SdoyfSm4opXeyPtDQP2k/AmpCOPUrPU9MmLBX+RZo1z33KQSP8AgOa9csprLVNPg1DTrmG7tLhBJDNE25HU9wa/NeEz2twI9RgkjYyLncuOF619ifsYX+p3nhHV7GUSPpdpOn2SRh8quwJdFPfsT6ZrOcbIpM9mjtwH6Vfgg9qlWH5+lXIYvas0imwijxFimSJV5U+SopFrthsjjmtSi6UVYdaK1uZ2NaZ0MmMipbfGDiqkagyucVcthgmuRGyd2Sbar6jdW+n6fcX12xS3t4mllIGSFUZP6CreK574mF1+HPiRo4zK40q5KoF3bj5bYGO9Mtbn5yfFvxJN448Y6jrF0rLJfXxdYyc/IflRRjuF2jn0rW0j4f6akUUl00kr4BYFuCa5jT7We9u7XUWUs0bA4r1qzZpIVOwgEAk+lcteo1pFnpYOjGTvJE+h6Hp0EHlQWkSr3AUc10Gl6BYWLma2sIYWfqVQZNN0GKHIxcx7j2Dgn8q3mgmdVVX4ORnNedKUj3YQgkrIx7zQtL1D5b+yhnX0KDP4GuOPirW/hN8Rbe30K7mt/DtyUuBYs5MJXdiRdp7nnkc5r0cLY2qsbq/hjfgbXlAP5Vw3xn0ldW0jTdRtsSrb+ahdDkZJBAz+ddGFbvZ7HDmEIOF1ufZFuYp4o54W3RSqHRvVSMg/katxpjtVfRrVrXSLG2cYaG2ijI9CEAP8qvKtdqPDYEYUVC4qyw4qJxXVDY5pblWRaKkcUVoiGixD/rWz3q5B978K88Twx4v3ceLY+v8Azx/+vVuyj8Yp4g/sz+1rB9lsJvNMbc84xiuZMcVJbo7+qurWi3+lXdi6hluYJISGHB3KR/Wsua+1myv9Ogu1spYrqXymaPcGX5Sc4P0rG+M/irUvCXhJL3R44WvZ7lYI2lXcqDazFsdzhaJTUU2zppUpVJqEd2fE2j6WllcJZSRfvY2KOMcZHFWPFlhcGcW0t/JZWsab5Ch5Ynn68D+ddPKDL4ybUL8KZ7iZpZkACruOTlQOnJ6VozWsF7evLMCC7YOOOnHWvOnU1uj3KVB/AzynS7DSoboXFtb63I0ZBE80bIp57dCa9g8M6lLdaZK7lllgUsIz/EcdKy9U0u1toyZ5G246NIWz+GateGNi3Iit1QBeWDODz6H3rKpPnVzso0fZux51q0MGsa7LLc+HdVuHyS0lsSAOfevQfBGkRf2DfafEbsQXLwbIrgFXifcQAe3cd61bqy0YysxWFH3bWKsCA3ocdD9a6TSdMsv7PI+VY+C/ocHirjXs0jKrg1KLd9z6LKjPr705RXF/BdL5PA8aX00kxF1OInc5JjDYH4ZBrtgK7acuaKZ4Ven7KpKne9mNcVEwqZ6iauuOxxvchcUU5qKsk8/El4HH+kydf7xrb8MSOfHNyHYnGnx9T/tGs9IdwyBk5q54cV18cXjlSF+wxqDjjO41yo3Z0PiI51fQl/6e2P8A441J498NWvizwzc6RcN5bt88Ev8AzylGdrfTnBHoTUOuvnxD4fX/AKeJD/44a6QGqsndMIzlCSlF6o+KvGOnajouqyw6rZvaXkDosisp+YBhhlPRl68jsakMrxyDb6kfj1r6S+P2j2Wq/C7WZZ7SGa5tbfzLeVl+eIhlzg9R9K+OtJ8Us0rxT/NJDKp2kcnBwa86tRcNEe5h8X7V870ZX8S+Jbk3V1aWsSzTZ2ln6fSszQTrNvPJcw2wjuHjbLRlVy3YH1rp49EtV1OXXrVjFNLM7RygBtintgjFdLpvikWAEM3iCXfnkiGPI7ddnFKLSjZG7hKcryf4/wDAPP49X1/RGW31aWKJbsErbyjG/wBSPWvavh1aX2sadp2nb8PfPtQsSPlIPU+3X8KwfEVjYa/YPfXcs2oXEVuVhnuG3Mgbrtz0zxXXfAuS41f4qW0UUbLZaPZFzhflBK7Rn3JP6UrKpJJCnOVCDbfofQ+nWcOn2MFlbjEUEYReMZx3/HrVkUjdaUV6CVj59tt3Y16iapX61E1dC2MHuRtRSMaKYjkxE0EReTOWIK49Kd4YuWk8SaiN5KLsUKe3HNQ3Gq2DWyE3luMerjOKr+F7qwj1q7ujew7ZyCvzjHAxXMa31Og1x8+KfD6/9NJT/wCOV1KtXE6tfWr+MNB2XMLKomdjvGFG3qfQVk/Ef4veGfDGlTrp+pWmp6sRtht4HEio396QjgAemcnpVwi5OyB6Gz4817S9Qh1fwVDcbtSksN04C5WBJDhdx/vHrj0544r4T8caHq2heKrhltHWSN8TIo5B/vD1B6/jXWaF4/vdN+JieJL+5knW6kMd+zHJkRzyx+hwR6YxX0F4w8G6V4v0wSHYl2qZt7pRng8gN/eX+XajE0HBpo3w1VWsz5Z0XxtChFndoNmeQeBWu9xodzdxXG0E7/m+foKf4t8DSWepSWGsae0U8Z+V17r2IbuD61T0nwNbtcIn2ucRs3OQM/nXnS5PQ9eDqpW3R2UHiD7VFDpGi2yy3D4RD2HuT2Ar6M8BR6B4P0KPTdMvLa91NnR9RKEeY7tgHjqFXoB6D1rx/wAI+HdN0GzEtrDgqhZ3JyzYGeSfpXf2/inR7XwbpXiWbR/Nv7y3Gy7t4gTv25G7H+eDTpvdQOTH+05VKR6jqmu6fpt9bWt7L5LXR2xMw+Ut6Z9a1FYHBFeLW/iKD4jeHLvSLvEGqW4862ccbmHPHvXofw7v7y88J2EmoAi6Ee2TPUkcVtTq80vI8yMlLY6RzzUbnilZqjY13RehmxrGimblLEBhkUVVxHBahp/grT7Pz7+1tLeL+/Kdo/DPX8K8p1/4g+DNB1bU7jRtFt9REqosRmykaFRyQvU5/CvGfEnjDVdauGmuryaeRurySZNYDyyTHLtnPPWumngorWWoSqX2NvxR4y1nxBqJmvJkht8nFvboI48A5AIHUfWud+0TGSX53YuwY1IyBlYdOO1OhUSghuJk+UlR19DXWoKOiIvfchKMWJOM5719Pfs2+Lk1jwudAvJgdQ00bU3HmSD+Ej12/dP4V8zOJCWG8Z9MdPyrV8I61f8AhvxBaa1YSmOe3b5uMhlPDAjuCO30rOtS9pG3UqnLlZ9m+I9I0rVtNaDUxGoGfLlONyH2/wAO9eVz+CL7TxLcxQi4to2J82M5GPXHUfiK9A8MW66np8GsfbpdQE0ayJK4BG0jIIHb6V0NukhV4tgkjPYRkZz1BrwKtFVPJns0MROjotUeRatc/YtCuJDwwiYD8QavfBu0k8Q/BmLQ0fbeRRFrNz/DKhJT8Dyp9mNUPiBp72izadJu3I2PbHUfpiuk+E9g3hfwrYXN00nkfZ2unKDkLlnIwOvHbvXJgnKNS/VHdmEYypLzOBstcjhkh1CIJC9tL+8RBhkYHkMvXGcg/wBa9X8A/EK2vZo7S+hS3J/1c0Z3RPntnqp9jivnXxf4gs/EHiTVPEmj201pZalM0ixTY3qD1yF4BzzgdM1k6RrF9YXTyRzyHA4w3v8Azr6argKdRc0dGz5WM3B2R93CQOgYHIIpjSYB9ccV86+DPjRqljHFbarGt9agABmG2RR9R/WvV/DHxA8O+I7xLGzumivXQukEw2s4H3tp6MR3HXviuaeGqU1qjVTTLPifxbo3h6webUrlIZFb7mfnb6CivGf2rFtF/s9PsUsdxIx23SHqf7pory6tWUZWufVZblGCr4dVK9S0n0uj54hjKqynHy4xgVII2BABbuKKK+mUmfI2JjG27GW5GOtQTho8T/Nt+6/uD3/Ciim3oFh5QBw3HuBT5UyMAZyOlFFMD6G/ZR8UfadPu/Ct1Lumsv3sGf4oWPIH+6x/8er3SSx3PuiJGeoB4ooryMVBKo7HZSk+RHmnxe0qUTW10F4lRkb/AHl5H6H9K7XwxbLJ4T0pvLBX7HFtyP8AZFFFebSSVefyPTrybwlNvzPkvxXpi6J4m1vR4xiKC7Zoh6I/zD+dYUifMGHB/wA/40UV9XSd6cX5Hzs9JMlsXPl9eO/NS3OqXmmT2GoWs7rPZXUc0LBsEHdjr9DRRVboXU+t9VttI8U+GLe+urWOaK6gS4XcORkBuKKKK+fqpKVrHStVqf/Z" alt="Chris Greenidge">
+    <div class="apm-info">
+      <div class="apm-name">Chris Greenidge</div>
+      <div class="apm-title">Senior Loan Officer</div>
+      <div class="apm-nmls">NMLS# 2073018 &nbsp;·&nbsp; Equal Housing Opportunity</div>
+      <div class="apm-contacts">
+        <a class="apm-contact" href="tel:7276421374">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
+          727.642.1374
+        </a>
+        <a class="apm-contact" href="mailto:cgreenidge@apmortgage.com">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
+          cgreenidge@apmortgage.com
+        </a>
+        <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
+          ChrisToClose.com
+        </a>
+      </div>
+    </div>
+    <div class="apm-right">
+      <div><div class="apm-brand-line l1">AMERICAN</div><div class="apm-brand-line l2">PACIFIC</div><div class="apm-brand-line l3">MORTGAGE</div></div>
+      <div class="apm-tagline">Proud to be Employee Owned</div>
+      <a class="apm-apply" href="https://www.apmortgage.com" target="_blank">Apply Now →</a>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE WRAP -->
+<div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Mortgage Qualification Tool</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -234,439 +351,391 @@
 </div>
 
 <div class="layout">
-  <div>
+<div>
 
-    <!-- ══ LENDER PANEL ══ -->
-    <div id="lender-panel" class="panel fadein">
-
-
-
-      <div class="section-title">Client Financial Profile <span class="badge badge-lender">Lender Only</span></div>
-      <div class="field-grid">
-        <div class="field-group full">
-          <div class="field-label">Gross Monthly Income</div>
-          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-income" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
-        </div>
-        <div class="field-group full">
-          <div class="field-label">Other Monthly Debts
-            <small>Everything NOT secured by departing property — car, student loans, credit cards, personal loans.</small>
-          </div>
-          <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-debts" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
-        </div>
-        <div class="field-group full">
-          <div class="field-label">Interest Rate</div>
-          <div class="input-wrap"><input type="number" id="in-rate" value="7.0" min="1" max="20" step="0.125" style="text-align:right;"><span class="sfx">%</span></div>
-        </div>
-
-        <!-- SHOW RATE TO CLIENT TOGGLE -->
-        <div class="field-group full">
-          <div style="display:flex; align-items:center; gap:10px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 14px; cursor:pointer;" onclick="toggleShowRate()">
-            <input type="checkbox" id="show-rate-check" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation(); toggleShowRate()">
-            <div>
-              <div style="font-size:12px; color:var(--muted); font-weight:500;">Show interest rate to client</div>
-              <div style="font-size:10px; color:var(--border); margin-top:1px;">By default the rate is hidden — check to display it on the client view</div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- DEPARTING HOME CHECKBOX — collapses everything if not needed -->
-      <div style="background:rgba(138,100,200,0.06); border:1px solid rgba(138,100,200,0.2); border-radius:12px; padding:14px 16px; margin-top:20px;">
-        <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="toggleRentalSection()">
-          <input type="checkbox" id="rental-enabled" style="width:17px;height:17px;accent-color:var(--purple);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation(); toggleRentalSection()">
-          <div>
-            <div style="font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--purple); margin-bottom:2px;">🏡 Client is keeping their current home</div>
-            <div style="font-size:11px; color:var(--muted);">Check this if they are holding onto their departing property — rental income fields and debt rules will appear</div>
-          </div>
-        </div>
-
-        <!-- Everything below only shows when checked -->
-        <div id="rental-fields-wrap" style="display:none; margin-top:18px;">
-
-          <!-- YELLOW WARNING -->
-          <div style="background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.25); border-radius:9px; padding:11px 14px; margin-bottom:16px;">
-            <div style="font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--yellow); margin-bottom:5px;">⚠ Departing Residence Active</div>
-            <div style="font-size:11px; color:var(--muted); line-height:1.6;">Rental shortfall will be automatically added to back-end DTI per Encompass FM0132. Make sure debts secured by the departing property are entered in the Expenses field below — NOT in Other Monthly Debts above.</div>
-          </div>
-
-          <!-- ENCOMPASS RULES -->
-          <div style="background:rgba(201,168,76,0.05); border:1px solid rgba(201,168,76,0.2); border-radius:9px; padding:14px; margin-bottom:16px;">
-            <div style="font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--gold-light); margin-bottom:10px;">📋 What Goes Where</div>
-            <div class="rule-cols">
-              <div class="rule-col yes-col">
-                <div class="rule-col-title green">Departing Property Expenses ↓</div>
-                <ul>
-                  <li>1st mortgage on departing home</li>
-                  <li>2nd mortgage (pool, HELOC, etc.)</li>
-                  <li>Any other lien on that property</li>
-                  <li>Its tax, insurance &amp; HOA</li>
-                </ul>
-              </div>
-              <div class="rule-col no-col">
-                <div class="rule-col-title red">Other Monthly Debts ↑</div>
-                <ul>
-                  <li>Car loans</li>
-                  <li>Student loans</li>
-                  <li>Credit cards (minimums)</li>
-                  <li>Personal / installment loans</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- RENTAL FIELDS -->
-          <div class="field-grid">
-            <div class="field-group">
-              <div class="field-label">Gross Monthly Rental Income
-                <small>Expected rent on the departing property</small>
-              </div>
-              <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-rent" value="0" min="0" step="50"><span class="sfx">/ mo</span></div>
-            </div>
-            <div class="field-group">
-              <div class="field-label">Departing Property Total Expenses
-                <small>All mortgage payments (1st + 2nd + any liens) + that property's own tax + insurance + HOA</small>
-              </div>
-              <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-pitia" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
-            </div>
-          </div>
-
-          <!-- FM0132 LIVE CALC -->
-          <div class="rental-math" id="rental-math" style="display:none; margin-top:12px;">
-            <div class="rental-math-title">Encompass FM0132 — Auto-Applied to Back-End DTI</div>
-            <div class="rental-math-row"><span class="rk">Gross Rental Income</span><span class="rv" id="rr-gross">—</span></div>
-            <div class="rental-math-row"><span class="rk">× Percentage of Rental (75%)</span><span class="rv" id="rr-75">—</span></div>
-            <div class="rental-math-row"><span class="rk">− Expenses (mortgages + tax + ins + HOA)</span><span class="rv" id="rr-pitia">—</span></div>
-            <div class="rental-math-row"><span class="rk">Net Monthly Rental Income / (Loss)</span><span class="rv" id="rr-net">—</span></div>
-          </div>
-          <div class="no-rental-note" id="no-rental-note" style="margin-top:8px;">Enter rent and expenses above to see the FM0132 calculation.</div>
-
-        </div>
-      </div>
-
-      <button class="generate-link-btn" onclick="generateLink()">
-        🔗 Generate Client Link — Copy to Clipboard
-      </button>
-      <div class="link-copied" id="link-copied">
-        ✓ Link copied to clipboard! Send this to your client and they'll open directly to a pre-filled calculator.<br>
-        <span id="link-display" style="color:var(--gold-light);font-size:11px;margin-top:4px;display:block;"></span>
-      </div>
-
-      <button class="lock-btn" onclick="setMode('client')">→ Done — Switch to Client View</button>
+<!-- ══ LENDER PANEL ══ -->
+<div id="lender-panel" class="panel fadein">
+  <div class="section-title">Client Financial Profile <span class="badge badge-lender">Lender Only</span></div>
+  <div class="field-grid">
+    <div class="field-group full">
+      <div class="field-label">Gross Monthly Income</div>
+      <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-income" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
     </div>
-
-    <!-- ══ CLIENT SUMMARY ══ -->
-    <div id="client-summary">
-      <div class="summary-label">Your Financial Profile (set by your lender)</div>
-      <div class="summary-chips" id="summary-chips"></div>
-      <!-- Rate display — only shows if lender enabled it -->
-      <div id="rate-display-row" style="display:none; margin-top:10px; padding:10px 14px; background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.2); border-radius:9px; display:none;">
-        <span style="font-size:12px; color:var(--muted);">Interest Rate</span>
-        <strong style="font-family:'DM Mono',monospace; color:var(--gold-light); font-size:14px; margin-left:8px;" id="rate-display-val">—</strong>
+    <div class="field-group full">
+      <div class="field-label">Other Monthly Debts <small>Everything NOT secured by departing property — car, student loans, credit cards, personal loans.</small></div>
+      <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-debts" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
+    </div>
+    <div class="field-group full">
+      <div class="field-label">Interest Rate <small>Not shown to client by default</small></div>
+      <div class="input-wrap"><input type="number" id="in-rate" value="7.0" min="1" max="20" step="0.125" style="text-align:right;"><span class="sfx">%</span></div>
+    </div>
+    <div class="field-group full">
+      <div class="show-rate-row" onclick="toggleShowRate()">
+        <input type="checkbox" id="show-rate-check" onclick="event.stopPropagation();toggleShowRate()">
+        <div>
+          <div class="show-rate-text">Show interest rate to client</div>
+          <div class="show-rate-sub">By default the rate is hidden — check to display it on the client view</div>
+        </div>
       </div>
     </div>
-
-    <!-- ══ CLIENT SLIDERS ══ -->
-    <div class="panel fadein" id="client-panel">
-      <div class="section-title">Explore Properties <span class="badge badge-client">Move the sliders</span></div>
-
-      <!-- COUNTY -->
-      <div class="county-row">
-        <label class="county-label">Florida County</label>
-        <div class="county-select-wrap">
-          <select id="sl-county" onchange="onCountyChange()">
-            <option value="">— Select County —</option>
-            <option value="12.5">Alachua — ~12.5 mills</option>
-            <option value="11.0">Baker — ~11.0 mills</option>
-            <option value="13.5">Bay — ~13.5 mills</option>
-            <option value="11.5">Bradford — ~11.5 mills</option>
-            <option value="11.8">Brevard — ~11.8 mills</option>
-            <option value="19.5">Broward — ~19.5 mills</option>
-            <option value="11.0">Calhoun — ~11.0 mills</option>
-            <option value="13.2">Charlotte — ~13.2 mills</option>
-            <option value="12.0">Citrus — ~12.0 mills</option>
-            <option value="14.5">Clay — ~14.5 mills</option>
-            <option value="14.8">Collier — ~14.8 mills</option>
-            <option value="11.2">Columbia — ~11.2 mills</option>
-            <option value="14.0">DeSoto — ~14.0 mills</option>
-            <option value="10.5">Dixie — ~10.5 mills</option>
-            <option value="19.8">Duval — ~19.8 mills</option>
-            <option value="13.0">Escambia — ~13.0 mills</option>
-            <option value="11.5">Flagler — ~11.5 mills</option>
-            <option value="10.8">Franklin — ~10.8 mills</option>
-            <option value="11.0">Gadsden — ~11.0 mills</option>
-            <option value="10.5">Gilchrist — ~10.5 mills</option>
-            <option value="11.0">Glades — ~11.0 mills</option>
-            <option value="10.8">Gulf — ~10.8 mills</option>
-            <option value="10.5">Hamilton — ~10.5 mills</option>
-            <option value="12.0">Hardee — ~12.0 mills</option>
-            <option value="13.5">Hendry — ~13.5 mills</option>
-            <option value="12.5">Hernando — ~12.5 mills</option>
-            <option value="13.0">Highlands — ~13.0 mills</option>
-            <option value="21.5">Hillsborough — ~21.5 mills</option>
-            <option value="10.5">Holmes — ~10.5 mills</option>
-            <option value="14.2">Indian River — ~14.2 mills</option>
-            <option value="11.0">Jackson — ~11.0 mills</option>
-            <option value="10.5">Jefferson — ~10.5 mills</option>
-            <option value="10.8">Lafayette — ~10.8 mills</option>
-            <option value="13.8">Lake — ~13.8 mills</option>
-            <option value="14.5">Lee — ~14.5 mills</option>
-            <option value="19.2">Leon — ~19.2 mills</option>
-            <option value="11.0">Levy — ~11.0 mills</option>
-            <option value="10.5">Liberty — ~10.5 mills</option>
-            <option value="11.0">Madison — ~11.0 mills</option>
-            <option value="13.5">Manatee — ~13.5 mills</option>
-            <option value="13.0">Marion — ~13.0 mills</option>
-            <option value="13.8">Martin — ~13.8 mills</option>
-            <option value="20.5">Miami-Dade — ~20.5 mills</option>
-            <option value="11.5">Monroe — ~11.5 mills</option>
-            <option value="15.2">Nassau — ~15.2 mills</option>
-            <option value="12.8">Okaloosa — ~12.8 mills</option>
-            <option value="13.0">Okeechobee — ~13.0 mills</option>
-            <option value="19.0">Orange — ~19.0 mills</option>
-            <option value="14.5">Osceola — ~14.5 mills</option>
-            <option value="20.2">Palm Beach — ~20.2 mills</option>
-            <option value="13.5">Pasco — ~13.5 mills</option>
-            <option value="19.5">Pinellas — ~19.5 mills</option>
-            <option value="20.0">Polk — ~20.0 mills</option>
-            <option value="13.0">Putnam — ~13.0 mills</option>
-            <option value="12.5">St. Johns — ~12.5 mills</option>
-            <option value="13.8">St. Lucie — ~13.8 mills</option>
-            <option value="13.5">Santa Rosa — ~13.5 mills</option>
-            <option value="13.0">Sarasota — ~13.0 mills</option>
-            <option value="14.5">Seminole — ~14.5 mills</option>
-            <option value="12.0">Sumter — ~12.0 mills</option>
-            <option value="11.0">Suwannee — ~11.0 mills</option>
-            <option value="11.0">Taylor — ~11.0 mills</option>
-            <option value="11.0">Union — ~11.0 mills</option>
-            <option value="13.5">Volusia — ~13.5 mills</option>
-            <option value="11.0">Wakulla — ~11.0 mills</option>
-            <option value="11.0">Walton — ~11.0 mills</option>
-            <option value="10.5">Washington — ~10.5 mills</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- PURCHASE PRICE -->
-      <div class="slider-row">
-        <div class="slider-header"><span class="slider-label">Purchase Price</span><span class="slider-value" id="val-price">$400,000</span></div>
-        <div class="slider-track"><div class="slider-fill" id="fill-price"></div><input type="range" id="sl-price" min="100000" max="1500000" step="5000" value="400000"></div>
-        <div class="slider-range-labels"><span>$100K</span><span>$1.5M</span></div>
-      </div>
-
-      <!-- DOWN PAYMENT -->
-      <div class="slider-row">
-        <div class="slider-header"><span class="slider-label">Down Payment</span><span class="slider-value" id="val-down">20%</span></div>
-        <div class="slider-track"><div class="slider-fill" id="fill-down"></div><input type="range" id="sl-down" min="3" max="50" step="1" value="20"></div>
-        <div class="slider-range-labels"><span>3%</span><span>50%</span></div>
-      </div>
-
-      <!-- LOAN TERM -->
-      <div class="slider-row">
-        <div class="slider-header"><span class="slider-label">Loan Term</span><span class="slider-value" id="val-term">30 yrs</span></div>
-        <div class="slider-track"><div class="slider-fill" id="fill-term"></div><input type="range" id="sl-term" min="10" max="30" step="5" value="30"></div>
-        <div class="slider-range-labels"><span>10 yr</span><span>30 yr</span></div>
-      </div>
-
-      <!-- HOA -->
-      <div class="slider-row">
-        <div class="slider-header"><span class="slider-label">HOA Fees</span><span class="slider-value" id="val-hoa">$0/mo</span></div>
-        <div class="slider-track"><div class="slider-fill" id="fill-hoa"></div><input type="range" id="sl-hoa" min="0" max="1500" step="25" value="0"></div>
-        <div class="slider-range-labels"><span>$0</span><span>$1,500</span></div>
-      </div>
-
-      <!-- PMI -->
-      <div class="slider-row" id="pmi-row" style="display:none;">
-        <div class="slider-header"><span class="slider-label">PMI</span><span class="slider-value" id="val-pmi">$0/mo</span></div>
-        <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="10" value="0"></div>
-        <div class="slider-range-labels"><span>$0</span><span>$500</span></div>
-      </div>
-
-      <!-- FLOOD INSURANCE -->
-      <div class="flood-toggle-row" onclick="toggleFlood()">
-        <input type="checkbox" id="flood-check" onclick="event.stopPropagation(); toggleFlood()">
-        <label class="flood-toggle-label" for="flood-check">
-          🌊 Property is in a Flood Zone
-          <small>Check this if flood insurance is required — it will be added to your monthly payment</small>
-        </label>
-      </div>
-      <div class="flood-slider-wrap" id="flood-slider-wrap">
-        <div class="slider-row" style="margin-bottom:0;">
-          <div class="slider-header"><span class="slider-label">Flood Insurance</span><span class="slider-value" id="val-flood">$150/mo</span></div>
-          <div class="slider-track"><div class="slider-fill" id="fill-flood"></div><input type="range" id="sl-flood" min="50" max="800" step="25" value="150"></div>
-          <div class="slider-range-labels"><span>$50</span><span>$800</span></div>
-        </div>
-        <div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:4px;margin-bottom:16px;">Florida flood insurance estimate. Actual premiums vary by zone, elevation &amp; coverage.</div>
-      </div>
-
-      <!-- PROPERTY TAX — pencil edit -->
-      <div class="auto-row">
-        <div class="auto-header">
-          <span class="auto-label">Est. Property Tax</span>
-          <div class="auto-right">
-            <span class="auto-value" id="val-tax">—</span>
-            <span class="auto-badge">AUTO</span>
-            <button class="pencil-btn" id="tax-pencil" onclick="toggleTaxEdit()" title="Edit tax estimate">
-              ✏️
-            </button>
-          </div>
-        </div>
-        <div class="auto-track-wrap" id="tax-track-wrap">
-          <div style="font-size:12px;color:var(--muted);padding:8px 0;" id="tax-auto-display">Select a county above to auto-calculate</div>
-        </div>
-        <div class="auto-override-wrap" id="tax-override-wrap">
-          <input type="number" id="tax-override" min="0" step="1" placeholder="Enter monthly tax amount...">
-        </div>
-        <div class="auto-relock" id="tax-relock-note">⚠ Manual entry active — will reset to auto when county or price changes</div>
-        <div class="auto-note">Estimated from county mill rate. Tap ✏️ to enter your own amount.</div>
-      </div>
-
-      <!-- INSURANCE — pencil edit + slider -->
-      <div class="auto-row">
-        <div class="auto-header">
-          <span class="auto-label">Est. Homeowners Insurance</span>
-          <div class="auto-right">
-            <span class="auto-value" id="val-ins">$150/mo</span>
-            <span class="auto-badge">EST</span>
-            <button class="pencil-btn" id="ins-pencil" onclick="toggleInsEdit()" title="Edit insurance estimate">
-              ✏️
-            </button>
-          </div>
-        </div>
-        <div class="auto-track-wrap" id="ins-track-wrap">
-          <div class="slider-track" style="margin-bottom:4px;">
-            <div class="slider-fill" id="fill-ins"></div>
-            <input type="range" id="sl-ins" min="50" max="1500" step="25" value="150">
-          </div>
-          <div class="slider-range-labels"><span>$50</span><span>$1,500</span></div>
-        </div>
-        <div class="auto-override-wrap" id="ins-override-wrap">
-          <input type="number" id="ins-override" min="0" step="1" placeholder="Enter monthly insurance amount...">
-        </div>
-        <div class="auto-relock" id="ins-relock-note">⚠ Manual entry active — will reset to auto when price changes</div>
-        <div class="auto-note">Starting estimate at 0.5% annually. Use slider to adjust or tap ✏️ to enter exact quote. Florida premiums vary by location, age &amp; flood zone.</div>
-      </div>
-
-    </div>
-
-    <!-- ══ SCENARIO SAVE ══ -->
-    <div class="scenario-box" id="scenario-box" style="display:none;">
-      <div class="section-title">Save This Scenario <span class="badge badge-client">PDF + Send to Lender</span></div>
-      <div class="scenario-fields">
-        <div>
-          <div class="scenario-label">Your Name</div>
-          <div class="input-wrap"><input type="text" id="sc-name" placeholder="e.g. John & Sarah Smith"></div>
-        </div>
-        <div>
-          <div class="scenario-label">Your Email <span style="color:var(--muted);font-size:11px;">(a copy will be sent to you)</span></div>
-          <div class="input-wrap"><input type="email" id="sc-email" placeholder="e.g. john@email.com"></div>
-        </div>
-        <div>
-          <div class="scenario-label">Property Address</div>
-          <div class="input-wrap"><input type="text" id="sc-address" placeholder="e.g. 123 Bayshore Blvd, St. Pete FL 33701"></div>
-        </div>
-        <div>
-          <div class="scenario-label">Scenario Label <span style="color:var(--muted);font-size:11px;">(optional)</span></div>
-          <div class="input-wrap"><input type="text" id="sc-label" placeholder="e.g. 20% down — conservative"></div>
-        </div>
-      </div>
-      <button class="save-btn" id="save-btn" onclick="saveScenario()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Save PDF &amp; Send to Lender
-      </button>
-      <div class="save-status" id="save-status"></div>
-    </div>
-
   </div>
 
-  <!-- ══ RIGHT COL ══ -->
-  <div class="results-col">
-    <div class="gauge-panel">
-      <div class="gauge-eyebrow">Debt-to-Income</div>
-      <div class="gauge-svg-wrap">
-        <svg viewBox="0 0 180 100" width="180" height="100">
-          <path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#1e2535" stroke-width="14" stroke-linecap="round"/>
-          <path id="arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
-          <path id="arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
-          <line id="needle" x1="90" y1="100" x2="90" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90, 90, 100)" style="transition: transform 0.4s cubic-bezier(0.4,0,0.2,1)"/>
-          <circle cx="90" cy="100" r="5" fill="white" opacity="0.9"/>
-        </svg>
+  <!-- DEPARTING HOME -->
+  <div class="rental-block">
+    <div class="rental-toggle-header" onclick="toggleRental()">
+      <input type="checkbox" id="rental-enabled" onclick="event.stopPropagation();toggleRental()">
+      <div>
+        <div class="rental-toggle-title">🏡 Client is keeping their current home</div>
+        <div class="rental-toggle-sub">Check if they are holding onto their departing property — rental income fields and debt rules will appear</div>
       </div>
-      <div class="dti-dual">
-        <div class="dti-box">
-          <div class="dti-box-label">Front-End</div>
-          <div class="dti-box-num" id="front-dti">—</div>
-          <div class="dti-box-sub">Housing only</div>
-        </div>
-        <div class="dti-box">
-          <div class="dti-box-label">Back-End</div>
-          <div class="dti-box-num" id="back-dti">—</div>
-          <div class="dti-box-sub">All obligations</div>
-        </div>
-      </div>
-      <div class="dti-badge b-safe" id="dti-badge"><div class="dot"></div><span id="dti-badge-text">Awaiting input</span></div>
     </div>
+    <div class="rental-fields-wrap" id="rental-fields-wrap">
+      <div style="margin-top:16px;">
+        <div class="rental-warning">
+          <div class="rental-warning-title">⚠ Departing Residence Active</div>
+          <div class="rental-warning-body">Rental shortfall added to back-end DTI per Encompass FM0132. Debts secured by the departing property go in Expenses below — NOT in Other Monthly Debts above.</div>
+        </div>
+        <div class="rules-box">
+          <div class="rules-title">📋 What Goes Where</div>
+          <div class="rules-cols">
+            <div class="rules-col yes-col">
+              <div class="rules-col-title g">Departing Expenses ↓</div>
+              <ul><li>1st mortgage</li><li>2nd mortgage (any purpose)</li><li>Any other lien</li><li>Its tax, insurance &amp; HOA</li></ul>
+            </div>
+            <div class="rules-col no-col">
+              <div class="rules-col-title r">Other Debts ↑</div>
+              <ul><li>Car loans</li><li>Student loans</li><li>Credit cards</li><li>Personal loans</li></ul>
+            </div>
+          </div>
+        </div>
+        <div class="field-grid">
+          <div class="field-group">
+            <div class="field-label">Gross Monthly Rental Income <small>Expected rent on departing property</small></div>
+            <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-rent" value="0" min="0" step="50"><span class="sfx">/ mo</span></div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Departing Property Total Expenses <small>All mortgages + that property's own tax + insurance + HOA</small></div>
+            <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-pitia" value="0" min="0" step="1"><span class="sfx">/ mo</span></div>
+          </div>
+        </div>
+        <div class="rental-math" id="rental-math" style="display:none;">
+          <div class="rental-math-title">Encompass FM0132 — Auto-Applied to Back-End</div>
+          <div class="rental-math-row"><span class="rk">Gross Rental Income</span><span class="rv" id="rr-gross">—</span></div>
+          <div class="rental-math-row"><span class="rk">× 75% Usable</span><span class="rv" id="rr-75">—</span></div>
+          <div class="rental-math-row"><span class="rk">− Departing Expenses</span><span class="rv" id="rr-pitia">—</span></div>
+          <div class="rental-math-row"><span class="rk">Net Rental Impact</span><span class="rv" id="rr-net">—</span></div>
+        </div>
+        <div class="no-rental-note" id="no-rental-note">Enter rent and expenses above to see FM0132 calculation.</div>
+      </div>
+    </div>
+  </div>
 
-    <div class="breakdown-panel">
-      <div class="section-title" style="margin-bottom:14px;">Monthly Breakdown</div>
-      <div class="brow head-row"><span class="bk">Front-End — Housing</span></div>
-      <div class="brow"><span class="bk">Principal &amp; Interest</span><span class="bv" id="b-pi">—</span></div>
-      <div class="brow"><span class="bk">Property Tax</span><span class="bv" id="b-tax">—</span></div>
-      <div class="brow"><span class="bk">Insurance</span><span class="bv" id="b-ins">—</span></div>
-      <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
-      <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
-      <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
-      <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
-      <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
-      <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
-      <div class="brow rental-row" id="b-rental-row" style="display:none;"><span class="bk">+ Rental Shortfall (75% rule)</span><span class="bv" id="b-rental">—</span></div>
-      <div class="brow total"><span class="bk">Total All Obligations</span><span class="bv" id="b-total">—</span></div>
-      <div class="thresh-bar ts" id="thresh-bar">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span id="thresh-text">Max qualifying back-end: —</span>
-      </div>
-    </div>
+  <button class="gen-link-btn" onclick="generateLink()">🔗 Generate Client Link — Copy to Clipboard</button>
+  <div class="link-copied" id="link-copied">✓ Copied! Send this link to your client — their numbers will be pre-filled.<br><span id="link-display" style="font-size:11px;color:var(--teal);display:block;margin-top:4px;"></span></div>
+  <button class="go-client-btn" onclick="setMode('client')">→ Done — Switch to Client View</button>
+</div>
+
+<!-- ══ CLIENT SUMMARY ══ -->
+<div id="client-summary">
+  <div class="summary-label">Your Financial Profile (set by your lender)</div>
+  <div class="summary-chips" id="summary-chips"></div>
+  <div id="rate-display-row">
+    <span class="rate-display-label">Interest Rate</span>
+    <span class="rate-display-val" id="rate-display-val">—</span>
   </div>
 </div>
 
+<!-- ══ CLIENT SLIDERS ══ -->
+<div class="panel fadein" id="client-panel">
+  <div class="section-title">Explore Properties <span class="badge badge-client">Move the sliders</span></div>
+
+  <!-- ZIP OR COUNTY -->
+  <div class="zip-county-wrap">
+    <div class="loc-header">
+      <span class="loc-label">Location <button class="info-btn" onclick="toggleInfo('info-location')">i</button></span>
+      <div class="loc-tabs">
+        <button class="loc-tab active" id="tab-zip" onclick="switchZipCounty('zip')">Zip Code</button>
+        <button class="loc-tab" id="tab-county" onclick="switchZipCounty('county')">County</button>
+      </div>
+    </div>
+    <div id="info-location" class="info-dropdown"><button class="info-close" onclick="toggleInfo('info-location')">×</button><strong>Why does location matter?</strong><br>Property taxes in Florida are based on your county's mill rate — a percentage applied to your home's assessed value. Every county charges differently. Enter your zip code and we'll find the right county automatically.</div>
+    <div id="zip-wrap">
+      <div class="input-wrap"><input type="number" id="zip-input" placeholder="Enter FL zip code e.g. 33701" oninput="onZipInput()"></div>
+      <div class="zip-status" id="zip-status"></div>
+    </div>
+    <div id="county-wrap" style="display:none;">
+      <div class="county-select-wrap">
+        <select id="sl-county" onchange="onCountyChange()">
+          <option value="">— Select County —</option>
+          <option value="12.5">Alachua — ~12.5 mills</option><option value="11.0">Baker — ~11.0 mills</option>
+          <option value="13.5">Bay — ~13.5 mills</option><option value="11.5">Bradford — ~11.5 mills</option>
+          <option value="11.8">Brevard — ~11.8 mills</option><option value="19.5">Broward — ~19.5 mills</option>
+          <option value="11.0">Calhoun — ~11.0 mills</option><option value="13.2">Charlotte — ~13.2 mills</option>
+          <option value="12.0">Citrus — ~12.0 mills</option><option value="14.5">Clay — ~14.5 mills</option>
+          <option value="14.8">Collier — ~14.8 mills</option><option value="11.2">Columbia — ~11.2 mills</option>
+          <option value="14.0">DeSoto — ~14.0 mills</option><option value="10.5">Dixie — ~10.5 mills</option>
+          <option value="19.8">Duval — ~19.8 mills</option><option value="13.0">Escambia — ~13.0 mills</option>
+          <option value="11.5">Flagler — ~11.5 mills</option><option value="10.8">Franklin — ~10.8 mills</option>
+          <option value="11.0">Gadsden — ~11.0 mills</option><option value="10.5">Gilchrist — ~10.5 mills</option>
+          <option value="11.0">Glades — ~11.0 mills</option><option value="10.8">Gulf — ~10.8 mills</option>
+          <option value="10.5">Hamilton — ~10.5 mills</option><option value="12.0">Hardee — ~12.0 mills</option>
+          <option value="13.5">Hendry — ~13.5 mills</option><option value="12.5">Hernando — ~12.5 mills</option>
+          <option value="13.0">Highlands — ~13.0 mills</option><option value="21.5">Hillsborough — ~21.5 mills</option>
+          <option value="10.5">Holmes — ~10.5 mills</option><option value="14.2">Indian River — ~14.2 mills</option>
+          <option value="11.0">Jackson — ~11.0 mills</option><option value="10.5">Jefferson — ~10.5 mills</option>
+          <option value="10.8">Lafayette — ~10.8 mills</option><option value="13.8">Lake — ~13.8 mills</option>
+          <option value="14.5">Lee — ~14.5 mills</option><option value="19.2">Leon — ~19.2 mills</option>
+          <option value="11.0">Levy — ~11.0 mills</option><option value="10.5">Liberty — ~10.5 mills</option>
+          <option value="11.0">Madison — ~11.0 mills</option><option value="13.5">Manatee — ~13.5 mills</option>
+          <option value="13.0">Marion — ~13.0 mills</option><option value="13.8">Martin — ~13.8 mills</option>
+          <option value="20.5">Miami-Dade — ~20.5 mills</option><option value="11.5">Monroe — ~11.5 mills</option>
+          <option value="15.2">Nassau — ~15.2 mills</option><option value="12.8">Okaloosa — ~12.8 mills</option>
+          <option value="13.0">Okeechobee — ~13.0 mills</option><option value="19.0">Orange — ~19.0 mills</option>
+          <option value="14.5">Osceola — ~14.5 mills</option><option value="20.2">Palm Beach — ~20.2 mills</option>
+          <option value="13.5">Pasco — ~13.5 mills</option><option value="19.5">Pinellas — ~19.5 mills</option>
+          <option value="20.0">Polk — ~20.0 mills</option><option value="13.0">Putnam — ~13.0 mills</option>
+          <option value="12.5">St. Johns — ~12.5 mills</option><option value="13.8">St. Lucie — ~13.8 mills</option>
+          <option value="13.5">Santa Rosa — ~13.5 mills</option><option value="13.0">Sarasota — ~13.0 mills</option>
+          <option value="14.5">Seminole — ~14.5 mills</option><option value="12.0">Sumter — ~12.0 mills</option>
+          <option value="11.0">Suwannee — ~11.0 mills</option><option value="11.0">Taylor — ~11.0 mills</option>
+          <option value="11.0">Union — ~11.0 mills</option><option value="13.5">Volusia — ~13.5 mills</option>
+          <option value="11.0">Wakulla — ~11.0 mills</option><option value="11.0">Walton — ~11.0 mills</option>
+          <option value="10.5">Washington — ~10.5 mills</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- PURCHASE PRICE -->
+  <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-price')">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
+  <div class="slider-row">
+    <div class="slider-header"><span class="slider-label">Purchase Price <button class="info-btn" onclick="toggleInfo('info-price')">i</button></span><span class="slider-value" id="val-price">$400,000</span></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-price"></div><input type="range" id="sl-price" min="100000" max="1500000" step="5000" value="400000"></div>
+    <div class="slider-range-labels"><span>$100K</span><span>$1.5M</span></div>
+  </div>
+
+  <!-- DOWN PAYMENT -->
+  <div id="info-down" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-down')">×</button><strong>How does down payment affect your DTI?</strong><br>More down = smaller loan = lower payment = lower DTI. It also affects PMI — put down less than 20% and you'll pay Private Mortgage Insurance monthly. Putting 20%+ down eliminates PMI entirely. A larger down payment is one of the most powerful levers you have to qualify for a more expensive home.</div>
+  <div class="slider-row">
+    <div class="slider-header"><span class="slider-label">Down Payment <button class="info-btn" onclick="toggleInfo('info-down')">i</button></span><span class="slider-value" id="val-down">20%</span></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-down"></div><input type="range" id="sl-down" min="3" max="50" step="1" value="20"></div>
+    <div class="slider-range-labels"><span>3%</span><span>50%</span></div>
+  </div>
+
+  <!-- LOAN TERM -->
+  <div class="slider-row">
+    <div class="slider-header"><span class="slider-label">Loan Term</span><span class="slider-value" id="val-term">30 yrs</span></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-term"></div><input type="range" id="sl-term" min="10" max="30" step="5" value="30"></div>
+    <div class="slider-range-labels"><span>10 yr</span><span>30 yr</span></div>
+  </div>
+
+  <!-- HOA -->
+  <div id="info-hoa" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-hoa')">×</button><strong>What is HOA and why does it count against you?</strong><br>HOA stands for Homeowners Association — monthly fees for shared amenities. Lenders count HOA fees as part of your housing payment. A $500/mo HOA is treated exactly like $500 more in mortgage payment. High HOA fees in condos or gated communities can significantly reduce how much home you qualify for.</div>
+  <div class="slider-row">
+    <div class="slider-header"><span class="slider-label">HOA Fees <button class="info-btn" onclick="toggleInfo('info-hoa')">i</button></span><span class="slider-value" id="val-hoa">$0/mo</span></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-hoa"></div><input type="range" id="sl-hoa" min="0" max="1500" step="25" value="0"></div>
+    <div class="slider-range-labels"><span>$0</span><span>$1,500</span></div>
+  </div>
+
+  <!-- PMI -->
+  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;display:none;"><button class="info-close" onclick="toggleInfo('info-pmi')">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
+  <div class="slider-row" id="pmi-row" style="display:none;">
+    <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" onclick="toggleInfo('info-pmi')">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="10" value="0"></div>
+    <div class="slider-range-labels"><span>$0</span><span>$500</span></div>
+  </div>
+
+  <!-- FLOOD -->
+  <div id="info-flood" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-flood')">×</button><strong>What is flood insurance and when is it required?</strong><br>If a property is in a FEMA flood zone, your lender requires flood insurance — mandatory, not optional. Standard homeowners insurance does NOT cover floods. In Florida, many properties near water or low-lying areas require it. Cost ranges from $150–$500+/mo depending on flood risk and elevation.</div>
+  <div class="flood-row" onclick="toggleFlood()">
+    <input type="checkbox" id="flood-check" onclick="event.stopPropagation();toggleFlood()">
+    <label class="flood-label">🌊 Property is in a Flood Zone<small>Check this if flood insurance is required</small></label>
+    <button class="flood-info-btn" onclick="event.stopPropagation();toggleInfo('info-flood')">i</button>
+  </div>
+  <div class="flood-slider-wrap" id="flood-slider-wrap">
+    <div class="slider-row" style="margin-bottom:4px;">
+      <div class="slider-header"><span class="slider-label">Flood Insurance</span><span class="slider-value" id="val-flood">$150/mo</span></div>
+      <div class="slider-track"><div class="slider-fill" id="fill-flood"></div><input type="range" id="sl-flood" min="50" max="800" step="25" value="150"></div>
+      <div class="slider-range-labels"><span>$50</span><span>$800</span></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);font-style:italic;margin-bottom:16px;">Florida estimate — actual premiums vary by zone, elevation &amp; coverage.</div>
+  </div>
+
+  <!-- PROPERTY TAX -->
+  <div id="info-tax" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-tax')">×</button><strong>Why is property tax included in DTI?</strong><br>Lenders add your estimated monthly property tax to your housing payment when calculating DTI. In Florida, taxes are based on your county's mill rate applied to the home's assessed value. This estimate uses your county's average — your actual tax bill depends on the specific property's assessed value.</div>
+  <div class="auto-row">
+    <div class="auto-header">
+      <span class="auto-label">Est. Property Tax <button class="info-btn" onclick="toggleInfo('info-tax')">i</button></span>
+      <div class="auto-right">
+        <span class="auto-value" id="val-tax">—</span>
+        <span class="auto-badge">AUTO</span>
+        <button class="pencil-btn" id="tax-pencil" onclick="toggleTaxEdit()" title="Edit tax estimate">✏️</button>
+      </div>
+    </div>
+    <div id="tax-track-wrap">
+      <div style="font-size:12px;color:var(--muted);padding:8px 0;" id="tax-auto-display">Select your county or zip above to auto-calculate</div>
+    </div>
+    <div class="auto-override-wrap" id="tax-override-wrap">
+      <input type="number" id="tax-override" min="0" step="1" placeholder="Enter monthly tax amount...">
+    </div>
+    <div class="auto-relock" id="tax-relock-note">⚠ Manual entry — will reset to auto when county or price changes</div>
+    <div class="auto-note">Estimated from county mill rate. Tap ✏️ to enter your own amount.</div>
+  </div>
+
+  <!-- INSURANCE -->
+  <div id="info-ins" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-ins')">×</button><strong>Why does insurance count toward DTI?</strong><br>Lenders require homeowners insurance and include it in your monthly housing payment. In Florida, premiums have risen significantly. This estimate is a starting point — your actual quote varies by the home's age, location, construction type, and proximity to water. Get an actual quote early — it can be a deal-breaker.</div>
+  <div class="auto-row">
+    <div class="auto-header">
+      <span class="auto-label">Est. Homeowners Insurance <button class="info-btn" onclick="toggleInfo('info-ins')">i</button></span>
+      <div class="auto-right">
+        <span class="auto-value" id="val-ins">$150/mo</span>
+        <span class="auto-badge">EST</span>
+        <button class="pencil-btn" id="ins-pencil" onclick="toggleInsEdit()" title="Edit insurance">✏️</button>
+      </div>
+    </div>
+    <div id="ins-track-wrap">
+      <div class="slider-track" style="margin-bottom:4px;"><div class="slider-fill" id="fill-ins"></div><input type="range" id="sl-ins" min="50" max="1500" step="25" value="150"></div>
+      <div class="slider-range-labels"><span>$50</span><span>$1,500</span></div>
+    </div>
+    <div class="auto-override-wrap" id="ins-override-wrap">
+      <input type="number" id="ins-override" min="0" step="1" placeholder="Enter monthly insurance amount...">
+    </div>
+    <div class="auto-relock" id="ins-relock-note">⚠ Manual entry — will reset to auto when price changes</div>
+    <div class="auto-note">Starting estimate at 0.5% annually. Use slider to adjust or ✏️ to enter exact quote.</div>
+  </div>
+</div>
+
+<!-- ══ SCENARIO SAVE ══ -->
+<div class="scenario-box" id="scenario-box" style="display:none;">
+  <div class="section-title">Save This Scenario <span class="badge badge-client">PDF + Send to Lender</span></div>
+  <div class="scenario-fields">
+    <div><div class="scenario-label">Your Name</div><div class="input-wrap"><input type="text" id="sc-name" placeholder="e.g. John &amp; Sarah Smith"></div></div>
+    <div><div class="scenario-label">Your Email <span style="color:var(--muted);font-size:11px;">(copy sent to you)</span></div><div class="input-wrap"><input type="email" id="sc-email" placeholder="e.g. john@email.com"></div></div>
+    <div><div class="scenario-label">Property Address</div><div class="input-wrap"><input type="text" id="sc-address" placeholder="e.g. 123 Bayshore Blvd, St. Pete FL 33701"></div></div>
+    <div><div class="scenario-label">Scenario Label <span style="color:var(--muted);font-size:11px;">(optional)</span></div><div class="input-wrap"><input type="text" id="sc-label" placeholder="e.g. 20% down — conservative"></div></div>
+  </div>
+  <button class="save-btn" id="save-btn" onclick="saveScenario()">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Save PDF &amp; Send to Lender
+  </button>
+  <div class="save-status" id="save-status"></div>
+</div>
+
+</div>
+
+<!-- ══ RIGHT COL ══ -->
+<div class="results-col" id="results-col">
+  <div class="gauge-panel" id="gauge-anchor">
+    <div class="gauge-eyebrow">
+      Debt-to-Income
+      <button class="info-btn" onclick="toggleInfo('info-dti')" style="border-color:var(--teal);">i</button>
+    </div>
+    <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" onclick="toggleInfo('info-dti')">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
+    <div class="gauge-svg-wrap">
+      <svg viewBox="0 0 180 100" width="180" height="100">
+        <path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#1c2a3e" stroke-width="14" stroke-linecap="round"/>
+        <path id="arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        <path id="arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        <line id="needle" x1="90" y1="100" x2="90" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)" style="transition:transform 0.4s cubic-bezier(0.4,0,0.2,1)"/>
+        <circle cx="90" cy="100" r="5" fill="white" opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="dti-dual">
+      <div class="dti-box"><div class="dti-box-label">Front-End</div><div class="dti-box-num" id="front-dti">—</div><div class="dti-box-sub">Housing only</div></div>
+      <div class="dti-box"><div class="dti-box-label">Back-End</div><div class="dti-box-num" id="back-dti">—</div><div class="dti-box-sub">All obligations</div></div>
+    </div>
+    <div class="dti-badge b-safe" id="dti-badge"><div class="dot"></div><span id="dti-badge-text">Awaiting input</span></div>
+  </div>
+
+  <div class="breakdown-panel">
+    <div class="section-title" style="margin-bottom:14px;">Monthly Breakdown</div>
+    <div class="brow head-row"><span class="bk">Front-End — Housing</span></div>
+    <div class="brow"><span class="bk">Principal &amp; Interest</span><span class="bv" id="b-pi">—</span></div>
+    <div class="brow"><span class="bk">Property Tax</span><span class="bv" id="b-tax">—</span></div>
+    <div class="brow"><span class="bk">Insurance</span><span class="bv" id="b-ins">—</span></div>
+    <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
+    <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
+    <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
+    <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
+    <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
+    <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
+    <div class="brow rental-row" id="b-rental-row" style="display:none;"><span class="bk">+ Rental Shortfall</span><span class="bv" id="b-rental">—</span></div>
+    <div class="brow total"><span class="bk">Total All Obligations</span><span class="bv" id="b-total">—</span></div>
+    <div class="thresh-bar ts" id="thresh-bar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="thresh-text">Max qualifying back-end: —</span>
+    </div>
+  </div>
+</div>
+</div>
+</div><!-- end page-wrap -->
+
 <script>
-// ── CREDENTIALS ──
 const EMAILJS_PUBKEY   = 'NyULYxc1h8OKkvdOA';
 const EMAILJS_SERVICE  = 'service_jmgkuj5';
 const EMAILJS_TEMPLATE = 'template_9m8q81g';
 const LENDER_EMAIL     = 'cgreenidge@apmortgage.com';
 const BASE_URL         = 'https://christoclose.github.io/dti-calculator/dti-calculator-2.html';
 
-// ── STATE ──
 let state = {};
 let taxManual = false;
 let insManual = false;
+let urlParams = {};
 
 const fmt   = n => '$' + Math.round(n).toLocaleString();
 const fmtMo = n => fmt(n) + '/mo';
 
 // ── THEME ──
-function applyTheme(theme) {
-  document.body.setAttribute('data-theme', theme);
-  const btn = document.getElementById('theme-btn');
-  if (theme === 'dark') {
-    btn.textContent = '☀️ Light Mode';
-  } else {
-    btn.textContent = '🌙 Dark Mode';
-  }
-  localStorage.setItem('dti-theme', theme);
+function applyTheme(t) {
+  document.body.setAttribute('data-theme', t);
+  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('dti-theme', t);
 }
-
 function toggleTheme() {
-  const current = document.body.getAttribute('data-theme');
-  applyTheme(current === 'dark' ? 'light' : 'dark');
+  applyTheme(document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 }
-
 function initTheme() {
   const saved = localStorage.getItem('dti-theme');
   if (saved) { applyTheme(saved); return; }
-  const hour = new Date().getHours();
-  applyTheme(hour >= 19 || hour < 7 ? 'dark' : 'light');
+  const h = new Date().getHours();
+  applyTheme(h >= 19 || h < 7 ? 'dark' : 'light');
+}
+
+// ── STICKY DTI ──
+function updateStickyDTI(frontDTI, backDTI) {
+  const sticky = document.getElementById('sticky-dti');
+  const gauge  = document.getElementById('gauge-anchor');
+  if (!gauge || !sticky) return;
+  const rect = gauge.getBoundingClientRect();
+  const show = rect.bottom < 0;
+  sticky.className = show ? 'sticky-dti visible' : 'sticky-dti';
+  if (show) {
+    document.getElementById('sticky-front').textContent = frontDTI.toFixed(1) + '%';
+    document.getElementById('sticky-back').textContent  = backDTI.toFixed(1)  + '%';
+    const badge = document.getElementById('sticky-badge');
+    const col = backDTI > 50 ? '#e05555' : backDTI > 43 ? '#f5a623' : '#3ecf8e';
+    const cls  = backDTI > 50 ? 'danger' : backDTI > 43 ? 'warn' : 'safe';
+    const txt  = backDTI > 50 ? 'Ineligible' : backDTI > 43 ? 'Caution' : 'Eligible';
+    document.getElementById('sticky-front').style.color = col;
+    document.getElementById('sticky-back').style.color  = col;
+    badge.className = 'sticky-badge ' + cls;
+    badge.textContent = txt;
+  }
+}
+window.addEventListener('scroll', () => {
+  if (state.frontDTI !== undefined) updateStickyDTI(state.frontDTI, state.backDTI);
+});
+
+// ── RENTAL TOGGLE ──
+function toggleRental() {
+  const enabled = document.getElementById('rental-enabled').checked;
+  document.getElementById('rental-fields-wrap').style.display = enabled ? 'block' : 'none';
+  if (!enabled) {
+    document.getElementById('in-rent').value  = 0;
+    document.getElementById('in-pitia').value = 0;
+    delete urlParams.rent; delete urlParams.pitia;
+  }
+  update();
 }
 
 // ── FLOOD ──
@@ -676,123 +745,325 @@ function toggleFlood() {
   update();
 }
 
-// ── TAX PENCIL EDIT ──
-function toggleTaxEdit() {
-  taxManual = !taxManual;
-  const trackWrap = document.getElementById('tax-track-wrap');
-  const overWrap  = document.getElementById('tax-override-wrap');
-  const note      = document.getElementById('tax-relock-note');
-  const pencil    = document.getElementById('tax-pencil');
-  if (taxManual) {
-    trackWrap.style.display = 'none';
-    overWrap.style.display  = 'block';
-    note.className = 'auto-relock show';
-    pencil.textContent = '✓';
-    pencil.title = 'Click to restore auto estimate';
-    document.getElementById('tax-override').focus();
-  } else {
-    trackWrap.style.display = '';
-    overWrap.style.display  = 'none';
-    note.className = 'auto-relock';
-    pencil.textContent = '✏️';
-    pencil.title = 'Edit tax estimate';
-  }
-  update();
+// ── INFO TOOLTIPS ──
+function toggleInfo(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  document.querySelectorAll('.info-dropdown.open').forEach(d => { if (d.id !== id) d.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.info-btn') && !e.target.closest('.info-dropdown') && !e.target.closest('.flood-info-btn'))
+    document.querySelectorAll('.info-dropdown.open').forEach(d => d.classList.remove('open'));
+});
+
+// ── ZIP/COUNTY ──
+const FL_ZIP_TO_COUNTY = {
+  "32004":"St. Johns","32006":"Clay","32007":"Clay","32033":"St. Johns","32034":"Nassau",
+  "32043":"Clay","32065":"Clay","32068":"Clay","32073":"Clay","32080":"St. Johns",
+  "32081":"St. Johns","32082":"St. Johns","32084":"St. Johns","32086":"St. Johns",
+  "32092":"St. Johns","32095":"St. Johns","32114":"Volusia","32117":"Volusia","32118":"Volusia",
+  "32119":"Volusia","32127":"Volusia","32128":"Volusia","32129":"Volusia","32130":"Volusia",
+  "32132":"Volusia","32136":"Flagler","32137":"Flagler","32141":"Volusia","32164":"Flagler",
+  "32168":"Volusia","32174":"Volusia","32176":"Volusia","32177":"Putnam","32180":"Volusia",
+  "32202":"Duval","32204":"Duval","32205":"Duval","32206":"Duval","32207":"Duval",
+  "32208":"Duval","32209":"Duval","32210":"Duval","32211":"Duval","32212":"Duval",
+  "32216":"Duval","32217":"Duval","32218":"Duval","32219":"Duval","32220":"Duval",
+  "32221":"Duval","32222":"Duval","32223":"Duval","32224":"Duval","32225":"Duval",
+  "32226":"Duval","32244":"Duval","32246":"Duval","32250":"Duval","32256":"Duval",
+  "32257":"Duval","32258":"Duval","32259":"St. Johns","32301":"Leon","32303":"Leon",
+  "32304":"Leon","32305":"Leon","32308":"Leon","32309":"Leon","32311":"Leon","32312":"Leon",
+  "32317":"Leon","32401":"Bay","32404":"Bay","32405":"Bay","32407":"Bay","32408":"Bay",
+  "32409":"Bay","32413":"Bay","32444":"Bay","32501":"Escambia","32503":"Escambia",
+  "32504":"Escambia","32505":"Escambia","32506":"Escambia","32514":"Escambia",
+  "32526":"Escambia","32533":"Escambia","32534":"Escambia","32561":"Santa Rosa",
+  "32563":"Santa Rosa","32565":"Santa Rosa","32566":"Santa Rosa","32570":"Santa Rosa",
+  "32571":"Santa Rosa","32578":"Okaloosa","32579":"Okaloosa","32580":"Okaloosa",
+  "32601":"Alachua","32603":"Alachua","32605":"Alachua","32606":"Alachua","32607":"Alachua",
+  "32608":"Alachua","32609":"Alachua","32615":"Alachua","32641":"Alachua","32653":"Alachua",
+  "32701":"Seminole","32703":"Seminole","32707":"Seminole","32708":"Seminole",
+  "32714":"Seminole","32720":"Volusia","32724":"Volusia","32725":"Volusia","32726":"Lake",
+  "32735":"Lake","32736":"Lake","32746":"Lake","32750":"Seminole","32751":"Seminole",
+  "32757":"Lake","32771":"Seminole","32773":"Seminole","32779":"Seminole","32780":"Brevard",
+  "32789":"Orange","32792":"Seminole","32796":"Brevard","32801":"Orange","32803":"Orange",
+  "32804":"Orange","32805":"Orange","32806":"Orange","32807":"Orange","32808":"Orange",
+  "32809":"Orange","32810":"Orange","32811":"Orange","32812":"Orange","32814":"Orange",
+  "32817":"Orange","32818":"Orange","32819":"Orange","32820":"Orange","32821":"Orange",
+  "32822":"Orange","32824":"Orange","32825":"Orange","32826":"Orange","32827":"Orange",
+  "32828":"Orange","32829":"Orange","32832":"Orange","32835":"Orange","32836":"Orange",
+  "32837":"Orange","32839":"Orange","32901":"Brevard","32903":"Brevard","32904":"Brevard",
+  "32905":"Brevard","32907":"Brevard","32908":"Brevard","32909":"Brevard","32920":"Brevard",
+  "32922":"Brevard","32926":"Brevard","32927":"Brevard","32931":"Brevard","32934":"Brevard",
+  "32935":"Brevard","32937":"Brevard","32940":"Brevard","32948":"Indian River",
+  "32958":"Indian River","32960":"Indian River","32962":"Indian River","32963":"Indian River",
+  "32966":"Indian River","32967":"Indian River","32968":"Indian River","33004":"Broward",
+  "33009":"Broward","33010":"Miami-Dade","33012":"Miami-Dade","33013":"Miami-Dade",
+  "33014":"Miami-Dade","33015":"Miami-Dade","33016":"Miami-Dade","33018":"Miami-Dade",
+  "33019":"Broward","33020":"Broward","33021":"Broward","33023":"Broward","33024":"Broward",
+  "33025":"Broward","33026":"Broward","33027":"Broward","33028":"Broward","33029":"Broward",
+  "33030":"Miami-Dade","33031":"Miami-Dade","33032":"Miami-Dade","33033":"Miami-Dade",
+  "33034":"Miami-Dade","33040":"Monroe","33050":"Monroe","33054":"Miami-Dade",
+  "33055":"Miami-Dade","33056":"Miami-Dade","33060":"Broward","33062":"Broward",
+  "33063":"Broward","33064":"Broward","33065":"Broward","33066":"Broward","33067":"Broward",
+  "33068":"Broward","33069":"Broward","33071":"Broward","33073":"Broward","33076":"Broward",
+  "33101":"Miami-Dade","33125":"Miami-Dade","33126":"Miami-Dade","33127":"Miami-Dade",
+  "33128":"Miami-Dade","33129":"Miami-Dade","33130":"Miami-Dade","33131":"Miami-Dade",
+  "33132":"Miami-Dade","33133":"Miami-Dade","33134":"Miami-Dade","33135":"Miami-Dade",
+  "33136":"Miami-Dade","33137":"Miami-Dade","33138":"Miami-Dade","33139":"Miami-Dade",
+  "33140":"Miami-Dade","33141":"Miami-Dade","33142":"Miami-Dade","33143":"Miami-Dade",
+  "33144":"Miami-Dade","33145":"Miami-Dade","33146":"Miami-Dade","33147":"Miami-Dade",
+  "33149":"Miami-Dade","33150":"Miami-Dade","33155":"Miami-Dade","33156":"Miami-Dade",
+  "33157":"Miami-Dade","33160":"Miami-Dade","33161":"Miami-Dade","33162":"Miami-Dade",
+  "33165":"Miami-Dade","33166":"Miami-Dade","33167":"Miami-Dade","33168":"Miami-Dade",
+  "33169":"Miami-Dade","33172":"Miami-Dade","33173":"Miami-Dade","33174":"Miami-Dade",
+  "33175":"Miami-Dade","33176":"Miami-Dade","33177":"Miami-Dade","33178":"Miami-Dade",
+  "33179":"Miami-Dade","33180":"Miami-Dade","33183":"Miami-Dade","33186":"Miami-Dade",
+  "33196":"Miami-Dade","33301":"Broward","33304":"Broward","33305":"Broward","33306":"Broward",
+  "33308":"Broward","33309":"Broward","33310":"Broward","33311":"Broward","33312":"Broward",
+  "33313":"Broward","33314":"Broward","33315":"Broward","33316":"Broward","33317":"Broward",
+  "33319":"Broward","33321":"Broward","33322":"Broward","33323":"Broward","33324":"Broward",
+  "33325":"Broward","33326":"Broward","33328":"Broward","33331":"Broward","33334":"Broward",
+  "33401":"Palm Beach","33404":"Palm Beach","33405":"Palm Beach","33406":"Palm Beach",
+  "33407":"Palm Beach","33408":"Palm Beach","33409":"Palm Beach","33410":"Palm Beach",
+  "33411":"Palm Beach","33412":"Palm Beach","33413":"Palm Beach","33414":"Palm Beach",
+  "33415":"Palm Beach","33417":"Palm Beach","33418":"Palm Beach","33426":"Palm Beach",
+  "33428":"Palm Beach","33430":"Palm Beach","33431":"Palm Beach","33432":"Palm Beach",
+  "33433":"Palm Beach","33434":"Palm Beach","33435":"Palm Beach","33436":"Palm Beach",
+  "33437":"Palm Beach","33444":"Palm Beach","33445":"Palm Beach","33446":"Palm Beach",
+  "33458":"Palm Beach","33460":"Palm Beach","33461":"Palm Beach","33462":"Palm Beach",
+  "33463":"Palm Beach","33467":"Palm Beach","33469":"Palm Beach","33470":"Palm Beach",
+  "33472":"Palm Beach","33476":"Palm Beach","33477":"Palm Beach","33478":"Palm Beach",
+  "33480":"Palm Beach","33483":"Palm Beach","33484":"Palm Beach","33486":"Palm Beach",
+  "33487":"Palm Beach","33496":"Palm Beach","33498":"Palm Beach","33503":"Hillsborough",
+  "33510":"Hillsborough","33511":"Hillsborough","33527":"Hillsborough","33534":"Hillsborough",
+  "33540":"Pasco","33541":"Pasco","33542":"Pasco","33543":"Pasco","33544":"Pasco",
+  "33545":"Pasco","33547":"Hillsborough","33548":"Hillsborough","33549":"Hillsborough",
+  "33556":"Hillsborough","33558":"Hillsborough","33559":"Hillsborough","33563":"Hillsborough",
+  "33566":"Hillsborough","33567":"Hillsborough","33569":"Hillsborough","33570":"Hillsborough",
+  "33572":"Hillsborough","33573":"Hillsborough","33578":"Hillsborough","33579":"Hillsborough",
+  "33584":"Hillsborough","33592":"Hillsborough","33594":"Hillsborough","33596":"Hillsborough",
+  "33598":"Hillsborough","33602":"Hillsborough","33603":"Hillsborough","33604":"Hillsborough",
+  "33605":"Hillsborough","33606":"Hillsborough","33607":"Hillsborough","33609":"Hillsborough",
+  "33610":"Hillsborough","33611":"Hillsborough","33612":"Hillsborough","33613":"Hillsborough",
+  "33614":"Hillsborough","33615":"Hillsborough","33616":"Hillsborough","33617":"Hillsborough",
+  "33618":"Hillsborough","33619":"Hillsborough","33624":"Hillsborough","33625":"Hillsborough",
+  "33626":"Hillsborough","33629":"Hillsborough","33634":"Hillsborough","33635":"Hillsborough",
+  "33637":"Hillsborough","33647":"Hillsborough","33701":"Pinellas","33702":"Pinellas",
+  "33703":"Pinellas","33704":"Pinellas","33705":"Pinellas","33706":"Pinellas","33707":"Pinellas",
+  "33708":"Pinellas","33709":"Pinellas","33710":"Pinellas","33711":"Pinellas","33712":"Pinellas",
+  "33713":"Pinellas","33714":"Pinellas","33715":"Pinellas","33716":"Pinellas","33755":"Pinellas",
+  "33756":"Pinellas","33759":"Pinellas","33760":"Pinellas","33761":"Pinellas","33762":"Pinellas",
+  "33763":"Pinellas","33764":"Pinellas","33765":"Pinellas","33767":"Pinellas","33770":"Pinellas",
+  "33771":"Pinellas","33772":"Pinellas","33773":"Pinellas","33774":"Pinellas","33775":"Pinellas",
+  "33776":"Pinellas","33777":"Pinellas","33778":"Pinellas","33781":"Pinellas","33782":"Pinellas",
+  "33785":"Pinellas","33786":"Pinellas","33801":"Polk","33803":"Polk","33805":"Polk",
+  "33809":"Polk","33810":"Polk","33811":"Polk","33812":"Polk","33813":"Polk","33815":"Polk",
+  "33823":"Polk","33830":"Polk","33837":"Polk","33838":"Polk","33839":"Polk","33844":"Polk",
+  "33849":"Polk","33850":"Polk","33851":"Polk","33853":"Polk","33860":"Polk","33863":"Polk",
+  "33880":"Polk","33881":"Polk","33884":"Polk","33896":"Osceola","33897":"Osceola",
+  "33901":"Lee","33903":"Lee","33904":"Lee","33905":"Lee","33907":"Lee","33908":"Lee",
+  "33909":"Lee","33912":"Lee","33913":"Lee","33914":"Lee","33916":"Lee","33917":"Lee",
+  "33919":"Lee","33928":"Lee","33931":"Lee","33936":"Lee","33938":"Charlotte",
+  "33948":"Charlotte","33950":"Charlotte","33952":"Charlotte","33953":"Charlotte",
+  "33954":"Charlotte","33980":"Charlotte","33981":"Charlotte","33982":"Charlotte",
+  "33983":"Charlotte","33990":"Lee","33991":"Lee","33993":"Lee","34101":"Collier",
+  "34102":"Collier","34103":"Collier","34104":"Collier","34105":"Collier","34108":"Collier",
+  "34109":"Collier","34110":"Collier","34112":"Collier","34113":"Collier","34114":"Collier",
+  "34116":"Collier","34117":"Collier","34119":"Collier","34120":"Collier","34134":"Lee",
+  "34135":"Lee","34145":"Collier","34201":"Manatee","34202":"Manatee","34203":"Manatee",
+  "34205":"Manatee","34207":"Manatee","34208":"Manatee","34209":"Manatee","34210":"Manatee",
+  "34211":"Manatee","34212":"Manatee","34217":"Manatee","34219":"Manatee","34221":"Manatee",
+  "34222":"Manatee","34228":"Sarasota","34229":"Sarasota","34231":"Sarasota","34232":"Sarasota",
+  "34233":"Sarasota","34234":"Sarasota","34235":"Sarasota","34236":"Sarasota","34237":"Sarasota",
+  "34238":"Sarasota","34239":"Sarasota","34240":"Sarasota","34241":"Sarasota","34242":"Sarasota",
+  "34243":"Manatee","34266":"DeSoto","34269":"DeSoto","34420":"Marion","34428":"Citrus",
+  "34429":"Citrus","34431":"Marion","34432":"Marion","34433":"Citrus","34434":"Citrus",
+  "34436":"Hernando","34442":"Citrus","34446":"Citrus","34448":"Citrus","34450":"Citrus",
+  "34453":"Citrus","34461":"Citrus","34465":"Citrus","34470":"Marion","34471":"Marion",
+  "34472":"Marion","34473":"Marion","34474":"Marion","34475":"Marion","34476":"Marion",
+  "34479":"Marion","34480":"Marion","34481":"Marion","34482":"Marion","34488":"Marion",
+  "34491":"Marion","34601":"Hernando","34602":"Hernando","34604":"Hernando","34606":"Hernando",
+  "34607":"Hernando","34608":"Hernando","34609":"Hernando","34610":"Pasco","34613":"Hernando",
+  "34637":"Pasco","34638":"Pasco","34639":"Pasco","34652":"Pasco","34653":"Pasco",
+  "34654":"Pasco","34655":"Pasco","34667":"Pasco","34668":"Pasco","34669":"Pasco",
+  "34677":"Pinellas","34683":"Pinellas","34684":"Pinellas","34685":"Pinellas","34688":"Pinellas",
+  "34689":"Pinellas","34690":"Pasco","34691":"Pasco","34695":"Pinellas","34698":"Pinellas",
+  "34711":"Lake","34714":"Lake","34715":"Lake","34731":"Lake","34736":"Lake","34737":"Lake",
+  "34741":"Osceola","34743":"Osceola","34744":"Osceola","34746":"Osceola","34747":"Osceola",
+  "34748":"Lake","34756":"Lake","34758":"Osceola","34759":"Osceola","34761":"Orange",
+  "34769":"Osceola","34771":"Osceola","34772":"Osceola","34773":"Osceola","34785":"Sumter",
+  "34786":"Orange","34787":"Orange","34788":"Lake","34945":"St. Lucie","34946":"St. Lucie",
+  "34947":"St. Lucie","34950":"St. Lucie","34952":"St. Lucie","34953":"St. Lucie",
+  "34957":"Martin","34972":"Okeechobee","34981":"St. Lucie","34982":"St. Lucie",
+  "34983":"St. Lucie","34984":"St. Lucie","34986":"St. Lucie","34987":"St. Lucie",
+  "34990":"Martin","34994":"Martin","34996":"Martin","34997":"Martin"
+};
+const COUNTY_MILLS_MAP = {
+  "Alachua":12.5,"Baker":11.0,"Bay":13.5,"Bradford":11.5,"Brevard":11.8,"Broward":19.5,
+  "Calhoun":11.0,"Charlotte":13.2,"Citrus":12.0,"Clay":14.5,"Collier":14.8,"Columbia":11.2,
+  "DeSoto":14.0,"Dixie":10.5,"Duval":19.8,"Escambia":13.0,"Flagler":11.5,"Franklin":10.8,
+  "Gadsden":11.0,"Gilchrist":10.5,"Glades":11.0,"Gulf":10.8,"Hamilton":10.5,"Hardee":12.0,
+  "Hendry":13.5,"Hernando":12.5,"Highlands":13.0,"Hillsborough":21.5,"Holmes":10.5,
+  "Indian River":14.2,"Jackson":11.0,"Jefferson":10.5,"Lafayette":10.8,"Lake":13.8,
+  "Lee":14.5,"Leon":19.2,"Levy":11.0,"Liberty":10.5,"Madison":11.0,"Manatee":13.5,
+  "Marion":13.0,"Martin":13.8,"Miami-Dade":20.5,"Monroe":11.5,"Nassau":15.2,"Okaloosa":12.8,
+  "Okeechobee":13.0,"Orange":19.0,"Osceola":14.5,"Palm Beach":20.2,"Pasco":13.5,
+  "Pinellas":19.5,"Polk":20.0,"Putnam":13.0,"St. Johns":12.5,"St. Lucie":13.8,
+  "Santa Rosa":13.5,"Sarasota":13.0,"Seminole":14.5,"Sumter":12.0,"Suwannee":11.0,
+  "Taylor":11.0,"Union":11.0,"Volusia":13.5,"Wakulla":11.0,"Walton":11.0,"Washington":10.5
+};
+
+function switchZipCounty(mode) {
+  document.getElementById('zip-wrap').style.display    = mode === 'zip'    ? 'block' : 'none';
+  document.getElementById('county-wrap').style.display = mode === 'county' ? 'block' : 'none';
+  document.getElementById('tab-zip').classList.toggle('active',    mode === 'zip');
+  document.getElementById('tab-county').classList.toggle('active', mode === 'county');
+  if (mode === 'county') { document.getElementById('zip-status').textContent = ''; document.getElementById('zip-input').value = ''; }
 }
 
-function relockTax() {
-  if (taxManual) {
-    taxManual = false;
-    document.getElementById('tax-track-wrap').style.display = '';
-    document.getElementById('tax-override-wrap').style.display = 'none';
-    document.getElementById('tax-relock-note').className = 'auto-relock';
-    document.getElementById('tax-pencil').textContent = '✏️';
-    document.getElementById('tax-pencil').title = 'Edit tax estimate';
-  }
-}
-
-// ── INS PENCIL EDIT ──
-function toggleInsEdit() {
-  insManual = !insManual;
-  const trackWrap = document.getElementById('ins-track-wrap');
-  const overWrap  = document.getElementById('ins-override-wrap');
-  const note      = document.getElementById('ins-relock-note');
-  const pencil    = document.getElementById('ins-pencil');
-  if (insManual) {
-    trackWrap.style.display = 'none';
-    overWrap.style.display  = 'block';
-    note.className = 'auto-relock show';
-    pencil.textContent = '✓';
-    pencil.title = 'Click to restore auto estimate';
-    const cur = document.getElementById('sl-ins').value;
-    document.getElementById('ins-override').value = cur;
-    document.getElementById('ins-override').focus();
-  } else {
-    trackWrap.style.display = '';
-    overWrap.style.display  = 'none';
-    note.className = 'auto-relock';
-    pencil.textContent = '✏️';
-    pencil.title = 'Edit insurance estimate';
-  }
-  update();
-}
-
-function relockIns() {
-  if (insManual) {
-    insManual = false;
-    document.getElementById('ins-track-wrap').style.display = '';
-    document.getElementById('ins-override-wrap').style.display = 'none';
-    document.getElementById('ins-relock-note').className = 'auto-relock';
-    document.getElementById('ins-pencil').textContent = '✏️';
-    document.getElementById('ins-pencil').title = 'Edit insurance estimate';
-    document.getElementById('sl-ins').dataset.manual = '';
+function onZipInput() {
+  const zip    = String(document.getElementById('zip-input').value).trim();
+  const status = document.getElementById('zip-status');
+  const county = FL_ZIP_TO_COUNTY[zip];
+  if (zip.length < 5) { status.textContent = ''; return; }
+  if (county) {
+    const sel = document.getElementById('sl-county');
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].text.startsWith(county)) { sel.selectedIndex = i; break; }
+    }
+    status.className = 'zip-status found';
+    status.textContent = '✓ ' + county + ' County — ' + (COUNTY_MILLS_MAP[county] || '?') + ' mills';
+    relockTax(); update();
+  } else if (zip.length === 5) {
+    status.className = 'zip-status notfound';
+    status.textContent = '⚠ ZIP not found — try selecting county manually';
   }
 }
 
 function onCountyChange() { relockTax(); update(); }
 
-// ── FILL SLIDER ──
-function updateFill(fillId, slEl) {
-  const p = (slEl.value - slEl.min) / (slEl.max - slEl.min) * 100;
-  document.getElementById(fillId).style.width = p + '%';
+// ── TAX EDIT ──
+function toggleTaxEdit() {
+  taxManual = !taxManual;
+  document.getElementById('tax-track-wrap').style.display   = taxManual ? 'none' : '';
+  document.getElementById('tax-override-wrap').style.display = taxManual ? 'block' : 'none';
+  document.getElementById('tax-relock-note').className = 'auto-relock' + (taxManual ? ' show' : '');
+  const p = document.getElementById('tax-pencil');
+  p.textContent = taxManual ? '✓' : '✏️';
+  p.title = taxManual ? 'Restore auto estimate' : 'Edit tax estimate';
+  if (taxManual) document.getElementById('tax-override').focus();
+  update();
+}
+function relockTax() {
+  if (!taxManual) return;
+  taxManual = false;
+  document.getElementById('tax-track-wrap').style.display   = '';
+  document.getElementById('tax-override-wrap').style.display = 'none';
+  document.getElementById('tax-relock-note').className = 'auto-relock';
+  document.getElementById('tax-pencil').textContent = '✏️';
+  document.getElementById('tax-pencil').title = 'Edit tax estimate';
 }
 
-// ── MAIN CALC ──
+// ── INS EDIT ──
+function toggleInsEdit() {
+  insManual = !insManual;
+  document.getElementById('ins-track-wrap').style.display   = insManual ? 'none' : '';
+  document.getElementById('ins-override-wrap').style.display = insManual ? 'block' : 'none';
+  document.getElementById('ins-relock-note').className = 'auto-relock' + (insManual ? ' show' : '');
+  const p = document.getElementById('ins-pencil');
+  p.textContent = insManual ? '✓' : '✏️';
+  p.title = insManual ? 'Restore auto estimate' : 'Edit insurance';
+  if (insManual) { document.getElementById('ins-override').value = document.getElementById('sl-ins').value; document.getElementById('ins-override').focus(); }
+  update();
+}
+function relockIns() {
+  if (!insManual) return;
+  insManual = false;
+  document.getElementById('ins-track-wrap').style.display   = '';
+  document.getElementById('ins-override-wrap').style.display = 'none';
+  document.getElementById('ins-relock-note').className = 'auto-relock';
+  document.getElementById('ins-pencil').textContent = '✏️';
+  document.getElementById('ins-pencil').title = 'Edit insurance';
+  document.getElementById('sl-ins').dataset.manual = '';
+}
+
+// ── SHOW RATE ──
+function toggleShowRate() {
+  const show = document.getElementById('show-rate-check').checked;
+  const row  = document.getElementById('rate-display-row');
+  if (row) { row.style.display = show ? 'flex' : 'none'; }
+  const rate = +document.getElementById('in-rate').value || 7.0;
+  const rv = document.getElementById('rate-display-val');
+  if (rv) rv.textContent = rate.toFixed(3) + '%';
+}
+
+// ── HELPER ──
+function getLenderVal(id) {
+  const el = document.getElementById(id);
+  const v = el ? +el.value : 0;
+  if (v) return v;
+  const key = id.replace('in-', '');
+  return +(urlParams[key] || 0);
+}
+
+function calcPI(price, down, rate, term) {
+  const loan = price * (1 - down/100);
+  const r = rate/100/12, n = term*12;
+  if (r === 0) return loan/n;
+  return loan * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
+}
+
+function fillSlider(id, el) {
+  const p = (el.value - el.min) / (el.max - el.min) * 100;
+  document.getElementById(id).style.width = p + '%';
+}
+
+// ── MAIN UPDATE ──
 function update() {
   const price  = +document.getElementById('sl-price').value;
   const down   = +document.getElementById('sl-down').value;
   const term   = +document.getElementById('sl-term').value;
   const hoa    = +document.getElementById('sl-hoa').value;
   const pmi    = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
-  const rate   = getLenderVal('in-rate')  || 7.0;
+  const rate   = getLenderVal('in-rate')   || 7.0;
   const debts  = getLenderVal('in-debts')  || 0;
   const income = getLenderVal('in-income') || 1;
 
+  // PMI visibility
+  document.getElementById('pmi-row').style.display  = down >= 20 ? 'none' : 'block';
+  document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
+  document.getElementById('info-pmi').style.display = down >= 20 ? 'none' : 'block';
+
+  // Slider labels
+  document.getElementById('val-price').textContent = fmt(price);
+  document.getElementById('val-down').textContent  = `${down}%  (${fmt(price*down/100)})`;
+  document.getElementById('val-term').textContent  = `${term} yrs`;
+  document.getElementById('val-hoa').textContent   = fmtMo(hoa);
+  document.getElementById('val-pmi').textContent   = fmtMo(pmi);
+  fillSlider('fill-price', document.getElementById('sl-price'));
+  fillSlider('fill-down',  document.getElementById('sl-down'));
+  fillSlider('fill-term',  document.getElementById('sl-term'));
+  fillSlider('fill-hoa',   document.getElementById('sl-hoa'));
+  fillSlider('fill-pmi',   document.getElementById('sl-pmi'));
+
   // TAX
-  const countyMills = +document.getElementById('sl-county').value;
+  const mills = +document.getElementById('sl-county').value;
   let tax = 0;
-  if (taxManual) {
-    tax = +document.getElementById('tax-override').value || 0;
-  } else if (countyMills > 0) {
-    tax = Math.round((price * countyMills / 1000) / 12);
-  }
-  const taxAutoText = countyMills > 0 ? fmtMo(tax) : 'Select a county above to auto-calculate';
-  document.getElementById('tax-auto-display').textContent = taxAutoText;
-  document.getElementById('val-tax').textContent = (countyMills > 0 || taxManual) ? fmtMo(tax) : '—';
+  if (taxManual) { tax = +document.getElementById('tax-override').value || 0; }
+  else if (mills > 0) { tax = Math.round((price * mills/1000)/12); }
+  document.getElementById('tax-auto-display').textContent = mills > 0 ? fmtMo(tax) : 'Select county or enter zip above';
+  document.getElementById('val-tax').textContent = (mills > 0 || taxManual) ? fmtMo(tax) : '—';
 
   // INSURANCE
   let ins = 0;
-  if (insManual) {
-    ins = +document.getElementById('ins-override').value || 0;
-  } else {
-    const autoIns = Math.round((price * 0.005) / 12);
-    const slIns   = document.getElementById('sl-ins');
-    if (!slIns.dataset.manual) {
-      slIns.value = Math.min(Math.max(autoIns, 50), 1500);
-    }
+  if (insManual) { ins = +document.getElementById('ins-override').value || 0; }
+  else {
+    const autoIns = Math.round((price*0.005)/12);
+    const slIns = document.getElementById('sl-ins');
+    if (!slIns.dataset.manual) slIns.value = Math.min(Math.max(autoIns,50),1500);
     ins = +slIns.value;
-    const pctFill = (ins - 50) / (1500 - 50) * 100;
-    document.getElementById('fill-ins').style.width = pctFill + '%';
+    const pct = (ins-50)/(1500-50)*100;
+    document.getElementById('fill-ins').style.width = pct + '%';
   }
   document.getElementById('val-ins').textContent = fmtMo(ins);
 
@@ -801,44 +1072,26 @@ function update() {
   const flood   = floodOn ? +document.getElementById('sl-flood').value : 0;
   document.getElementById('val-flood').textContent = fmtMo(flood);
   document.getElementById('b-flood-row').style.display = floodOn ? 'flex' : 'none';
-
-  // PMI
-  document.getElementById('pmi-row').style.display  = down >= 20 ? 'none' : 'block';
-  document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
-
-  // Slider labels
-  document.getElementById('val-price').textContent = fmt(price);
-  document.getElementById('val-down').textContent  = `${down}%  (${fmt(price * down / 100)})`;
-  document.getElementById('val-term').textContent  = `${term} yrs`;
-  document.getElementById('val-hoa').textContent   = fmtMo(hoa);
-  document.getElementById('val-pmi').textContent   = fmtMo(pmi);
-
-  updateFill('fill-price', document.getElementById('sl-price'));
-  updateFill('fill-down',  document.getElementById('sl-down'));
-  updateFill('fill-term',  document.getElementById('sl-term'));
-  updateFill('fill-hoa',   document.getElementById('sl-hoa'));
-  updateFill('fill-pmi',   document.getElementById('sl-pmi'));
-  if (floodOn) updateFill('fill-flood', document.getElementById('sl-flood'));
+  if (floodOn) fillSlider('fill-flood', document.getElementById('sl-flood'));
 
   const pi      = calcPI(price, down, rate, term);
   const housing = pi + tax + ins + flood + hoa + pmi;
 
   // RENTAL
-  const rentalEnabled = document.getElementById('rental-enabled') && document.getElementById('rental-enabled').checked;
+  const rentalEnabled = document.getElementById('rental-enabled').checked;
   const grossRent = rentalEnabled ? (getLenderVal('in-rent')  || 0) : 0;
   const pitia     = rentalEnabled ? (getLenderVal('in-pitia') || 0) : 0;
-  let   rentalShortfall = 0;
-  const rentalActive = grossRent > 0 || pitia > 0;
-  if (rentalActive) {
-    const usable75  = grossRent * 0.75;
-    const rentalNet = usable75 - pitia;
-    rentalShortfall = rentalNet < 0 ? Math.abs(rentalNet) : 0;
+  let rentalShortfall = 0;
+  if (rentalEnabled && (grossRent > 0 || pitia > 0)) {
+    const u75 = grossRent * 0.75;
+    const net = u75 - pitia;
+    rentalShortfall = net < 0 ? Math.abs(net) : 0;
     document.getElementById('rr-gross').textContent = fmtMo(grossRent);
-    document.getElementById('rr-75').textContent    = fmtMo(usable75);
+    document.getElementById('rr-75').textContent    = fmtMo(u75);
     document.getElementById('rr-pitia').textContent = fmtMo(pitia);
     const netEl = document.getElementById('rr-net');
-    netEl.textContent = (rentalNet >= 0 ? '+' : '−') + fmtMo(Math.abs(rentalNet));
-    netEl.className   = 'rv ' + (rentalNet >= 0 ? 'rv-pos' : 'rv-neg');
+    netEl.textContent = (net >= 0 ? '+' : '−') + fmtMo(Math.abs(net));
+    netEl.className = 'rv ' + (net >= 0 ? 'rv-pos' : 'rv-neg');
     document.getElementById('rental-math').style.display    = 'block';
     document.getElementById('no-rental-note').style.display = 'none';
   } else {
@@ -849,8 +1102,7 @@ function update() {
   const total    = housing + debts + rentalShortfall;
   const frontDTI = (housing / income) * 100;
   const backDTI  = (total   / income) * 100;
-
-  state = { pi, tax, ins, flood, floodOn, hoa, pmi, debts, housing, total, frontDTI, backDTI, income, price, down, rate, term, grossRent, pitia, rentalShortfall, rentalActive, countyMills };
+  state = {pi,tax,ins,flood,floodOn,hoa,pmi,debts,housing,total,frontDTI,backDTI,income,price,down,rate,term,grossRent,pitia,rentalShortfall,rentalEnabled,mills};
 
   // Breakdown
   document.getElementById('b-pi').textContent      = fmtMo(pi);
@@ -862,371 +1114,234 @@ function update() {
   document.getElementById('b-housing').textContent = fmtMo(housing);
   document.getElementById('b-debts').textContent   = fmtMo(debts);
   document.getElementById('b-total').textContent   = fmtMo(total);
+  const rBrow = document.getElementById('b-rental-row');
+  rBrow.style.display = rentalShortfall > 0 ? 'flex' : 'none';
+  if (rentalShortfall > 0) document.getElementById('b-rental').textContent = fmtMo(rentalShortfall);
 
-  if (rentalShortfall > 0) {
-    document.getElementById('b-rental-row').style.display = 'flex';
-    document.getElementById('b-rental').textContent = fmtMo(rentalShortfall);
-  } else {
-    document.getElementById('b-rental-row').style.display = 'none';
-  }
-
+  // Threshold
   const maxPay = income * 0.5;
-  const threshBar = document.getElementById('thresh-bar');
-  const threshTxt = document.getElementById('thresh-text');
-  if (backDTI > 50) {
-    threshBar.className = 'thresh-bar td';
-    threshTxt.textContent = `Over limit by ${fmt(total - maxPay)}/mo — max: ${fmt(maxPay)}/mo`;
-  } else {
-    threshBar.className = 'thresh-bar ts';
-    threshTxt.textContent = `Max qualifying back-end: ${fmt(maxPay)}/mo (50% DTI)`;
-  }
+  document.getElementById('thresh-bar').className = backDTI > 50 ? 'thresh-bar td' : 'thresh-bar ts';
+  document.getElementById('thresh-text').textContent = backDTI > 50
+    ? `Over limit by ${fmt(total-maxPay)}/mo — max: ${fmt(maxPay)}/mo`
+    : `Max qualifying back-end: ${fmt(maxPay)}/mo (50% DTI)`;
 
-  // Gauge
-  const arcLen   = 251.2;
-  const angle    = -90 + (Math.min(backDTI,100) / 100) * 180;
-  document.getElementById('needle').setAttribute('transform', `rotate(${angle}, 90, 100)`);
-  const safeFill = Math.min(backDTI, 43) / 100 * arcLen;
-  const warnFill = backDTI > 43 ? Math.min(backDTI-43,7) / 100 * arcLen : 0;
-  const arcSafe  = document.getElementById('arc-safe');
-  const arcWarn  = document.getElementById('arc-warn');
-  arcSafe.style.strokeDashoffset = arcLen - safeFill;
-  arcWarn.style.strokeDasharray  = `${warnFill} ${arcLen - warnFill}`;
-  arcWarn.style.strokeDashoffset = arcLen - safeFill;
+  // GAUGE — always green/yellow/red
+  const arcLen = 251.2;
+  const angle  = -90 + (Math.min(backDTI,100)/100)*180;
+  document.getElementById('needle').setAttribute('transform', `rotate(${angle},90,100)`);
+  const safe = Math.min(backDTI,43)/100*arcLen;
+  const warn = backDTI > 43 ? Math.min(backDTI-43,7)/100*arcLen : 0;
+  const arcS = document.getElementById('arc-safe');
+  const arcW = document.getElementById('arc-warn');
+  arcS.style.strokeDashoffset = arcLen - safe;
+  arcW.style.strokeDasharray  = `${warn} ${arcLen-warn}`;
+  arcW.style.strokeDashoffset = arcLen - safe;
 
-  const frontEl  = document.getElementById('front-dti');
-  const backEl   = document.getElementById('back-dti');
-  const badge    = document.getElementById('dti-badge');
-  const badgeTxt = document.getElementById('dti-badge-text');
-  const needle   = document.getElementById('needle');
+  const col = backDTI > 50 ? '#e05555' : backDTI > 43 ? '#f5a623' : '#3ecf8e';
+  const cls = backDTI > 50 ? 'b-danger' : backDTI > 43 ? 'b-warn' : 'b-safe';
+  const txt = backDTI > 50 ? 'Ineligible — Back-End Over 50%' : backDTI > 43 ? 'Caution — Approaching Limit' : 'Eligible — Looking Good';
 
-  frontEl.textContent = frontDTI.toFixed(3) + '%';
-  backEl.textContent  = backDTI.toFixed(3)  + '%';
+  document.getElementById('front-dti').textContent = frontDTI.toFixed(3) + '%';
+  document.getElementById('back-dti').textContent  = backDTI.toFixed(3)  + '%';
+  document.getElementById('front-dti').style.color = col;
+  document.getElementById('back-dti').style.color  = col;
+  document.getElementById('dti-badge').className   = 'dti-badge ' + cls;
+  document.getElementById('dti-badge-text').textContent = txt;
+  document.getElementById('needle').setAttribute('stroke', col);
+  arcS.setAttribute('stroke', backDTI > 50 ? '#e05555' : '#3ecf8e');
+  arcW.setAttribute('stroke', backDTI > 50 ? '#e05555' : '#f5a623');
 
-  if (backDTI > 50) {
-    frontEl.style.color = 'var(--red)'; backEl.style.color = 'var(--red)';
-    badge.className = 'dti-badge b-danger'; badgeTxt.textContent = 'Ineligible — Back-End Over 50%';
-    needle.setAttribute('stroke','var(--red)');
-    arcSafe.setAttribute('stroke','var(--red)'); arcWarn.setAttribute('stroke','var(--red)');
-  } else if (backDTI > 43) {
-    frontEl.style.color = 'var(--yellow)'; backEl.style.color = 'var(--yellow)';
-    badge.className = 'dti-badge b-warn'; badgeTxt.textContent = 'Caution — Approaching Limit';
-    needle.setAttribute('stroke','var(--yellow)');
-    arcSafe.setAttribute('stroke','#3ecf8e'); arcWarn.setAttribute('stroke','var(--yellow)');
-  } else {
-    frontEl.style.color = 'var(--green)'; backEl.style.color = 'var(--green)';
-    badge.className = 'dti-badge b-safe'; badgeTxt.textContent = 'Eligible — Looking Good';
-    needle.setAttribute('stroke','white');
-    arcSafe.setAttribute('stroke','#3ecf8e'); arcWarn.setAttribute('stroke','#f5a623');
-  }
-}
-
-function calcPI(price, downPct, rate, termYrs) {
-  const loan = price * (1 - downPct / 100);
-  const r = rate / 100 / 12;
-  const n = termYrs * 12;
-  if (r === 0) return loan / n;
-  return loan * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1);
-}
-
-// ── TOGGLE SHOW RATE ──
-function toggleShowRate() {
-  const show = document.getElementById('show-rate-check').checked;
-  const rateRow = document.getElementById('rate-display-row');
-  if (rateRow) {
-    rateRow.style.display = show ? 'flex' : 'none';
-    rateRow.style.alignItems = 'center';
-    rateRow.style.justifyContent = 'space-between';
-  }
-  const rate = +document.getElementById('in-rate').value || 7.0;
-  const rateVal = document.getElementById('rate-display-val');
-  if (rateVal) rateVal.textContent = rate.toFixed(3) + '%';
-}
-
-// ── TOGGLE RENTAL SECTION ──
-function toggleRentalSection() {
-  const enabled = document.getElementById('rental-enabled').checked;
-  document.getElementById('rental-fields-wrap').style.display = enabled ? 'block' : 'none';
-  document.getElementById('rental-warning').style.display     = enabled ? 'block' : 'none';
-  if (!enabled) {
-    document.getElementById('in-rent').value  = 0;
-    document.getElementById('in-pitia').value = 0;
-    delete urlParams.rent;
-    delete urlParams.pitia;
-  }
-  update();
-}
-
-// ── GENERATE CLIENT LINK ──
-function generateLink() {
-  const income = document.getElementById('in-income').value;
-  const debts  = document.getElementById('in-debts').value;
-  const rate   = document.getElementById('in-rate').value;
-  const rent   = document.getElementById('in-rent').value;
-  const pitia  = document.getElementById('in-pitia').value;
-
-  const params = new URLSearchParams({ income, debts, rate, rent, pitia });
-  const url = BASE_URL + '?' + params.toString();
-
-  navigator.clipboard.writeText(url).then(() => {
-    const box = document.getElementById('link-copied');
-    document.getElementById('link-display').textContent = url;
-    box.style.display = 'block';
-    setTimeout(() => { box.style.display = 'none'; }, 10000);
-  }).catch(() => {
-    // Fallback if clipboard fails
-    const box = document.getElementById('link-copied');
-    document.getElementById('link-display').textContent = url;
-    box.style.display = 'block';
-  });
-}
-
-// ── LOAD FROM URL — FIXED ──
-// We store URL params in a global object so update() can always read them
-// even when the lender panel is hidden (display:none doesn't affect input values,
-// but we store them explicitly to be safe)
-let urlParams = {};
-
-function loadFromURL() {
-  const p = new URLSearchParams(window.location.search);
-  if (!p.has('income') && !p.has('debts')) return false;
-
-  // Store in global AND set in DOM
-  if (p.has('income')) { urlParams.income = p.get('income'); document.getElementById('in-income').value = p.get('income'); }
-  if (p.has('debts'))  { urlParams.debts  = p.get('debts');  document.getElementById('in-debts').value  = p.get('debts'); }
-  if (p.has('rate'))   { urlParams.rate   = p.get('rate');   document.getElementById('in-rate').value   = p.get('rate'); }
-  if (p.has('rent'))   { urlParams.rent   = p.get('rent');   document.getElementById('in-rent').value   = p.get('rent'); }
-  if (p.has('pitia'))  { urlParams.pitia  = p.get('pitia');  document.getElementById('in-pitia').value  = p.get('pitia'); }
-
-  return true;
-}
-
-// Helper: read lender field — uses urlParams as fallback if DOM value is missing
-function getLenderVal(id) {
-  const el = document.getElementById(id);
-  const val = el ? +el.value : 0;
-  if (val) return val;
-  // fallback to urlParams
-  const key = id.replace('in-', '');
-  return +(urlParams[key] || 0);
+  updateStickyDTI(frontDTI, backDTI);
 }
 
 // ── MODE SWITCH ──
 function setMode(mode) {
-  const lenderPanel   = document.getElementById('lender-panel');
-  const clientSummary = document.getElementById('client-summary');
-  const scenarioBox   = document.getElementById('scenario-box');
-  const tabLender     = document.getElementById('tab-lender');
-  const tabClient     = document.getElementById('tab-client');
-  const hint          = document.getElementById('mode-hint');
+  const lp = document.getElementById('lender-panel');
+  const cs = document.getElementById('client-summary');
+  const sb = document.getElementById('scenario-box');
+  const tl = document.getElementById('tab-lender');
+  const tc = document.getElementById('tab-client');
+  const hm = document.getElementById('mode-hint');
+  const ah = document.getElementById('apm-header');
 
   if (mode === 'lender') {
-    lenderPanel.style.display   = 'block';
-    clientSummary.style.display = 'none';
-    scenarioBox.style.display   = 'none';
-    tabLender.style.display     = '';
-    tabLender.classList.add('active'); tabClient.classList.remove('active');
-    hint.textContent = "Fill in your client's profile, then switch to Client View.";
+    lp.style.display = 'block'; cs.style.display = 'none'; sb.style.display = 'none';
+    tl.style.display = ''; tl.classList.add('active'); tc.classList.remove('active');
+    ah.className = 'apm-header';
+    hm.textContent = "Fill in your client's profile, then switch to Client View.";
   } else {
-    const income = +document.getElementById('in-income').value || 0;
-    const debts  = +document.getElementById('in-debts').value  || 0;
-    const rent   = +document.getElementById('in-rent').value   || 0;
-
-    let chips = [
-      { label: 'Monthly Income', val: fmt(income) + '/mo' },
-      { label: 'Other Debts',    val: fmt(debts)  + '/mo' },
+    const income = getLenderVal('in-income');
+    const debts  = getLenderVal('in-debts');
+    const rent   = getLenderVal('in-rent');
+    const chips  = [
+      {l:'Monthly Income', v:fmt(income)+'/mo'},
+      {l:'Other Debts',    v:fmt(debts)+'/mo'},
     ];
-    if (rent > 0) chips.push({ label: 'Rental Income', val: fmt(rent) + '/mo' });
-
+    if (rent > 0) chips.push({l:'Rental Income', v:fmt(rent)+'/mo'});
     document.getElementById('summary-chips').innerHTML = chips.map(c =>
-      `<div class="chip">${c.label} <strong>${c.val}</strong></div>`
-    ).join('');
-
-    lenderPanel.style.display   = 'none';
-    clientSummary.style.display = 'block';
-    scenarioBox.style.display   = 'block';
-    tabLender.style.display     = 'none'; // hidden from client
-    tabLender.classList.remove('active'); tabClient.classList.add('active');
-    hint.textContent = 'Select your county, move the sliders, and explore how different homes affect your DTI.';
-    toggleShowRate(); // sync rate display
+      `<div class="chip">${c.l} <strong>${c.v}</strong></div>`).join('');
+    lp.style.display = 'none'; cs.style.display = 'block'; sb.style.display = 'block';
+    tl.style.display = 'none'; tl.classList.remove('active'); tc.classList.add('active');
+    ah.className = 'apm-header visible';
+    hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
+    toggleShowRate();
   }
   update();
 }
 
-// ── SAVE SCENARIO ──
-async function saveScenario() {
-  const btn    = document.getElementById('save-btn');
-  const status = document.getElementById('save-status');
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Generating...';
-  status.style.display = 'none';
+// ── GENERATE LINK ──
+function generateLink() {
+  const p = new URLSearchParams({
+    income: document.getElementById('in-income').value,
+    debts:  document.getElementById('in-debts').value,
+    rate:   document.getElementById('in-rate').value,
+    rent:   document.getElementById('in-rent').value,
+    pitia:  document.getElementById('in-pitia').value,
+  });
+  const url = BASE_URL + '?' + p.toString();
+  navigator.clipboard.writeText(url).catch(()=>{});
+  const box = document.getElementById('link-copied');
+  document.getElementById('link-display').textContent = url;
+  box.style.display = 'block';
+  setTimeout(()=>{box.style.display='none';}, 10000);
+}
 
+// ── LOAD FROM URL ──
+function loadFromURL() {
+  const p = new URLSearchParams(window.location.search);
+  if (!p.has('income') && !p.has('debts')) return false;
+  ['income','debts','rate','rent','pitia'].forEach(k => {
+    if (p.has(k)) {
+      urlParams[k] = p.get(k);
+      const el = document.getElementById('in-' + k);
+      if (el) el.value = p.get(k);
+    }
+  });
+  return true;
+}
+
+// ── SAVE PDF ──
+async function saveScenario() {
+  const btn = document.getElementById('save-btn');
+  const statusEl = document.getElementById('save-status');
+  btn.disabled = true; btn.innerHTML = '⏳ Generating...'; statusEl.style.display = 'none';
   try {
-    const { jsPDF } = window.jspdf;
-    const doc  = new jsPDF({ unit:'pt', format:'letter' });
+    const {jsPDF} = window.jspdf;
+    const doc  = new jsPDF({unit:'pt',format:'letter'});
     const name    = document.getElementById('sc-name').value    || 'Client';
     const address = document.getElementById('sc-address').value || 'Not specified';
     const label   = document.getElementById('sc-label').value   || 'Scenario';
-    const date    = new Date().toLocaleDateString('en-US',{ year:'numeric', month:'long', day:'numeric' });
-    const W = 612, M = 50;
-
-    doc.setFillColor(14,17,23); doc.rect(0,0,W,80,'F');
-    doc.setTextColor(201,168,76); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text('MORTGAGE QUALIFICATION TOOL', M, 28);
-    doc.setTextColor(232,234,240); doc.setFontSize(22); doc.setFont('helvetica','bold');
-    doc.text('Buyer DTI Calculator', M, 58);
-    doc.setTextColor(122,132,153); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text(date, W-M, 28, { align:'right' });
-
-    let y = 108;
-    doc.setFillColor(22,27,37); doc.roundedRect(M, y, W-M*2, 90, 6,6,'F');
-    doc.setTextColor(201,168,76); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    const date    = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    const W=612,M=50;
+    doc.setFillColor(27,58,107); doc.rect(0,0,W,80,'F');
+    doc.setTextColor(245,166,35); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('AMERICAN PACIFIC MORTGAGE — BUYER DTI CALCULATOR', M, 25);
+    doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
+    doc.text('Chris Greenidge · Sr. Loan Officer', M, 50);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.setTextColor(200,220,255);
+    doc.text('NMLS# 2073018 · 727.642.1374 · cgreenidge@apmortgage.com · ChrisToClose.com', M, 68);
+    doc.setTextColor(200,220,255); doc.text(date, W-M, 25, {align:'right'});
+    let y=100;
+    doc.setFillColor(22,32,48); doc.roundedRect(M,y,W-M*2,90,6,6,'F');
+    doc.setTextColor(245,166,35); doc.setFontSize(8); doc.setFont('helvetica','bold');
     doc.text('SCENARIO', M+16, y+20);
-    doc.setTextColor(232,234,240); doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
     doc.text(label, M+16, y+38);
-    doc.setTextColor(122,132,153); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text('CLIENT', M+16, y+56);
-    doc.setTextColor(232,234,240); doc.setFontSize(11);
+    doc.setTextColor(150,180,220); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('CLIENT', M+16, y+56); doc.setTextColor(255,255,255); doc.setFontSize(11);
     doc.text(name, M+16, y+70);
-    doc.setTextColor(122,132,153); doc.setFontSize(9);
-    doc.text('PROPERTY', W/2+10, y+56);
-    doc.setTextColor(232,234,240); doc.setFontSize(11);
+    doc.setTextColor(150,180,220); doc.setFontSize(9);
+    doc.text('PROPERTY', W/2+10, y+56); doc.setTextColor(255,255,255); doc.setFontSize(11);
     doc.text(address, W/2+10, y+70);
-
-    y += 110;
-    const beColor  = state.backDTI > 50 ? [224,85,85] : state.backDTI > 43 ? [245,166,35] : [62,207,142];
-    const statusTx = state.backDTI > 50 ? 'INELIGIBLE' : state.backDTI > 43 ? 'CAUTION' : 'ELIGIBLE';
-    doc.setFillColor(22,27,37); doc.roundedRect(M, y, W-M*2, 80, 6,6,'F');
-    doc.setTextColor(122,132,153); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    y+=100;
+    const beC = state.backDTI>50?[224,85,85]:state.backDTI>43?[245,166,35]:[62,207,142];
+    const stx = state.backDTI>50?'INELIGIBLE':state.backDTI>43?'CAUTION':'ELIGIBLE';
+    doc.setFillColor(22,32,48); doc.roundedRect(M,y,W-M*2,80,6,6,'F');
+    doc.setTextColor(150,180,220); doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text('FRONT-END DTI', M+16, y+20);
-    doc.setTextColor(...beColor); doc.setFontSize(24); doc.setFont('helvetica','bold');
-    doc.text(state.frontDTI.toFixed(3) + '%', M+16, y+50);
-    doc.setTextColor(122,132,153); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.setTextColor(...beC); doc.setFontSize(24); doc.setFont('helvetica','bold');
+    doc.text(state.frontDTI.toFixed(3)+'%', M+16, y+50);
+    doc.setTextColor(150,180,220); doc.setFontSize(9); doc.setFont('helvetica','normal');
     doc.text('Housing only', M+16, y+66);
     doc.text('BACK-END DTI', W/2+10, y+20);
-    doc.setTextColor(...beColor); doc.setFontSize(24); doc.setFont('helvetica','bold');
-    doc.text(state.backDTI.toFixed(3) + '%', W/2+10, y+50);
-    doc.setTextColor(122,132,153); doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text('All obligations — ' + statusTx, W/2+10, y+66);
-
-    y += 100;
-    const colW = (W - M*2 - 16) / 2;
-    doc.setFillColor(22,27,37); doc.roundedRect(M, y, colW, 240, 6,6,'F');
-    doc.setTextColor(201,168,76); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.setTextColor(...beC); doc.setFontSize(24); doc.setFont('helvetica','bold');
+    doc.text(state.backDTI.toFixed(3)+'%', W/2+10, y+50);
+    doc.setTextColor(150,180,220); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('All obligations — '+stx, W/2+10, y+66);
+    y+=100;
+    const colW=(W-M*2-16)/2;
+    doc.setFillColor(22,32,48); doc.roundedRect(M,y,colW,240,6,6,'F');
+    doc.setTextColor(43,127,164); doc.setFontSize(8); doc.setFont('helvetica','bold');
     doc.text('MONTHLY BREAKDOWN', M+14, y+20);
-
-    const rows = [
-      ['Principal & Interest', fmtMo(state.pi)],
-      ['Property Tax',         fmtMo(state.tax)],
-      ['Insurance',            fmtMo(state.ins)],
-    ];
-    if (state.floodOn) rows.push(['Flood Insurance', fmtMo(state.flood)]);
-    rows.push(['HOA', fmtMo(state.hoa)]);
-    if (state.down < 20) rows.push(['PMI', fmtMo(state.pmi)]);
-    rows.push(['TOTAL HOUSING', fmtMo(state.housing)]);
-    rows.push(['Other Debts', fmtMo(state.debts)]);
-    if (state.rentalShortfall > 0) rows.push(['+ Rental Shortfall (75%)', fmtMo(state.rentalShortfall)]);
-    rows.push(['TOTAL ALL OBLIGATIONS', fmtMo(state.total)]);
-
-    let ry = y + 38;
-    rows.forEach(([k,v]) => {
-      const isTotal = k.startsWith('TOTAL');
-      doc.setTextColor(isTotal ? 232 : 122, isTotal ? 234 : 132, isTotal ? 240 : 153);
-      doc.setFontSize(isTotal ? 10 : 9); doc.setFont('helvetica', isTotal ? 'bold' : 'normal');
-      doc.text(k, M+14, ry);
-      doc.setTextColor(isTotal ? 232 : 232, isTotal ? 202 : 234, isTotal ? 122 : 240);
-      doc.text(v, M+colW-14, ry, { align:'right' });
-      if (!isTotal) { doc.setDrawColor(42,51,71); doc.line(M+14, ry+4, M+colW-14, ry+4); }
-      ry += isTotal ? 20 : 18;
+    const rows=[['Principal & Interest',fmtMo(state.pi)],['Property Tax',fmtMo(state.tax)],['Insurance',fmtMo(state.ins)]];
+    if (state.floodOn) rows.push(['Flood Insurance',fmtMo(state.flood)]);
+    rows.push(['HOA',fmtMo(state.hoa)]);
+    if (state.down<20) rows.push(['PMI',fmtMo(state.pmi)]);
+    rows.push(['TOTAL HOUSING',fmtMo(state.housing)],['Other Debts',fmtMo(state.debts)]);
+    if (state.rentalShortfall>0) rows.push(['+ Rental Shortfall',fmtMo(state.rentalShortfall)]);
+    rows.push(['TOTAL ALL OBLIGATIONS',fmtMo(state.total)]);
+    let ry=y+38;
+    rows.forEach(([k,v])=>{
+      const iT=k.startsWith('TOTAL');
+      doc.setTextColor(iT?255:150,iT?255:180,iT?255:220); doc.setFontSize(iT?10:9); doc.setFont('helvetica',iT?'bold':'normal');
+      doc.text(k,M+14,ry);
+      doc.setTextColor(iT?245:232,iT?166:234,iT?35:240);
+      doc.text(v,M+colW-14,ry,{align:'right'});
+      if (!iT){doc.setDrawColor(42,60,85);doc.line(M+14,ry+4,M+colW-14,ry+4);}
+      ry+=iT?20:18;
     });
-
-    const rx = M + colW + 16;
-    doc.setFillColor(22,27,37); doc.roundedRect(rx, y, colW, 240, 6,6,'F');
-    doc.setTextColor(201,168,76); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    const rx=M+colW+16;
+    doc.setFillColor(22,32,48); doc.roundedRect(rx,y,colW,240,6,6,'F');
+    doc.setTextColor(43,127,164); doc.setFontSize(8); doc.setFont('helvetica','bold');
     doc.text('LOAN DETAILS', rx+14, y+20);
-    const details = [
-      ['Purchase Price',    fmt(state.price)],
-      ['Down Payment',      state.down + '% (' + fmt(state.price * state.down/100) + ')'],
-      ['Loan Amount',       fmt(state.price * (1-state.down/100))],
-      ['Loan Term',         state.term + ' years'],
-      ['Monthly Income',    fmtMo(state.income)],
-      ['Max Payment (50%)', fmtMo(state.income * 0.5)],
-    ];
-    let dy = y + 38;
-    details.forEach(([k,v]) => {
-      doc.setTextColor(122,132,153); doc.setFontSize(9); doc.setFont('helvetica','normal');
-      doc.text(k, rx+14, dy);
-      doc.setTextColor(232,234,240); doc.text(v, rx+colW-14, dy, { align:'right' });
-      doc.setDrawColor(42,51,71); doc.line(rx+14, dy+4, rx+colW-14, dy+4);
-      dy += 18;
+    const det=[['Purchase Price',fmt(state.price)],['Down Payment',state.down+'% ('+fmt(state.price*state.down/100)+')'],['Loan Amount',fmt(state.price*(1-state.down/100))],['Loan Term',state.term+' years'],['Monthly Income',fmtMo(state.income)],['Max Payment (50%)',fmtMo(state.income*0.5)]];
+    let dy=y+38;
+    det.forEach(([k,v])=>{
+      doc.setTextColor(150,180,220); doc.setFontSize(9); doc.setFont('helvetica','normal');
+      doc.text(k,rx+14,dy); doc.setTextColor(255,255,255);
+      doc.text(v,rx+colW-14,dy,{align:'right'});
+      doc.setDrawColor(42,60,85); doc.line(rx+14,dy+4,rx+colW-14,dy+4); dy+=18;
     });
-
-    y += 260;
-    doc.setFillColor(14,17,23); doc.rect(0, y, W, 40,'F');
-    doc.setTextColor(122,132,153); doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text('This document is for informational purposes only and does not constitute a loan commitment or guarantee of financing.', W/2, y+16, { align:'center' });
-    doc.text('Generated by Buyer DTI Calculator — ChrisToClose', W/2, y+30, { align:'center' });
-
-    const filename = `DTI_${(name||'Scenario').replace(/\s+/g,'_')}_${(address||'Property').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30)}.pdf`;
-    doc.save(filename);
-
+    y+=260;
+    doc.setFillColor(27,58,107); doc.rect(0,y,W,40,'F');
+    doc.setTextColor(150,180,220); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text('This document is for informational purposes only and does not constitute a loan commitment.',W/2,y+16,{align:'center'});
+    doc.text('American Pacific Mortgage · NMLS#1850 · Generated by ChrisToClose.com',W/2,y+30,{align:'center'});
+    doc.save(`DTI_${(name||'Scenario').replace(/\s+/g,'_')}_${(address||'').replace(/[^a-zA-Z0-9]/g,'_').slice(0,25)}.pdf`);
     emailjs.init(EMAILJS_PUBKEY);
     const clientEmail = document.getElementById('sc-email').value.trim();
-    const summary = `Purchase: ${fmt(state.price)} | Down: ${state.down}% | Front DTI: ${state.frontDTI.toFixed(3)}% | Back DTI: ${state.backDTI.toFixed(3)}% | Housing: ${fmtMo(state.housing)} | Total: ${fmtMo(state.total)}${state.floodOn ? ' | Flood Ins: ' + fmtMo(state.flood) : ''}`;
-    const payload = {
-      scenario_name: label, client_name: name, address,
-      front_end_dti: state.frontDTI.toFixed(3) + '%',
-      back_end_dti:  state.backDTI.toFixed(3)  + '%',
-      total_payment: fmtMo(state.total), summary,
-    };
-
-    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { ...payload, to_email: LENDER_EMAIL });
-    if (clientEmail) {
-      await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { ...payload, to_email: clientEmail });
-    }
-
-    status.className = 'save-status ok';
-    status.textContent = clientEmail
-      ? '✓ PDF saved. Scenario sent to your lender and a copy sent to you.'
-      : '✓ PDF saved and scenario sent to your lender.';
-
+    const summary = `Purchase: ${fmt(state.price)} | Down: ${state.down}% | Front: ${state.frontDTI.toFixed(3)}% | Back: ${state.backDTI.toFixed(3)}% | Housing: ${fmtMo(state.housing)} | Total: ${fmtMo(state.total)}`;
+    const payload = {scenario_name:label,client_name:name,address,front_end_dti:state.frontDTI.toFixed(3)+'%',back_end_dti:state.backDTI.toFixed(3)+'%',total_payment:fmtMo(state.total),summary};
+    await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{...payload,to_email:LENDER_EMAIL});
+    if (clientEmail) await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{...payload,to_email:clientEmail});
+    statusEl.className='save-status ok';
+    statusEl.textContent = clientEmail ? '✓ PDF saved. Sent to lender and a copy to you.' : '✓ PDF saved and sent to your lender.';
   } catch(err) {
     console.error(err);
-    status.className = 'save-status err';
-    status.textContent = '⚠ PDF saved but email failed. Check your EmailJS setup.';
+    statusEl.className='save-status err';
+    statusEl.textContent='⚠ PDF saved but email failed. Check EmailJS setup.';
   }
-
-  status.style.display = 'flex';
-  btn.disabled = false;
-  btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Save PDF &amp; Send to Lender';
+  statusEl.style.display='flex'; btn.disabled=false;
+  btn.innerHTML='<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Save PDF &amp; Send to Lender';
 }
 
 // ── EVENTS ──
-document.getElementById('in-rate').addEventListener('input', () => { update(); toggleShowRate(); });
-['in-income','in-debts','in-rent','in-pitia'].forEach(id =>
-  document.getElementById(id).addEventListener('input', update));
-
-['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => { relockTax(); relockIns(); update(); });
+['in-income','in-debts','in-rent','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+document.getElementById('in-rate').addEventListener('input',()=>{update();toggleShowRate();});
+['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();update();});
 });
-
-document.getElementById('sl-ins').addEventListener('input', () => {
-  document.getElementById('sl-ins').dataset.manual = 'yes';
-  update();
-});
-
-document.getElementById('sl-flood').addEventListener('input', update);
-document.getElementById('tax-override').addEventListener('input', update);
-document.getElementById('ins-override').addEventListener('input', update);
+document.getElementById('sl-ins').addEventListener('input',()=>{document.getElementById('sl-ins').dataset.manual='yes';update();});
+document.getElementById('sl-flood').addEventListener('input',update);
+document.getElementById('tax-override').addEventListener('input',update);
+document.getElementById('ins-override').addEventListener('input',update);
 
 // ── INIT ──
 initTheme();
 const hasParams = loadFromURL();
 if (hasParams) {
-  // Small delay ensures DOM values are committed before update() reads them
-  setTimeout(() => {
-    setMode('client');
-    update();
-  }, 50);
+  setTimeout(()=>{setMode('client');update();},50);
 } else {
   update();
 }
