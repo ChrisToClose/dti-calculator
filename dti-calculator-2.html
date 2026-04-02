@@ -277,6 +277,23 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .fadein{animation:fadeUp 0.4s ease both;}
+
+/* ══ LOCATION GATE ══ */
+.location-gate {
+  display: none;
+  text-align: center;
+  padding: 28px 20px;
+  background: rgba(43,127,164,0.06);
+  border: 2px dashed rgba(43,127,164,0.3);
+  border-radius: 12px;
+  margin-top: 8px;
+}
+.location-gate-icon { font-size: 28px; margin-bottom: 8px; }
+.location-gate-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.location-gate-text strong { color: var(--teal); display: block; font-size: 15px; margin-bottom: 4px; }
+.sliders-wrap { transition: opacity 0.3s, filter 0.3s; }
+.sliders-wrap.locked { opacity: 0.25; pointer-events: none; filter: blur(1px); }
+.sliders-wrap.unlocked { opacity: 1; pointer-events: all; filter: none; }
 </style>
 </head>
 <body>
@@ -316,9 +333,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
           727.642.1374
         </a>
-        <a class="apm-contact" href="mailto:cgreenidge@apmortgage.com">
+        <a class="apm-contact" href="/cdn-cgi/l/email-protection#0162667364646f686566644160716c6e7375666066642f626e6c">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
-          cgreenidge@apmortgage.com
+          <span class="__cf_email__" data-cfemail="d8bbbfaabdbdb6b1bcbfbd98b9a8b5b7aaacbfb9bfbdf6bbb7b5">[email&#160;protected]</span>
         </a>
         <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -506,6 +523,18 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
+  <!-- LOCATION GATE — shown when no county selected -->
+  <div class="location-gate" id="location-gate">
+    <div class="location-gate-icon">📍</div>
+    <div class="location-gate-text">
+      <strong>Enter your location first</strong>
+      Type your zip code or select your county above — property tax will calculate automatically and all sliders will unlock.
+    </div>
+  </div>
+
+  <!-- SLIDERS WRAP — locked until county selected -->
+  <div class="sliders-wrap locked" id="sliders-wrap">
+
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-price')">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
   <div class="slider-row">
@@ -605,6 +634,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 </div>
 
+  </div><!-- end sliders-wrap -->
+
 <!-- ══ SCENARIO SAVE ══ -->
 <div class="scenario-box" id="scenario-box" style="display:none;">
   <div class="section-title">Save This Scenario <span class="badge badge-client">PDF + Send to Lender</span></div>
@@ -670,7 +701,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 </div><!-- end page-wrap -->
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const EMAILJS_PUBKEY   = 'NyULYxc1h8OKkvdOA';
 const EMAILJS_SERVICE  = 'service_jmgkuj5';
 const EMAILJS_TEMPLATE = 'template_9m8q81g';
@@ -743,6 +774,21 @@ function toggleFlood() {
   const checked = document.getElementById('flood-check').checked;
   document.getElementById('flood-slider-wrap').style.display = checked ? 'block' : 'none';
   update();
+}
+
+// ── UNLOCK SLIDERS ──
+function unlockSliders() {
+  const wrap = document.getElementById('sliders-wrap');
+  const gate = document.getElementById('location-gate');
+  if (wrap) { wrap.className = 'sliders-wrap unlocked'; }
+  if (gate) { gate.style.display = 'none'; }
+}
+
+function lockSliders() {
+  const wrap = document.getElementById('sliders-wrap');
+  const gate = document.getElementById('location-gate');
+  if (wrap) { wrap.className = 'sliders-wrap locked'; }
+  if (gate) { gate.style.display = 'block'; }
 }
 
 // ── INFO TOOLTIPS ──
@@ -933,14 +979,14 @@ function onZipInput() {
     }
     status.className = 'zip-status found';
     status.textContent = '✓ ' + county + ' County — ' + (COUNTY_MILLS_MAP[county] || '?') + ' mills';
-    relockTax(); update();
+    relockTax(); unlockSliders(); update();
   } else if (zip.length === 5) {
     status.className = 'zip-status notfound';
     status.textContent = '⚠ ZIP not found — try selecting county manually';
   }
 }
 
-function onCountyChange() { relockTax(); update(); }
+function onCountyChange() { relockTax(); unlockSliders(); update(); }
 
 // ── TAX EDIT ──
 function toggleTaxEdit() {
@@ -1185,19 +1231,25 @@ function setMode(mode) {
     ah.className = 'apm-header visible';
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
     toggleShowRate();
+    // If county already selected (e.g. from URL param), unlock sliders
+    const countyAlreadySet = document.getElementById('sl-county').value !== '';
+    if (countyAlreadySet) { unlockSliders(); } else { lockSliders(); }
   }
   update();
 }
 
 // ── GENERATE LINK ──
 function generateLink() {
-  const p = new URLSearchParams({
-    income: document.getElementById('in-income').value,
-    debts:  document.getElementById('in-debts').value,
+  const countyVal = document.getElementById('sl-county').value;
+  const params = {
+    income: String(+document.getElementById('in-income').value),
+    debts:  String(+document.getElementById('in-debts').value),
     rate:   document.getElementById('in-rate').value,
-    rent:   document.getElementById('in-rent').value,
-    pitia:  document.getElementById('in-pitia').value,
-  });
+    rent:   String(+document.getElementById('in-rent').value),
+    pitia:  String(+document.getElementById('in-pitia').value),
+  };
+  if (countyVal) params.county = countyVal;
+  const p = new URLSearchParams(params);
   const url = BASE_URL + '?' + p.toString();
   navigator.clipboard.writeText(url).catch(()=>{});
   const box = document.getElementById('link-copied');
@@ -1217,6 +1269,21 @@ function loadFromURL() {
       if (el) el.value = p.get(k);
     }
   });
+  // Auto-enable rental section if rent or pitia were passed
+  if (+p.get('rent') > 0 || +p.get('pitia') > 0) {
+    const cb = document.getElementById('rental-enabled');
+    if (cb) { cb.checked = true; document.getElementById('rental-fields-wrap').style.display = 'block'; }
+  }
+  // Auto-select county if passed
+  if (p.has('county')) {
+    const sel = document.getElementById('sl-county');
+    if (sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === p.get('county')) { sel.selectedIndex = i; break; }
+      }
+      switchZipCounty('county');
+    }
+  }
   return true;
 }
 
@@ -1335,13 +1402,18 @@ document.getElementById('in-rate').addEventListener('input',()=>{update();toggle
 document.getElementById('sl-ins').addEventListener('input',()=>{document.getElementById('sl-ins').dataset.manual='yes';update();});
 document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
-document.getElementById('ins-override').addEventListener('input',update);
+documdocument.getElementById('ins-override').addEventListener('input',update);
 
 // ── INIT ──
 initTheme();
 const hasParams = loadFromURL();
 if (hasParams) {
-  setTimeout(()=>{setMode('client');update();},50);
+  setTimeout(()=>{
+    setMode('client');
+    const countySet = document.getElementById('sl-county').value !== '';
+    if (!countySet) lockSliders();
+    update();
+  },50);
 } else {
   update();
 }
