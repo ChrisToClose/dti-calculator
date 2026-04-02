@@ -338,7 +338,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.4</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.6</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -506,17 +506,11 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
-  <!-- LOCATION GATE -->
-  <div id="location-gate" style="display:none; text-align:center; padding:28px 20px; background:rgba(43,127,164,0.06); border:2px dashed rgba(43,127,164,0.3); border-radius:12px; margin-top:8px;">
+  <div id="location-gate" style="display:none;text-align:center;padding:28px 20px;background:rgba(43,127,164,0.06);border:2px dashed rgba(43,127,164,0.3);border-radius:12px;margin-top:8px;">
     <div style="font-size:28px;margin-bottom:8px;">📍</div>
-    <div style="font-size:14px;color:var(--muted);line-height:1.6;">
-      <strong style="color:var(--teal);display:block;font-size:15px;margin-bottom:4px;">Enter your location first</strong>
-      Type your zip code or select your county above to unlock all sliders and auto-calculate property tax.
-    </div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.6;"><strong style="color:var(--teal);display:block;font-size:15px;margin-bottom:4px;">Enter your location first</strong>Type your zip or select county above to unlock sliders and auto-calculate property tax.</div>
   </div>
-
-  <div id="sliders-wrap" style="transition:opacity 0.3s,filter 0.3s;">
-
+  <div id="sliders-wrap">
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-price')">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
   <div class="slider-row">
@@ -617,7 +611,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 
   </div><!-- end sliders-wrap -->
-
 <!-- ══ SCENARIO SAVE ══ -->
 <div class="scenario-box" id="scenario-box" style="display:none;">
   <div class="section-title">Save This Scenario <span class="badge badge-client">PDF + Send to Lender</span></div>
@@ -758,18 +751,16 @@ function toggleFlood() {
   update();
 }
 
-// ── LOCK / UNLOCK SLIDERS ──
+// ── LOCK/UNLOCK SLIDERS ──
 function unlockSliders() {
-  const w = document.getElementById('sliders-wrap');
-  const g = document.getElementById('location-gate');
-  if (w) { w.style.opacity='1'; w.style.pointerEvents='all'; w.style.filter='none'; }
-  if (g) g.style.display = 'none';
+  const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');
+  if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}
+  if(g)g.style.display='none';
 }
 function lockSliders() {
-  const w = document.getElementById('sliders-wrap');
-  const g = document.getElementById('location-gate');
-  if (w) { w.style.opacity='0.25'; w.style.pointerEvents='none'; w.style.filter='blur(1px)'; }
-  if (g) g.style.display = 'block';
+  const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');
+  if(w){w.style.opacity='0.25';w.style.pointerEvents='none';w.style.filter='blur(1px)';}
+  if(g)g.style.display='block';
 }
 
 // ── INFO TOOLTIPS ──
@@ -960,7 +951,7 @@ function onZipInput() {
     }
     status.className = 'zip-status found';
     status.textContent = '✓ ' + county + ' County — ' + (COUNTY_MILLS_MAP[county] || '?') + ' mills';
-    relockTax(); unlockSliders(); update();
+    relockTax(); update();
   } else if (zip.length === 5) {
     status.className = 'zip-status notfound';
     status.textContent = '⚠ ZIP not found — try selecting county manually';
@@ -1076,6 +1067,7 @@ function update() {
   const mills = +document.getElementById('sl-county').value;
   let tax = 0;
   if (taxManual) { tax = +document.getElementById('tax-override').value || 0; }
+  else if (urlParams.tax && !taxManual) { tax = +urlParams.tax; } // from URL
   else if (mills > 0) { tax = Math.round((price * mills/1000)/12); }
   document.getElementById('tax-auto-display').textContent = mills > 0 ? fmtMo(tax) : 'Select county or enter zip above';
   document.getElementById('val-tax').textContent = (mills > 0 || taxManual) ? fmtMo(tax) : '—';
@@ -1210,8 +1202,7 @@ function setMode(mode) {
     tl.style.display = 'none'; tl.classList.remove('active'); tc.classList.add('active');
     ah.className = 'apm-header visible';
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
-    const _cs = document.getElementById('sl-county').value !== '';
-    if (_cs) { unlockSliders(); } else { lockSliders(); }
+    if(document.getElementById('sl-county').value!==''){unlockSliders();}else{lockSliders();}
     toggleShowRate();
   }
   update();
@@ -1219,15 +1210,25 @@ function setMode(mode) {
 
 // ── GENERATE LINK ──
 function generateLink() {
-  const countyVal = document.getElementById('sl-county').value;
+  const cv = document.getElementById('sl-county').value;
   const params = {
     income: String(+document.getElementById('in-income').value),
     debts:  String(+document.getElementById('in-debts').value),
     rate:   document.getElementById('in-rate').value,
     rent:   String(+document.getElementById('in-rent').value),
     pitia:  String(+document.getElementById('in-pitia').value),
+    price:  document.getElementById('sl-price').value,
+    down:   document.getElementById('sl-down').value,
+    term:   document.getElementById('sl-term').value,
+    hoa:    document.getElementById('sl-hoa').value,
+    ins:    document.getElementById('sl-ins').value,
   };
-  if (countyVal) params.county = countyVal;
+  if (cv) params.county = cv;
+  // Include tax override if manually set
+  if (taxManual) {
+    const taxVal = document.getElementById('tax-override').value;
+    if (taxVal) params.tax = taxVal;
+  }
   const p = new URLSearchParams(params);
   const url = BASE_URL + '?' + p.toString();
   navigator.clipboard.writeText(url).catch(()=>{});
@@ -1241,26 +1242,35 @@ function generateLink() {
 function loadFromURL() {
   const p = new URLSearchParams(window.location.search);
   if (!p.has('income') && !p.has('debts')) return false;
+  // Lender fields -> urlParams + DOM
   ['income','debts','rate','rent','pitia'].forEach(k => {
-    if (p.has(k)) {
-      urlParams[k] = p.get(k);
-      const el = document.getElementById('in-' + k);
-      if (el) el.value = p.get(k);
-    }
+    if (p.has(k)) { urlParams[k] = p.get(k); const el = document.getElementById('in-'+k); if (el) el.value = p.get(k); }
   });
-  // Auto-enable rental if needed
-  if (+p.get('rent') > 0 || +p.get('pitia') > 0) {
-    const cb = document.getElementById('rental-enabled');
-    if (cb) { cb.checked = true; document.getElementById('rental-fields-wrap').style.display = 'block'; }
+  // Slider values -> DOM
+  if (p.has('price')) { const s=document.getElementById('sl-price'); if(s) s.value=p.get('price'); }
+  if (p.has('down'))  { const s=document.getElementById('sl-down');  if(s) s.value=p.get('down'); }
+  if (p.has('term'))  { const s=document.getElementById('sl-term');  if(s) s.value=p.get('term'); }
+  if (p.has('hoa'))   { const s=document.getElementById('sl-hoa');   if(s) s.value=p.get('hoa'); }
+  if (p.has('ins'))   {
+    const s=document.getElementById('sl-ins');
+    if(s) { s.value=p.get('ins'); s.dataset.manual='yes'; }
   }
-  // Auto-select county if passed
+  if (p.has('tax'))   {
+    // Lender had manually set tax — restore it
+    urlParams.tax = p.get('tax');
+  }
+  // Rental
+  if (+p.get('rent')>0 || +p.get('pitia')>0) {
+    const cb=document.getElementById('rental-enabled');
+    if (cb) { cb.checked=true; document.getElementById('rental-fields-wrap').style.display='block'; }
+  }
+  // County
   if (p.has('county')) {
     switchZipCounty('county');
-    const sel = document.getElementById('sl-county');
-    for (let i = 0; i < sel.options.length; i++) {
-      if (parseFloat(sel.options[i].value) === parseFloat(p.get('county'))) {
-        sel.selectedIndex = i; break;
-      }
+    const sel=document.getElementById('sl-county');
+    const tv=parseFloat(p.get('county'));
+    for (let i=0;i<sel.options.length;i++) {
+      if (parseFloat(sel.options[i].value)===tv) { sel.selectedIndex=i; urlParams.county=p.get('county'); break; }
     }
   }
   return true;
@@ -1388,26 +1398,23 @@ initTheme();
 const hasParams = loadFromURL();
 if (hasParams) {
   setTimeout(()=>{
-    // Manually set client mode — most reliable approach
-    document.getElementById('lender-panel').style.display = 'none';
-    document.getElementById('client-summary').style.display = 'block';
-    document.getElementById('scenario-box').style.display = 'block';
-    document.getElementById('tab-lender').style.display = 'none';
+    document.getElementById('lender-panel').style.display='none';
+    document.getElementById('client-summary').style.display='block';
+    document.getElementById('scenario-box').style.display='block';
+    document.getElementById('tab-lender').style.display='none';
     document.getElementById('tab-lender').classList.remove('active');
     document.getElementById('tab-client').classList.add('active');
-    document.getElementById('apm-header').className = 'apm-header visible';
-    document.getElementById('mode-hint').textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
-    // Build chips directly from urlParams
-    const _i = +urlParams.income||0, _d = +urlParams.debts||0, _r = +urlParams.rent||0;
-    let _c = [{l:'Monthly Income',v:'$'+Math.round(_i).toLocaleString()+'/mo'},{l:'Other Debts',v:'$'+Math.round(_d).toLocaleString()+'/mo'}];
-    if (_r > 0) _c.push({l:'Rental Income',v:'$'+Math.round(_r).toLocaleString()+'/mo'});
-    document.getElementById('summary-chips').innerHTML = _c.map(c=>'<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
+    document.getElementById('apm-header').className='apm-header visible';
+    document.getElementById('mode-hint').textContent='Select your county, move the sliders, explore how different homes affect your DTI.';
+    const _i=+urlParams.income||0,_d=+urlParams.debts||0,_r=+urlParams.rent||0;
+    let _c=[{l:'Monthly Income',v:'$'+Math.round(_i).toLocaleString()+'/mo'},{l:'Other Debts',v:'$'+Math.round(_d).toLocaleString()+'/mo'}];
+    if(_r>0)_c.push({l:'Rental Income',v:'$'+Math.round(_r).toLocaleString()+'/mo'});
+    document.getElementById('summary-chips').innerHTML=_c.map(c=>'<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
     toggleShowRate();
-    // Unlock sliders if county was set
-    const countySet = document.getElementById('sl-county').value !== '';
-    if (countySet) { unlockSliders(); } else { lockSliders(); }
+    const countySet=document.getElementById('sl-county').value!=='';
+    if(countySet){unlockSliders();}else{lockSliders();}
     update();
-  }, 200);
+  },200);
 } else {
   update();
 }
