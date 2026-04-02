@@ -355,7 +355,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.2</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.3</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1424,6 +1424,8 @@ documdocument.getElementById('ins-override').addEventListener('input',update);
 initTheme();
 // Load URL params first — populates hidden lender fields
 // ── SIMPLE RELIABLE INIT ──
+// Wrapped in DOMContentLoaded so Cloudflare script injection doesn't break timing
+function runInit() {
 const _p = new URLSearchParams(window.location.search);
 if (_p.has('income') || _p.has('debts')) {
   // Store params globally FIRST before anything else
@@ -1476,8 +1478,24 @@ if (_p.has('income') || _p.has('debts')) {
   // Run calculation — getLenderVal will use urlParams
   update();
 
-} else {
+// ── SIMPLE RELIABLE INIT ──
+// Wrapped in DOMContentLoaded so Cloudflare script injection doesn't break timing
+function runInit() {
+const _p = new URLSearchParams(window.location.search);} else {
   update();
+}
+} // end runInit
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', runInit);
+} else {
+  runInit();
+}it
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', runInit);
+} else {
+  runInit();
 }
 </script>
 </body>
