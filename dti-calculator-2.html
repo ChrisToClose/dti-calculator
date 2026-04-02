@@ -275,11 +275,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .ts{background:rgba(62,207,142,0.08);color:#3ecf8e;border:1px solid rgba(62,207,142,0.2);}
 .td{background:rgba(224,85,85,0.08);color:#e05555;border:1px solid rgba(224,85,85,0.2);}
 
-/* Pre-hide lender panel if opened via client link */
-[data-client-link="true"] #lender-panel { display: none !important; }
-[data-client-link="true"] #tab-lender { display: none !important; }
-[data-client-link="true"] .apm-header { display: flex !important; }
-
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .fadein{animation:fadeUp 0.4s ease both;}
 
@@ -302,17 +297,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </style>
 </head>
 <body>
-
-<!-- EARLY URL CHECK — runs before page renders -->
-<script>
-(function(){
-  const p = new URLSearchParams(window.location.search);
-  if (p.has('income') || p.has('debts')) {
-    // Mark body so CSS can pre-hide lender panel
-    document.documentElement.setAttribute('data-client-link', 'true');
-  }
-})();
-</script>
 
 <!-- STICKY DTI BAR -->
 <div class="sticky-dti" id="sticky-dti">
@@ -371,7 +355,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.2</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1439,41 +1423,59 @@ documdocument.getElementById('ins-override').addEventListener('input',update);
 // ── INIT ──
 initTheme();
 // Load URL params first — populates hidden lender fields
-const hasParams = loadFromURL();
-if (hasParams) {
-  setTimeout(()=>{
-    // Switch to client view
-    document.getElementById('lender-panel').style.display = 'none';
-    document.getElementById('client-summary').style.display = 'block';
-    document.getElementById('scenario-box').style.display = 'block';
-    document.getElementById('tab-lender').style.display = 'none';
-    document.getElementById('tab-lender').classList.remove('active');
-    document.getElementById('tab-client').classList.add('active');
-    document.getElementById('apm-header').className = 'apm-header visible';
-    document.getElementById('mode-hint').textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
+// ── SIMPLE RELIABLE INIT ──
+const _p = new URLSearchParams(window.location.search);
+if (_p.has('income') || _p.has('debts')) {
+  // Store params globally FIRST before anything else
+  ['income','debts','rate','rent','pitia'].forEach(k => {
+    if (_p.has(k)) urlParams[k] = _p.get(k);
+  });
 
-    // Build summary chips from urlParams
-    const income = +urlParams.income || 0;
-    const debts  = +urlParams.debts  || 0;
-    const rent   = +urlParams.rent   || 0;
-    const chips  = [
-      {l:'Monthly Income', v:'$'+Math.round(income).toLocaleString()+'/mo'},
-      {l:'Other Debts',    v:'$'+Math.round(debts).toLocaleString()+'/mo'},
-    ];
-    if (rent > 0) chips.push({l:'Rental Income', v:'$'+Math.round(rent).toLocaleString()+'/mo'});
-    document.getElementById('summary-chips').innerHTML = chips.map(c =>
-      '<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
+  // Switch to client view immediately (no setTimeout needed for this)
+  document.getElementById('lender-panel').style.display = 'none';
+  document.getElementById('client-summary').style.display = 'block';
+  document.getElementById('scenario-box').style.display = 'block';
+  document.getElementById('tab-lender').style.display = 'none';
+  document.getElementById('tab-lender').classList.remove('active');
+  document.getElementById('tab-client').classList.add('active');
+  document.getElementById('apm-header').className = 'apm-header visible';
+  document.getElementById('mode-hint').textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
 
-    // Show rate if enabled
-    toggleShowRate();
+  // Build summary chips
+  const _income = +urlParams.income || 0;
+  const _debts  = +urlParams.debts  || 0;
+  const _rent   = +urlParams.rent   || 0;
+  let _chips = [
+    {l:'Monthly Income', v:'$'+Math.round(_income).toLocaleString()+'/mo'},
+    {l:'Other Debts',    v:'$'+Math.round(_debts).toLocaleString()+'/mo'},
+  ];
+  if (_rent > 0) _chips.push({l:'Rental Income', v:'$'+Math.round(_rent).toLocaleString()+'/mo'});
+  document.getElementById('summary-chips').innerHTML = _chips.map(c =>
+    '<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
 
-    // Check if county was auto-set — unlock sliders if so
-    const countySet = document.getElementById('sl-county').value !== '';
-    if (countySet) { unlockSliders(); } else { lockSliders(); }
+  // Auto-enable rental if needed
+  if (+urlParams.rent > 0 || +urlParams.pitia > 0) {
+    const _cb = document.getElementById('rental-enabled');
+    if (_cb) { _cb.checked = true; document.getElementById('rental-fields-wrap').style.display = 'block'; }
+  }
 
-    // Run calculation with urlParams data
-    update();
-  }, 100);
+  // Auto-select county
+  if (_p.has('county')) {
+    switchZipCounty('county');
+    const _sel = document.getElementById('sl-county');
+    for (let i = 0; i < _sel.options.length; i++) {
+      if (parseFloat(_sel.options[i].value) === parseFloat(_p.get('county'))) {
+        _sel.selectedIndex = i; break;
+      }
+    }
+    unlockSliders();
+  } else {
+    lockSliders();
+  }
+
+  // Run calculation — getLenderVal will use urlParams
+  update();
+
 } else {
   update();
 }
