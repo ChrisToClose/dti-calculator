@@ -1061,11 +1061,11 @@ function toggleShowRate() {
 
 // ── HELPER ──
 function getLenderVal(id) {
-  const el = document.getElementById(id);
-  const v = el ? +el.value : 0;
-  if (v) return v;
+  // Always check urlParams first — DOM inputs may be hidden or not yet set
   const key = id.replace('in-', '');
-  return +(urlParams[key] || 0);
+  if (urlParams[key] !== undefined && +urlParams[key] !== 0) return +urlParams[key];
+  const el = document.getElementById(id);
+  return el ? (+el.value || 0) : 0;
 }
 
 function calcPI(price, down, rate, term) {
