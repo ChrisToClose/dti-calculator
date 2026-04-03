@@ -338,7 +338,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.1</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.2</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1203,11 +1203,7 @@ function generateLink() {
     hoa:   document.getElementById('sl-hoa').value,
     ins:   document.getElementById('sl-ins').value,
   };
-  if(cv){
-    const countyName=sel.options[sel.selectedIndex].text.split(' —')[0].trim();
-    params.county=countyName;
-    params.mills=cv;
-  }
+  if(cv){const cn=sel.options[sel.selectedIndex].text.split(' —')[0].trim();params.county=cn;params.mills=cv;}
   if(taxManual){const tv=document.getElementById('tax-override').value;if(tv)params.tax=tv;}
   if(document.getElementById('show-rate-check').checked) params.showrate='1';
   const p=new URLSearchParams(params);
@@ -1453,6 +1449,8 @@ if (hasParams) {
   },200);
 } else {
   update();
+  // Lock sliders by default until county selected
+  lockSliders();
 }
 </script>
 </body>
