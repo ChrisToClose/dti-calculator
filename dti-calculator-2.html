@@ -316,9 +316,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
           727.642.1374
         </a>
-        <a class="apm-contact" href="/cdn-cgi/l/email-protection#ccafabbea9a9a2a5a8aba98cadbca1a3beb8abadaba9e2afa3a1">
+        <a class="apm-contact" href="mailto:cgreenidge@apmortgage.com">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span class="__cf_email__" data-cfemail="c5a6a2b7a0a0abaca1a2a085a4b5a8aab7b1a2a4a2a0eba6aaa8">[email&#160;protected]</span>
+          cgreenidge@apmortgage.com
         </a>
         <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -338,14 +338,14 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.0</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.1</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
 <div class="mode-bar">
   <div class="mode-tabs">
-    <button class="mode-tab active" id="tab-lender" data-action="lender-tab">⚙️ Lender Setup</button>
-    <button class="mode-tab" id="tab-client" data-action="client-tab">🏠 Client View</button>
+    <button class="mode-tab active" id="tab-lender" >⚙️ Lender Setup</button>
+    <button class="mode-tab" id="tab-client" id="go-client-btn">🏠 Client View</button>
   </div>
   <div class="mode-hint" id="mode-hint">Fill in your client's profile, then switch to Client View.</div>
 </div>
@@ -370,8 +370,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="input-wrap"><input type="number" id="in-rate" value="7.0" min="1" max="20" step="0.125" style="text-align:right;"><span class="sfx">%</span></div>
     </div>
     <div class="field-group full">
-      <div class="show-rate-row" data-action="show-rate-row">
-        <input type="checkbox" id="show-rate-check" id="show-rate-check">
+      <div class="show-rate-row" class="show-rate-row">
+        <input type="checkbox" id="show-rate-check">
         <div>
           <div class="show-rate-text">Show interest rate to client</div>
           <div class="show-rate-sub">By default the rate is hidden — check to display it on the client view</div>
@@ -382,7 +382,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
   <!-- DEPARTING HOME -->
   <div class="rental-block">
-    <div class="rental-toggle-header" data-action="rental-header">
+    <div class="rental-toggle-header">
       <input type="checkbox" id="rental-enabled">
       <div>
         <div class="rental-toggle-title">🏡 Client is keeping their current home</div>
@@ -432,7 +432,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
   <button class="gen-link-btn" id="gen-link-btn">🔗 Generate Client Link — Copy to Clipboard</button>
   <div class="link-copied" id="link-copied">✓ Copied! Send this link to your client — their numbers will be pre-filled.<br><span id="link-display" style="font-size:11px;color:var(--teal);display:block;margin-top:4px;"></span></div>
-  <button class="go-client-btn" data-action="client-tab">→ Done — Switch to Client View</button>
+  <button class="go-client-btn" id="go-client-btn">→ Done — Switch to Client View</button>
 </div>
 
 <!-- ══ CLIENT SUMMARY ══ -->
@@ -454,18 +454,18 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="loc-header">
       <span class="loc-label">Location <button class="info-btn" data-info="info-location">i</button></span>
       <div class="loc-tabs">
-        <button class="loc-tab active" id="tab-zip" data-action="zip-tab">Zip Code</button>
-        <button class="loc-tab" id="tab-county" data-action="county-tab">County</button>
+        <button class="loc-tab active" id="tab-zip" id="tab-zip">Zip Code</button>
+        <button class="loc-tab" id="tab-county" id="tab-county">County</button>
       </div>
     </div>
     <div id="info-location" class="info-dropdown"><button class="info-close" data-info="info-location">×</button><strong>Why does location matter?</strong><br>Property taxes in Florida are based on your county's mill rate — a percentage applied to your home's assessed value. Every county charges differently. Enter your zip code and we'll find the right county automatically.</div>
     <div id="zip-wrap">
-      <div class="input-wrap"><input type="number" id="zip-input" placeholder="Enter FL zip code e.g. 33701" id="zip-input"></div>
+      <div class="input-wrap"><input type="number" id="zip-input" placeholder="Enter FL zip code e.g. 33701" ></div>
       <div class="zip-status" id="zip-status"></div>
     </div>
     <div id="county-wrap" style="display:none;">
       <div class="county-select-wrap">
-        <select id="sl-county">
+        <select id="sl-county" >
           <option value="">— Select County —</option>
           <option value="12.5">Alachua — ~12.5 mills</option><option value="11.0">Baker — ~11.0 mills</option>
           <option value="13.5">Bay — ~13.5 mills</option><option value="11.5">Bradford — ~11.5 mills</option>
@@ -506,11 +506,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
-  <div id="location-gate" style="display:none;text-align:center;padding:28px 20px;background:rgba(43,127,164,0.06);border:2px dashed rgba(43,127,164,0.3);border-radius:12px;margin-top:8px;">
-    <div style="font-size:28px;margin-bottom:8px;">📍</div>
-    <div style="font-size:14px;color:var(--muted);line-height:1.6;"><strong style="color:var(--teal);display:block;font-size:15px;margin-bottom:4px;">Enter your location first</strong>Type your zip or select county above to unlock sliders and auto-calculate property tax.</div>
-  </div>
-  <div id="sliders-wrap">
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-price">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
   <div class="slider-row">
@@ -552,10 +547,10 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
   <!-- FLOOD -->
   <div id="info-flood" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-flood">×</button><strong>What is flood insurance and when is it required?</strong><br>If a property is in a FEMA flood zone, your lender requires flood insurance — mandatory, not optional. Standard homeowners insurance does NOT cover floods. In Florida, many properties near water or low-lying areas require it. Cost ranges from $150–$500+/mo depending on flood risk and elevation.</div>
-  <div class="flood-row" data-action="flood-row">
-    <input type="checkbox" id="flood-check" id="flood-check">
+  <div class="flood-row" class="flood-row">
+    <input type="checkbox" id="flood-check">
     <label class="flood-label">🌊 Property is in a Flood Zone<small>Check this if flood insurance is required</small></label>
-    <button class="flood-info-btn" data-info="info-flood" data-stop-prop="true">i</button>
+    <button class="flood-info-btn" data-info="info-flood">i</button>
   </div>
   <div class="flood-slider-wrap" id="flood-slider-wrap">
     <div class="slider-row" style="margin-bottom:4px;">
@@ -574,7 +569,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="auto-right">
         <span class="auto-value" id="val-tax">—</span>
         <span class="auto-badge">AUTO</span>
-        <button class="pencil-btn" id="tax-pencil" id="tax-pencil" title="Edit tax estimate">✏️</button>
+        <button class="pencil-btn" id="tax-pencil" title="Edit tax estimate">✏️</button>
       </div>
     </div>
     <div id="tax-track-wrap">
@@ -595,7 +590,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="auto-right">
         <span class="auto-value" id="val-ins">$150/mo</span>
         <span class="auto-badge">EST</span>
-        <button class="pencil-btn" id="ins-pencil" id="ins-pencil" title="Edit insurance">✏️</button>
+        <button class="pencil-btn" id="ins-pencil" title="Edit insurance">✏️</button>
       </div>
     </div>
     <div id="ins-track-wrap">
@@ -610,7 +605,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 </div>
 
-  </div><!-- end sliders-wrap -->
 <!-- ══ SCENARIO SAVE ══ -->
 <div class="scenario-box" id="scenario-box" style="display:none;">
   <div class="section-title">Save This Scenario <span class="badge badge-client">PDF + Send to Lender</span></div>
@@ -620,7 +614,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div><div class="scenario-label">Property Address</div><div class="input-wrap"><input type="text" id="sc-address" placeholder="e.g. 123 Bayshore Blvd, St. Pete FL 33701"></div></div>
     <div><div class="scenario-label">Scenario Label <span style="color:var(--muted);font-size:11px;">(optional)</span></div><div class="input-wrap"><input type="text" id="sc-label" placeholder="e.g. 20% down — conservative"></div></div>
   </div>
-  <button class="save-btn" id="save-btn" id="save-btn">
+  <button class="save-btn" id="save-btn" id="save-btn-inner">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Save PDF &amp; Send to Lender
   </button>
@@ -676,7 +670,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 </div><!-- end page-wrap -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 const EMAILJS_PUBKEY   = 'NyULYxc1h8OKkvdOA';
 const EMAILJS_SERVICE  = 'service_jmgkuj5';
 const EMAILJS_TEMPLATE = 'template_9m8q81g';
@@ -694,14 +688,13 @@ const fmtMo = n => fmt(n) + '/mo';
 // ── THEME ──
 function applyTheme(t) {
   document.body.setAttribute('data-theme', t);
-  document.getElementById('theme-btn').textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
-  // No localStorage — time of day always wins on next load
+  const btn=document.getElementById('theme-btn');
+  if(btn) btn.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
 }
 function toggleTheme() {
   applyTheme(document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 }
 function initTheme() {
-  // Time of day always determines starting theme — 7pm to 7am = dark
   const h = new Date().getHours();
   applyTheme(h >= 19 || h < 7 ? 'dark' : 'light');
 }
@@ -749,10 +742,6 @@ function toggleFlood() {
   document.getElementById('flood-slider-wrap').style.display = checked ? 'block' : 'none';
   update();
 }
-
-// ── LOCK/UNLOCK SLIDERS ──
-function unlockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}if(g)g.style.display='none';}
-function lockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='0.25';w.style.pointerEvents='none';w.style.filter='blur(1px)';}if(g)g.style.display='block';}
 
 // ── INFO TOOLTIPS ──
 function toggleInfo(id) {
@@ -998,10 +987,10 @@ function relockIns() {
 
 // ── SHOW RATE ──
 function toggleShowRate() {
-  const show = document.getElementById('show-rate-check').checked || urlParams.showrate==='1';
+  const show = document.getElementById('show-rate-check').checked;
   const row  = document.getElementById('rate-display-row');
   if (row) { row.style.display = show ? 'flex' : 'none'; }
-  const rate = getLenderVal('in-rate') || 7.0;
+  const rate = +document.getElementById('in-rate').value || 7.0;
   const rv = document.getElementById('rate-display-val');
   if (rv) rv.textContent = rate.toFixed(3) + '%';
 }
@@ -1193,7 +1182,6 @@ function setMode(mode) {
     tl.style.display = 'none'; tl.classList.remove('active'); tc.classList.add('active');
     ah.className = 'apm-header visible';
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
-    if(document.getElementById('sl-county').value!==''){unlockSliders();}else{lockSliders();}
     toggleShowRate();
   }
   update();
@@ -1201,7 +1189,8 @@ function setMode(mode) {
 
 // ── GENERATE LINK ──
 function generateLink() {
-  const cv=document.getElementById('sl-county').value;
+  const sel=document.getElementById('sl-county');
+  const cv=sel.value;
   const params={
     income:String(+document.getElementById('in-income').value),
     debts: String(+document.getElementById('in-debts').value),
@@ -1214,13 +1203,10 @@ function generateLink() {
     hoa:   document.getElementById('sl-hoa').value,
     ins:   document.getElementById('sl-ins').value,
   };
-  if(cv) {
-    // Store county name (text before ' —') not mill value, to avoid ambiguity
-    const sel=document.getElementById('sl-county');
-    const selectedText=sel.options[sel.selectedIndex].text;
-    const countyName=selectedText.split(' —')[0].trim();
+  if(cv){
+    const countyName=sel.options[sel.selectedIndex].text.split(' —')[0].trim();
     params.county=countyName;
-    params.mills=cv; // keep mills for tax calc
+    params.mills=cv;
   }
   if(taxManual){const tv=document.getElementById('tax-override').value;if(tv)params.tax=tv;}
   if(document.getElementById('show-rate-check').checked) params.showrate='1';
@@ -1254,24 +1240,18 @@ function loadFromURL() {
   if (p.has('county')) {
     switchZipCounty('county');
     const sel=document.getElementById('sl-county');
-    const countyName=p.get('county');
-    const mills=p.get('mills');
+    const cn=p.get('county');
     let matched=false;
-    // Match by county name first (most reliable)
     for(let i=0;i<sel.options.length;i++){
-      if(sel.options[i].text.startsWith(countyName)){
-        sel.selectedIndex=i; matched=true; break;
-      }
+      if(sel.options[i].text.startsWith(cn)){sel.selectedIndex=i;matched=true;break;}
     }
-    // Fallback: match by mills if name not found (old links)
-    if(!matched && mills){
+    if(!matched && p.has('mills')){
+      const tv=parseFloat(p.get('mills'));
       for(let i=0;i<sel.options.length;i++){
-        if(parseFloat(sel.options[i].value)===parseFloat(mills)){
-          sel.selectedIndex=i; matched=true; break;
-        }
+        if(parseFloat(sel.options[i].value)===tv){sel.selectedIndex=i;break;}
       }
     }
-    if(matched) urlParams.county=countyName;
+    urlParams.county=cn;
   }
   return true;
 }
@@ -1393,68 +1373,63 @@ document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
 
-// ── INIT ──
-// ── WIRE ALL EVENT LISTENERS HERE — avoids Cloudflare script-split issues ──
+// ── WIRE BUTTONS VIA addEventListener (Cloudflare splits scripts so onclick fails) ──
 document.getElementById('theme-btn').addEventListener('click', toggleTheme);
-document.getElementById('tab-lender') && document.getElementById('tab-lender').addEventListener('click', ()=>setMode('lender'));
-document.getElementById('tab-client') && document.getElementById('tab-client').addEventListener('click', ()=>setMode('client'));
-document.getElementById('sl-county').addEventListener('change', onCountyChange);
+document.getElementById('tab-lender').addEventListener('click', ()=>setMode('lender'));
+document.getElementById('tab-client').addEventListener('click', ()=>setMode('client'));
+document.getElementById('sl-county').addEventListener('change', ()=>{onCountyChange();});
 document.getElementById('zip-input').addEventListener('input', onZipInput);
 
-// Rental toggle — clicking the header row toggles the checkbox AND expands section
-const _rentalHeader = document.querySelector('[data-action="rental-header"]');
-if(_rentalHeader) _rentalHeader.addEventListener('click', function(e) {
-  if(e.target.id === 'rental-enabled') return; // checkbox handles its own change event
-  const cb = document.getElementById('rental-enabled');
-  cb.checked = !cb.checked;
-  toggleRental();
+// Rental — clicking row or checkbox both work
+document.querySelector('.rental-toggle-header').addEventListener('click', function(e){
+  if(e.target.id==='rental-enabled') return;
+  const cb=document.getElementById('rental-enabled');
+  cb.checked=!cb.checked; toggleRental();
 });
 document.getElementById('rental-enabled').addEventListener('change', toggleRental);
 
 // Flood
-const _floodRow = document.querySelector('[data-action="flood-row"]');
-if(_floodRow) _floodRow.addEventListener('click', toggleFlood);
+document.querySelector('.flood-row').addEventListener('click', function(e){
+  if(e.target.id==='flood-check') return;
+  document.getElementById('flood-check').checked=!document.getElementById('flood-check').checked;
+  toggleFlood();
+});
 document.getElementById('flood-check').addEventListener('change', toggleFlood);
 
-// Tax/ins pencil
+// Pencils
 document.getElementById('tax-pencil').addEventListener('click', toggleTaxEdit);
 document.getElementById('ins-pencil').addEventListener('click', toggleInsEdit);
 
 // Show rate
-const _showRateRow = document.querySelector('[data-action="show-rate-row"]');
-if(_showRateRow) _showRateRow.addEventListener('click', toggleShowRate);
+document.querySelector('.show-rate-row').addEventListener('click', function(e){
+  if(e.target.id==='show-rate-check') return;
+  const cb=document.getElementById('show-rate-check');
+  cb.checked=!cb.checked; toggleShowRate();
+});
 document.getElementById('show-rate-check').addEventListener('change', toggleShowRate);
 
-// Generate link
+// Buttons
 document.getElementById('gen-link-btn').addEventListener('click', generateLink);
-
-// Go to client
-const _goClient = document.querySelector('[data-action="go-client"]');
-if(_goClient) _goClient.addEventListener('click', ()=>setMode('client'));
-
-// Zip/county tabs
-const _zipTab = document.querySelector('[data-action="zip-tab"]');
-const _countyTab = document.querySelector('[data-action="county-tab"]');
-if(_zipTab) _zipTab.addEventListener('click', ()=>switchZipCounty('zip'));
-if(_countyTab) _countyTab.addEventListener('click', ()=>switchZipCounty('county'));
-
-// Save
+document.getElementById('go-client-btn').addEventListener('click', ()=>setMode('client'));
 document.getElementById('save-btn').addEventListener('click', saveScenario);
 
-// Info button delegation — handles all [data-info] buttons
-document.addEventListener('click', function(e) {
-  const btn = e.target.closest('[data-info]');
-  if (btn) {
-    e.stopPropagation();
-    toggleInfo(btn.getAttribute('data-info'));
-    return;
-  }
-  // Close dropdowns when clicking outside
-  if (!e.target.closest('.info-dropdown')) {
-    document.querySelectorAll('.info-dropdown.open').forEach(d => d.classList.remove('open'));
-  }
+// Zip/county tabs
+document.getElementById('tab-zip').addEventListener('click', ()=>switchZipCounty('zip'));
+document.getElementById('tab-county').addEventListener('click', ()=>switchZipCounty('county'));
+
+// Info buttons — event delegation
+document.addEventListener('click', function(e){
+  const ib=e.target.closest('[data-info]');
+  if(ib){ e.stopPropagation(); toggleInfo(ib.getAttribute('data-info')); return; }
+  if(!e.target.closest('.info-dropdown'))
+    document.querySelectorAll('.info-dropdown.open').forEach(d=>d.classList.remove('open'));
 });
 
+// ── LOCK/UNLOCK SLIDERS ──
+function unlockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}if(g)g.style.display='none';}
+function lockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='0.25';w.style.pointerEvents='none';w.style.filter='blur(1px)';}if(g)g.style.display='block';}
+
+// ── INIT ──
 initTheme();
 const hasParams = loadFromURL();
 if (hasParams) {
@@ -1470,10 +1445,10 @@ if (hasParams) {
     const _i=+urlParams.income||0,_d=+urlParams.debts||0,_r=+urlParams.rent||0;
     let _c=[{l:'Monthly Income',v:'$'+Math.round(_i).toLocaleString()+'/mo'},{l:'Other Debts',v:'$'+Math.round(_d).toLocaleString()+'/mo'}];
     if(_r>0)_c.push({l:'Rental Income',v:'$'+Math.round(_r).toLocaleString()+'/mo'});
-    document.getElementById('summary-chips').innerHTML=_c.map(c=>'<div class="chip">'+c.l+' <strong+'</strong></div>').join('');
+    document.getElementById('summary-chips').innerHTML=_c.map(c=>'<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
     toggleShowRate();
-    const countySet=document.getElementById('sl-county').value!=='';
-    if(countySet){unlockSliders();}else{lockSliders();}
+    const cs=document.getElementById('sl-county').value!=='';
+    if(cs){unlockSliders();}else{lockSliders();}
     update();
   },200);
 } else {
