@@ -32,7 +32,7 @@
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 0 60px;transition:background 0.3s,color 0.3s;}
 
 /* ══ THEME TOGGLE ══ */
-.theme-btn{position:fixed;top:12px;right:12px;z-index:200;background:var(--surface);color:var(--text);border:2px solid var(--border);border-radius:100px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px var(--shadow);transition:all 0.2s;}
+.theme-btn{position:fixed;top:12px;right:12px;z-index:200;background:var(--surface);color:var(--text);border:2px solid var(--teal);border-radius:100px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px var(--shadow);transition:all 0.2s;}
 .theme-btn:hover{background:var(--teal);color:#fff;border-color:var(--teal);}
 
 /* ══ APM BRAND HEADER ══ */
@@ -316,9 +316,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
           727.642.1374
         </a>
-        <a class="apm-contact" href="/cdn-cgi/l/email-protection#0f6c687d6a6a61666b686a4f6e7f62607d7b686e686a216c6062">
+        <a class="apm-contact" href="mailto:cgreenidge@apmortgage.com">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span class="__cf_email__" data-cfemail="fb989c899e9e95929f9c9ebb9a8b9694898f9c9a9c9ed5989496">[email&#160;protected]</span>
+          cgreenidge@apmortgage.com
         </a>
         <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -338,14 +338,14 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.8</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v4.9</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
 <div class="mode-bar">
   <div class="mode-tabs">
-    <button class="mode-tab active" id="tab-lender" onclick="setMode('lender')">⚙️ Lender Setup</button>
-    <button class="mode-tab" id="tab-client" onclick="setMode('client')">🏠 Client View</button>
+    <button class="mode-tab active" id="tab-lender" data-action="lender-tab">⚙️ Lender Setup</button>
+    <button class="mode-tab" id="tab-client" data-action="client-tab">🏠 Client View</button>
   </div>
   <div class="mode-hint" id="mode-hint">Fill in your client's profile, then switch to Client View.</div>
 </div>
@@ -370,8 +370,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="input-wrap"><input type="number" id="in-rate" value="7.0" min="1" max="20" step="0.125" style="text-align:right;"><span class="sfx">%</span></div>
     </div>
     <div class="field-group full">
-      <div class="show-rate-row" onclick="toggleShowRate()">
-        <input type="checkbox" id="show-rate-check" onclick="event.stopPropagation();toggleShowRate()">
+      <div class="show-rate-row" data-action="show-rate-row">
+        <input type="checkbox" id="show-rate-check" id="show-rate-check">
         <div>
           <div class="show-rate-text">Show interest rate to client</div>
           <div class="show-rate-sub">By default the rate is hidden — check to display it on the client view</div>
@@ -382,8 +382,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
   <!-- DEPARTING HOME -->
   <div class="rental-block">
-    <div class="rental-toggle-header" onclick="toggleRental()">
-      <input type="checkbox" id="rental-enabled" onclick="event.stopPropagation();toggleRental()">
+    <div class="rental-toggle-header" data-action="rental-header">
+      <input type="checkbox" id="rental-enabled" id="rental-enabled">
       <div>
         <div class="rental-toggle-title">🏡 Client is keeping their current home</div>
         <div class="rental-toggle-sub">Check if they are holding onto their departing property — rental income fields and debt rules will appear</div>
@@ -430,9 +430,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
-  <button class="gen-link-btn" onclick="generateLink()">🔗 Generate Client Link — Copy to Clipboard</button>
+  <button class="gen-link-btn" id="gen-link-btn">🔗 Generate Client Link — Copy to Clipboard</button>
   <div class="link-copied" id="link-copied">✓ Copied! Send this link to your client — their numbers will be pre-filled.<br><span id="link-display" style="font-size:11px;color:var(--teal);display:block;margin-top:4px;"></span></div>
-  <button class="go-client-btn" onclick="setMode('client')">→ Done — Switch to Client View</button>
+  <button class="go-client-btn" data-action="client-tab">→ Done — Switch to Client View</button>
 </div>
 
 <!-- ══ CLIENT SUMMARY ══ -->
@@ -452,20 +452,20 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   <!-- ZIP OR COUNTY -->
   <div class="zip-county-wrap">
     <div class="loc-header">
-      <span class="loc-label">Location <button class="info-btn" onclick="toggleInfo('info-location')">i</button></span>
+      <span class="loc-label">Location <button class="info-btn" data-info="info-location">i</button></span>
       <div class="loc-tabs">
-        <button class="loc-tab active" id="tab-zip" onclick="switchZipCounty('zip')">Zip Code</button>
-        <button class="loc-tab" id="tab-county" onclick="switchZipCounty('county')">County</button>
+        <button class="loc-tab active" id="tab-zip" data-action="zip-tab">Zip Code</button>
+        <button class="loc-tab" id="tab-county" data-action="county-tab">County</button>
       </div>
     </div>
-    <div id="info-location" class="info-dropdown"><button class="info-close" onclick="toggleInfo('info-location')">×</button><strong>Why does location matter?</strong><br>Property taxes in Florida are based on your county's mill rate — a percentage applied to your home's assessed value. Every county charges differently. Enter your zip code and we'll find the right county automatically.</div>
+    <div id="info-location" class="info-dropdown"><button class="info-close" data-info="info-location">×</button><strong>Why does location matter?</strong><br>Property taxes in Florida are based on your county's mill rate — a percentage applied to your home's assessed value. Every county charges differently. Enter your zip code and we'll find the right county automatically.</div>
     <div id="zip-wrap">
-      <div class="input-wrap"><input type="number" id="zip-input" placeholder="Enter FL zip code e.g. 33701" oninput="onZipInput()"></div>
+      <div class="input-wrap"><input type="number" id="zip-input" placeholder="Enter FL zip code e.g. 33701" id="zip-input"></div>
       <div class="zip-status" id="zip-status"></div>
     </div>
     <div id="county-wrap" style="display:none;">
       <div class="county-select-wrap">
-        <select id="sl-county" onchange="onCountyChange()">
+        <select id="sl-county">
           <option value="">— Select County —</option>
           <option value="12.5">Alachua — ~12.5 mills</option><option value="11.0">Baker — ~11.0 mills</option>
           <option value="13.5">Bay — ~13.5 mills</option><option value="11.5">Bradford — ~11.5 mills</option>
@@ -512,17 +512,17 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
   <div id="sliders-wrap">
   <!-- PURCHASE PRICE -->
-  <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-price')">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
+  <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-price">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
   <div class="slider-row">
-    <div class="slider-header"><span class="slider-label">Purchase Price <button class="info-btn" onclick="toggleInfo('info-price')">i</button></span><span class="slider-value" id="val-price">$400,000</span></div>
+    <div class="slider-header"><span class="slider-label">Purchase Price <button class="info-btn" data-info="info-price">i</button></span><span class="slider-value" id="val-price">$400,000</span></div>
     <div class="slider-track"><div class="slider-fill" id="fill-price"></div><input type="range" id="sl-price" min="100000" max="1500000" step="5000" value="400000"></div>
     <div class="slider-range-labels"><span>$100K</span><span>$1.5M</span></div>
   </div>
 
   <!-- DOWN PAYMENT -->
-  <div id="info-down" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-down')">×</button><strong>How does down payment affect your DTI?</strong><br>More down = smaller loan = lower payment = lower DTI. It also affects PMI — put down less than 20% and you'll pay Private Mortgage Insurance monthly. Putting 20%+ down eliminates PMI entirely. A larger down payment is one of the most powerful levers you have to qualify for a more expensive home.</div>
+  <div id="info-down" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-down">×</button><strong>How does down payment affect your DTI?</strong><br>More down = smaller loan = lower payment = lower DTI. It also affects PMI — put down less than 20% and you'll pay Private Mortgage Insurance monthly. Putting 20%+ down eliminates PMI entirely. A larger down payment is one of the most powerful levers you have to qualify for a more expensive home.</div>
   <div class="slider-row">
-    <div class="slider-header"><span class="slider-label">Down Payment <button class="info-btn" onclick="toggleInfo('info-down')">i</button></span><span class="slider-value" id="val-down">20%</span></div>
+    <div class="slider-header"><span class="slider-label">Down Payment <button class="info-btn" data-info="info-down">i</button></span><span class="slider-value" id="val-down">20%</span></div>
     <div class="slider-track"><div class="slider-fill" id="fill-down"></div><input type="range" id="sl-down" min="3" max="50" step="1" value="20"></div>
     <div class="slider-range-labels"><span>3%</span><span>50%</span></div>
   </div>
@@ -535,27 +535,27 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 
   <!-- HOA -->
-  <div id="info-hoa" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-hoa')">×</button><strong>What is HOA and why does it count against you?</strong><br>HOA stands for Homeowners Association — monthly fees for shared amenities. Lenders count HOA fees as part of your housing payment. A $500/mo HOA is treated exactly like $500 more in mortgage payment. High HOA fees in condos or gated communities can significantly reduce how much home you qualify for.</div>
+  <div id="info-hoa" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-hoa">×</button><strong>What is HOA and why does it count against you?</strong><br>HOA stands for Homeowners Association — monthly fees for shared amenities. Lenders count HOA fees as part of your housing payment. A $500/mo HOA is treated exactly like $500 more in mortgage payment. High HOA fees in condos or gated communities can significantly reduce how much home you qualify for.</div>
   <div class="slider-row">
-    <div class="slider-header"><span class="slider-label">HOA Fees <button class="info-btn" onclick="toggleInfo('info-hoa')">i</button></span><span class="slider-value" id="val-hoa">$0/mo</span></div>
+    <div class="slider-header"><span class="slider-label">HOA Fees <button class="info-btn" data-info="info-hoa">i</button></span><span class="slider-value" id="val-hoa">$0/mo</span></div>
     <div class="slider-track"><div class="slider-fill" id="fill-hoa"></div><input type="range" id="sl-hoa" min="0" max="1500" step="25" value="0"></div>
     <div class="slider-range-labels"><span>$0</span><span>$1,500</span></div>
   </div>
 
   <!-- PMI -->
-  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;display:none;"><button class="info-close" onclick="toggleInfo('info-pmi')">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
+  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;display:none;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
   <div class="slider-row" id="pmi-row" style="display:none;">
-    <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" onclick="toggleInfo('info-pmi')">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
+    <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" data-info="info-pmi">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
     <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="10" value="0"></div>
     <div class="slider-range-labels"><span>$0</span><span>$500</span></div>
   </div>
 
   <!-- FLOOD -->
-  <div id="info-flood" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-flood')">×</button><strong>What is flood insurance and when is it required?</strong><br>If a property is in a FEMA flood zone, your lender requires flood insurance — mandatory, not optional. Standard homeowners insurance does NOT cover floods. In Florida, many properties near water or low-lying areas require it. Cost ranges from $150–$500+/mo depending on flood risk and elevation.</div>
-  <div class="flood-row" onclick="toggleFlood()">
-    <input type="checkbox" id="flood-check" onclick="event.stopPropagation();toggleFlood()">
+  <div id="info-flood" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-flood">×</button><strong>What is flood insurance and when is it required?</strong><br>If a property is in a FEMA flood zone, your lender requires flood insurance — mandatory, not optional. Standard homeowners insurance does NOT cover floods. In Florida, many properties near water or low-lying areas require it. Cost ranges from $150–$500+/mo depending on flood risk and elevation.</div>
+  <div class="flood-row" data-action="flood-row">
+    <input type="checkbox" id="flood-check" id="flood-check">
     <label class="flood-label">🌊 Property is in a Flood Zone<small>Check this if flood insurance is required</small></label>
-    <button class="flood-info-btn" onclick="event.stopPropagation();toggleInfo('info-flood')">i</button>
+    <button class="flood-info-btn" data-info="info-flood" data-stop-prop="true">i</button>
   </div>
   <div class="flood-slider-wrap" id="flood-slider-wrap">
     <div class="slider-row" style="margin-bottom:4px;">
@@ -567,14 +567,14 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 
   <!-- PROPERTY TAX -->
-  <div id="info-tax" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-tax')">×</button><strong>Why is property tax included in DTI?</strong><br>Lenders add your estimated monthly property tax to your housing payment when calculating DTI. In Florida, taxes are based on your county's mill rate applied to the home's assessed value. This estimate uses your county's average — your actual tax bill depends on the specific property's assessed value.</div>
+  <div id="info-tax" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-tax">×</button><strong>Why is property tax included in DTI?</strong><br>Lenders add your estimated monthly property tax to your housing payment when calculating DTI. In Florida, taxes are based on your county's mill rate applied to the home's assessed value. This estimate uses your county's average — your actual tax bill depends on the specific property's assessed value.</div>
   <div class="auto-row">
     <div class="auto-header">
-      <span class="auto-label">Est. Property Tax <button class="info-btn" onclick="toggleInfo('info-tax')">i</button></span>
+      <span class="auto-label">Est. Property Tax <button class="info-btn" data-info="info-tax">i</button></span>
       <div class="auto-right">
         <span class="auto-value" id="val-tax">—</span>
         <span class="auto-badge">AUTO</span>
-        <button class="pencil-btn" id="tax-pencil" onclick="toggleTaxEdit()" title="Edit tax estimate">✏️</button>
+        <button class="pencil-btn" id="tax-pencil" id="tax-pencil" title="Edit tax estimate">✏️</button>
       </div>
     </div>
     <div id="tax-track-wrap">
@@ -588,14 +588,14 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 
   <!-- INSURANCE -->
-  <div id="info-ins" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" onclick="toggleInfo('info-ins')">×</button><strong>Why does insurance count toward DTI?</strong><br>Lenders require homeowners insurance and include it in your monthly housing payment. In Florida, premiums have risen significantly. This estimate is a starting point — your actual quote varies by the home's age, location, construction type, and proximity to water. Get an actual quote early — it can be a deal-breaker.</div>
+  <div id="info-ins" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-ins">×</button><strong>Why does insurance count toward DTI?</strong><br>Lenders require homeowners insurance and include it in your monthly housing payment. In Florida, premiums have risen significantly. This estimate is a starting point — your actual quote varies by the home's age, location, construction type, and proximity to water. Get an actual quote early — it can be a deal-breaker.</div>
   <div class="auto-row">
     <div class="auto-header">
-      <span class="auto-label">Est. Homeowners Insurance <button class="info-btn" onclick="toggleInfo('info-ins')">i</button></span>
+      <span class="auto-label">Est. Homeowners Insurance <button class="info-btn" data-info="info-ins">i</button></span>
       <div class="auto-right">
         <span class="auto-value" id="val-ins">$150/mo</span>
         <span class="auto-badge">EST</span>
-        <button class="pencil-btn" id="ins-pencil" onclick="toggleInsEdit()" title="Edit insurance">✏️</button>
+        <button class="pencil-btn" id="ins-pencil" id="ins-pencil" title="Edit insurance">✏️</button>
       </div>
     </div>
     <div id="ins-track-wrap">
@@ -620,7 +620,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div><div class="scenario-label">Property Address</div><div class="input-wrap"><input type="text" id="sc-address" placeholder="e.g. 123 Bayshore Blvd, St. Pete FL 33701"></div></div>
     <div><div class="scenario-label">Scenario Label <span style="color:var(--muted);font-size:11px;">(optional)</span></div><div class="input-wrap"><input type="text" id="sc-label" placeholder="e.g. 20% down — conservative"></div></div>
   </div>
-  <button class="save-btn" id="save-btn" onclick="saveScenario()">
+  <button class="save-btn" id="save-btn" id="save-btn">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Save PDF &amp; Send to Lender
   </button>
@@ -634,9 +634,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   <div class="gauge-panel" id="gauge-anchor">
     <div class="gauge-eyebrow">
       Debt-to-Income
-      <button class="info-btn" onclick="toggleInfo('info-dti')" style="border-color:var(--teal);">i</button>
+      <button class="info-btn" data-info="info-dti" style="border-color:var(--teal);">i</button>
     </div>
-    <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" onclick="toggleInfo('info-dti')">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
+    <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" data-info="info-dti">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
     <div class="gauge-svg-wrap">
       <svg viewBox="0 0 180 100" width="180" height="100">
         <path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#1c2a3e" stroke-width="14" stroke-linecap="round"/>
@@ -676,7 +676,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 </div><!-- end page-wrap -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 const EMAILJS_PUBKEY   = 'NyULYxc1h8OKkvdOA';
 const EMAILJS_SERVICE  = 'service_jmgkuj5';
 const EMAILJS_TEMPLATE = 'template_9m8q81g';
@@ -950,7 +950,7 @@ function onZipInput() {
   }
 }
 
-function onCountyChange() { relockTax(); unlockSliders(); update(); }
+function onCountyChange() { relockTax(); update(); }
 
 // ── TAX EDIT ──
 function toggleTaxEdit() {
@@ -999,7 +999,7 @@ function relockIns() {
 
 // ── SHOW RATE ──
 function toggleShowRate() {
-  const show = document.getElementById('show-rate-check').checked || urlParams.showrate === '1';
+  const show = document.getElementById('show-rate-check').checked || urlParams.showrate==='1';
   const row  = document.getElementById('rate-display-row');
   if (row) { row.style.display = show ? 'flex' : 'none'; }
   const rate = getLenderVal('in-rate') || 7.0;
@@ -1373,10 +1373,63 @@ document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
 
-// ── EVENT LISTENERS ──
-document.getElementById('theme-btn').addEventListener('click', toggleTheme);
-
 // ── INIT ──
+// ── WIRE ALL EVENT LISTENERS HERE — avoids Cloudflare script-split issues ──
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+document.getElementById('tab-lender') && document.getElementById('tab-lender').addEventListener('click', ()=>setMode('lender'));
+document.getElementById('tab-client') && document.getElementById('tab-client').addEventListener('click', ()=>setMode('client'));
+document.getElementById('sl-county').addEventListener('change', onCountyChange);
+document.getElementById('zip-input').addEventListener('input', onZipInput);
+
+// Rental toggle
+const _rentalHeader = document.querySelector('[data-action="rental-header"]');
+if(_rentalHeader) _rentalHeader.addEventListener('click', toggleRental);
+document.getElementById('rental-enabled').addEventListener('change', toggleRental);
+
+// Flood
+const _floodRow = document.querySelector('[data-action="flood-row"]');
+if(_floodRow) _floodRow.addEventListener('click', toggleFlood);
+document.getElementById('flood-check').addEventListener('change', toggleFlood);
+
+// Tax/ins pencil
+document.getElementById('tax-pencil').addEventListener('click', toggleTaxEdit);
+document.getElementById('ins-pencil').addEventListener('click', toggleInsEdit);
+
+// Show rate
+const _showRateRow = document.querySelector('[data-action="show-rate-row"]');
+if(_showRateRow) _showRateRow.addEventListener('click', toggleShowRate);
+document.getElementById('show-rate-check').addEventListener('change', toggleShowRate);
+
+// Generate link
+document.getElementById('gen-link-btn').addEventListener('click', generateLink);
+
+// Go to client
+const _goClient = document.querySelector('[data-action="go-client"]');
+if(_goClient) _goClient.addEventListener('click', ()=>setMode('client'));
+
+// Zip/county tabs
+const _zipTab = document.querySelector('[data-action="zip-tab"]');
+const _countyTab = document.querySelector('[data-action="county-tab"]');
+if(_zipTab) _zipTab.addEventListener('click', ()=>switchZipCounty('zip'));
+if(_countyTab) _countyTab.addEventListener('click', ()=>switchZipCounty('county'));
+
+// Save
+document.getElementById('save-btn').addEventListener('click', saveScenario);
+
+// Info button delegation — handles all [data-info] buttons
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-info]');
+  if (btn) {
+    e.stopPropagation();
+    toggleInfo(btn.getAttribute('data-info'));
+    return;
+  }
+  // Close dropdowns when clicking outside
+  if (!e.target.closest('.info-dropdown')) {
+    document.querySelectorAll('.info-dropdown.open').forEach(d => d.classList.remove('open'));
+  }
+});
+
 initTheme();
 const hasParams = loadFromURL();
 if (hasParams) {
@@ -1392,7 +1445,7 @@ if (hasParams) {
     const _i=+urlParams.income||0,_d=+urlParams.debts||0,_r=+urlParams.rent||0;
     let _c=[{l:'Monthly Income',v:'$'+Math.round(_i).toLocaleString()+'/mo'},{l:'Other Debts',v:'$'+Math.round(_d).toLocaleString()+'/mo'}];
     if(_r>0)_c.push({l:'Rental Income',v:'$'+Math.round(_r).toLocaleString()+'/mo'});
-    document.getElementById('summary-chips').innerHTML=_c.map(c=>'<div class="chip">'+c.l+' <strong+'</strong></div>').join('');
+    document.getElementById('summary-chips').innerHTML=_c.map(c=>'<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
     toggleShowRate();
     const countySet=document.getElementById('sl-county').value!=='';
     if(countySet){unlockSliders();}else{lockSliders();}
