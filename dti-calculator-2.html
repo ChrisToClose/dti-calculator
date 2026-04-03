@@ -109,7 +109,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 /* ══ RENTAL BLOCK ══ */
 .rental-block{background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;margin-top:20px;}
 .rental-toggle-header{display:flex;align-items:center;gap:12px;cursor:pointer;}
-.rental-toggle-header input[type="checkbox"]{width:17px;height:17px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.rental-toggle-header input[type="checkbox"]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
 .rental-toggle-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:2px;}
 .rental-toggle-sub{font-size:11px;color:var(--muted);}
 .rental-fields-wrap{display:none;margin-top:16px;}
@@ -214,8 +214,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .info-close:hover{color:#fff;}
 
 /* ══ SHOW RATE CHECKBOX ══ */
-.show-rate-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;cursor:pointer;}
-.show-rate-row input[type="checkbox"]{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.show-rate-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;cursor:pointer;}
+.show-rate-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
 .show-rate-text{font-size:12px;color:var(--muted);font-weight:500;}
 .show-rate-sub{font-size:11px;color:var(--muted);opacity:0.8;margin-top:1px;}
 
@@ -338,7 +338,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.2</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.3</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -506,6 +506,16 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
+  <!-- LOCATION GATE + SLIDERS WRAP -->
+  <div id="location-gate" style="display:none;text-align:center;padding:28px 20px;background:rgba(43,127,164,0.06);border:2px dashed rgba(43,127,164,0.3);border-radius:12px;margin-top:8px;margin-bottom:12px;">
+    <div style="font-size:28px;margin-bottom:8px;">📍</div>
+    <div style="font-size:14px;color:var(--muted);line-height:1.6;">
+      <strong style="color:var(--teal);display:block;font-size:15px;margin-bottom:4px;">Enter your location first</strong>
+      Type your zip or select your county above to unlock the sliders and auto-calculate property tax.
+    </div>
+  </div>
+  <div id="sliders-wrap">
+
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-price">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
   <div class="slider-row">
@@ -604,6 +614,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="auto-note">Starting estimate at 0.5% annually. Use slider to adjust or ✏️ to enter exact quote.</div>
   </div>
 </div>
+
+  </div><!-- end sliders-wrap -->
 
 <!-- ══ SCENARIO SAVE ══ -->
 <div class="scenario-box" id="scenario-box" style="display:none;">
