@@ -383,7 +383,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   <!-- DEPARTING HOME -->
   <div class="rental-block">
     <div class="rental-toggle-header" data-action="rental-header">
-      <input type="checkbox" id="rental-enabled" id="rental-enabled">
+      <input type="checkbox" id="rental-enabled">
       <div>
         <div class="rental-toggle-title">🏡 Client is keeping their current home</div>
         <div class="rental-toggle-sub">Check if they are holding onto their departing property — rental income fields and debt rules will appear</div>
@@ -1401,9 +1401,14 @@ document.getElementById('tab-client') && document.getElementById('tab-client').a
 document.getElementById('sl-county').addEventListener('change', onCountyChange);
 document.getElementById('zip-input').addEventListener('input', onZipInput);
 
-// Rental toggle
+// Rental toggle — clicking the header row toggles the checkbox AND expands section
 const _rentalHeader = document.querySelector('[data-action="rental-header"]');
-if(_rentalHeader) _rentalHeader.addEventListener('click', toggleRental);
+if(_rentalHeader) _rentalHeader.addEventListener('click', function(e) {
+  if(e.target.id === 'rental-enabled') return; // checkbox handles its own change event
+  const cb = document.getElementById('rental-enabled');
+  cb.checked = !cb.checked;
+  toggleRental();
+});
 document.getElementById('rental-enabled').addEventListener('change', toggleRental);
 
 // Flood
