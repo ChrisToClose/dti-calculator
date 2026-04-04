@@ -38,50 +38,21 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 /* ══ APM BRAND HEADER ══ */
 .apm-header{width:100%;display:none;flex-direction:column;margin-bottom:0;}
 .apm-header.visible{display:flex;}
-/* ── ELECTRIC POWERED BY STRIPE ── */
-@keyframes electricFlicker{
-  0%,100%{opacity:1;text-shadow:0 0 8px #F5A623,0 0 20px #F5A623,0 0 40px #fff;}
-  10%{opacity:0.9;text-shadow:0 0 4px #F5A623,0 0 10px #F5A623;}
-  20%{opacity:1;text-shadow:0 0 12px #F5A623,0 0 30px #fff,0 0 60px #F5A623;}
-  30%{opacity:0.85;text-shadow:0 0 6px #F5A623;}
-  45%{opacity:1;text-shadow:0 0 15px #F5A623,0 0 35px #fff,0 0 70px #F5A623;}
-  60%{opacity:0.95;text-shadow:0 0 8px #F5A623,0 0 18px #F5A623;}
-  75%{opacity:1;text-shadow:0 0 20px #F5A623,0 0 45px #fff,0 0 80px #F5A623;}
-  90%{opacity:0.88;text-shadow:0 0 5px #F5A623,0 0 12px #F5A623;}
-}
-@keyframes sparkle{
-  0%,100%{transform:scaleX(1);opacity:1;}
-  25%{transform:scaleX(1.04);opacity:0.85;}
-  50%{transform:scaleX(0.97);opacity:1;}
-  75%{transform:scaleX(1.02);opacity:0.9;}
-}
-@keyframes spark-left{
-  0%,100%{transform:translateX(0) scaleX(1);opacity:1;}
-  33%{transform:translateX(-3px) scaleX(1.1);opacity:0.7;}
-  66%{transform:translateX(2px) scaleX(0.9);opacity:1;}
-}
-@keyframes spark-right{
-  0%,100%{transform:translateX(0) scaleX(1);opacity:1;}
-  33%{transform:translateX(3px) scaleX(1.1);opacity:0.7;}
-  66%{transform:translateX(-2px) scaleX(0.9);opacity:1;}
-}
+/* ── TESLA COIL POWERED BY STRIPE ── */
 .apm-stripe{
   background:var(--navy);
-  padding:12px 24px;
+  padding:0;
   text-align:center;
   position:relative;
   overflow:hidden;
   border-bottom:2px solid var(--yellow);
+  height:44px;
 }
-.apm-stripe::before,.apm-stripe::after{
-  content:'⚡';
+#lightning-canvas{
   position:absolute;
-  top:50%;transform:translateY(-50%);
-  font-size:18px;
-  opacity:0.9;
+  top:0;left:0;width:100%;height:100%;
+  pointer-events:none;
 }
-.apm-stripe::before{left:20px;animation:spark-left 0.4s ease-in-out infinite;}
-.apm-stripe::after{right:20px;animation:spark-right 0.4s ease-in-out infinite;}
 .apm-stripe-text{
   font-family:'DM Mono',monospace;
   font-size:15px;
@@ -89,8 +60,11 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   text-transform:uppercase;
   color:var(--yellow);
   font-weight:700;
-  animation:electricFlicker 2.5s ease-in-out infinite, sparkle 0.4s ease-in-out infinite;
   display:inline-block;
+  position:relative;
+  z-index:2;
+  line-height:44px;
+  text-shadow:0 0 10px rgba(245,166,35,0.4);
 }
 .apm-body{background:var(--navy);display:flex;align-items:center;gap:20px;padding:20px 32px;}
 .apm-photo{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--yellow);box-shadow:0 0 0 4px rgba(245,166,35,0.25);flex-shrink:0;}
@@ -431,7 +405,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <!-- APM BRAND HEADER — client view only -->
 <div class="apm-header" id="apm-header">
   <div class="apm-stripe">
-    <span class="apm-stripe-text">⚡&nbsp; Powered by &nbsp;⚡</span>
+    <canvas id="lightning-canvas"></canvas>
+    <span class="apm-stripe-text">POWERED BY</span>
   </div>
   <div class="apm-body">
     <img class="apm-photo" src="data:image/jpeg;base64,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" alt="Chris Greenidge">
@@ -618,8 +593,11 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="zip-status" id="zip-status"></div>
     </div>
     <div id="county-wrap" style="display:none;">
+      <div class="input-wrap" style="margin-bottom:6px;">
+        <input type="text" id="county-search" placeholder="Type to filter e.g. Osceola..." style="font-size:13px;" autocomplete="off">
+      </div>
       <div class="county-select-wrap">
-        <select id="sl-county" >
+        <select id="sl-county" size="6" style="height:auto;">
           <option value="">— Select County —</option>
           <option value="12.5">Alachua — ~12.5 mills</option><option value="11.0">Baker — ~11.0 mills</option>
           <option value="13.5">Bay — ~13.5 mills</option><option value="11.5">Bradford — ~11.5 mills</option>
@@ -1841,6 +1819,124 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
     setTimeout(() => el.select(), 50);
   });
 });
+
+// ── TESLA COIL LIGHTNING ANIMATION ──
+(function() {
+  function initLightning() {
+    const canvas = document.getElementById('lightning-canvas');
+    if (!canvas) return;
+    const stripe = canvas.parentElement;
+    canvas.width  = stripe.offsetWidth;
+    canvas.height = stripe.offsetHeight;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    // Get text element position for origin points
+    const textEl = stripe.querySelector('.apm-stripe-text');
+
+    function bolt(x1, y1, x2, y2, ctx, color, width, branches) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 4) return;
+      const midX = (x1+x2)/2 + (Math.random()-0.5) * dist * 0.6;
+      const midY = (y1+y2)/2 + (Math.random()-0.5) * dist * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(midX, midY);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+      ctx.stroke();
+      if (branches > 0 && Math.random() > 0.4) {
+        const bx = midX + (Math.random()-0.5) * dist * 0.8;
+        const by = midY + (Math.random()-0.5) * H * 0.8;
+        bolt(midX, midY, bx, by, ctx, color, width*0.6, branches-1);
+      }
+    }
+
+    function flash() {
+      ctx.clearRect(0, 0, W, H);
+      const textRect = textEl ? textEl.getBoundingClientRect() : null;
+      const stripeRect = stripe.getBoundingClientRect();
+      // Origin points along text edges
+      const origins = textRect ? [
+        {x: textRect.left - stripeRect.left - 2, y: textRect.top - stripeRect.top + textRect.height/2},
+        {x: textRect.right - stripeRect.left + 2, y: textRect.top - stripeRect.top + textRect.height/2},
+        {x: textRect.left - stripeRect.left + textRect.width * Math.random(), y: textRect.top - stripeRect.top},
+        {x: textRect.left - stripeRect.left + textRect.width * Math.random(), y: textRect.bottom - stripeRect.top},
+      ] : [{x: W/2, y: H/2}];
+
+      // Fire 2-4 bolts per flash
+      const count = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i++) {
+        const origin = origins[Math.floor(Math.random() * origins.length)];
+        const angle  = Math.random() * Math.PI * 2;
+        const length = 20 + Math.random() * 50;
+        const tx = origin.x + Math.cos(angle) * length;
+        const ty = origin.y + Math.sin(angle) * length * 0.5;
+        // Main bolt — white/yellow
+        const color = Math.random() > 0.5 ? 'rgba(255,255,255,0.9)' : 'rgba(245,166,35,0.95)';
+        bolt(origin.x, origin.y, tx, ty, ctx, color, 1.5 + Math.random(), 2);
+      }
+
+      // Fade out
+      setTimeout(() => {
+        ctx.clearRect(0, 0, W, H);
+      }, 60 + Math.random() * 80);
+    }
+
+    // Fire bolts randomly — feels organic like real lightning
+    function scheduleNext() {
+      const delay = 300 + Math.random() * 1200;
+      setTimeout(() => { flash(); scheduleNext(); }, delay);
+    }
+    scheduleNext();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      canvas.width  = stripe.offsetWidth;
+      canvas.height = stripe.offsetHeight;
+    });
+  }
+
+  // Init after DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLightning);
+  } else {
+    setTimeout(initLightning, 100);
+  }
+})();
+
+// ── COUNTY SEARCH FILTER ──
+const _countySearch = document.getElementById('county-search');
+if (_countySearch) {
+  _countySearch.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    const sel = document.getElementById('sl-county');
+    Array.from(sel.options).forEach(opt => {
+      if (opt.value === '') { opt.style.display = ''; return; }
+      opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+    });
+    // Auto-select if only one visible match
+    const visible = Array.from(sel.options).filter(o => o.value !== '' && o.style.display !== 'none');
+    if (visible.length === 1) {
+      sel.value = visible[0].value;
+      onCountyChange();
+    }
+  });
+  _countySearch.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const sel = document.getElementById('sl-county');
+      const visible = Array.from(sel.options).filter(o => o.value !== '' && o.style.display !== 'none');
+      if (visible.length > 0) {
+        sel.value = visible[0].value;
+        onCountyChange();
+        this.value = visible[0].text.split(' —')[0];
+      }
+    }
+  });
+}
 
 // ── FIX EMAIL LINK (Cloudflare encodes mailto: in HTML) ──
 const _emailLink = document.getElementById('apm-email-link');
