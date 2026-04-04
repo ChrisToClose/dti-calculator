@@ -278,6 +278,50 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .fadein{animation:fadeUp 0.4s ease both;}
 
+/* ── PULSE ANIMATIONS ── */
+@keyframes pulseYellow{
+  0%,100%{opacity:1;filter:drop-shadow(0 0 0px #f5a623);}
+  50%{opacity:0.75;filter:drop-shadow(0 0 8px #f5a623);}
+}
+@keyframes pulseRed{
+  0%,100%{opacity:1;filter:drop-shadow(0 0 0px #e05555);}
+  50%{opacity:0.6;filter:drop-shadow(0 0 12px #e05555);}
+}
+@keyframes pulseBadgeRed{
+  0%,100%{box-shadow:0 0 0 0 rgba(224,85,85,0.4);}
+  50%{box-shadow:0 0 0 6px rgba(224,85,85,0);}
+}
+@keyframes pulseBadgeYellow{
+  0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,0.4);}
+  50%{box-shadow:0 0 0 6px rgba(245,166,35,0);}
+}
+.pulse-yellow{animation:pulseYellow 1.8s ease-in-out infinite;}
+.pulse-red{animation:pulseRed 1.0s ease-in-out infinite;}
+.badge-pulse-yellow{animation:pulseBadgeYellow 1.8s ease-in-out infinite;}
+.badge-pulse-red{animation:pulseBadgeRed 1.0s ease-in-out infinite;}
+
+/* ── INELIGIBLE WATERMARK ── */
+.gauge-panel{position:relative;}
+.ineligible-stamp{
+  display:none;
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%) rotate(-25deg);
+  font-family:'DM Mono',monospace;
+  font-size:36px;
+  font-weight:700;
+  letter-spacing:6px;
+  color:rgba(224,85,85,0.18);
+  border:4px solid rgba(224,85,85,0.18);
+  border-radius:8px;
+  padding:6px 16px;
+  pointer-events:none;
+  white-space:nowrap;
+  z-index:10;
+  text-transform:uppercase;
+}
+.ineligible-stamp.visible{display:block;}
+
 /* ── LOAN TYPE SELECTOR ── */
 .loan-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
 .loan-type-btn{flex:1;min-width:70px;padding:8px 6px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;cursor:pointer;text-align:center;transition:all 0.2s;}
@@ -721,6 +765,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <!-- ══ RIGHT COL ══ -->
 <div class="results-col" id="results-col">
   <div class="gauge-panel" id="gauge-anchor">
+    <div class="ineligible-stamp" id="ineligible-stamp">Over Limit</div>
     <div class="gauge-eyebrow">
       Debt-to-Income
       <span id="jumbo-dti-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:4px;font-family:'DM Mono',monospace;letter-spacing:1px;">JUMBO</span>
@@ -1404,12 +1449,17 @@ function update() {
 
   // GAUGE — always green/yellow/red
   const arcLen   = 251.2;
+  // Needle spans full 0-100 range
   const angle    = -90 + (Math.min(backDTI,100)/100)*180;
   document.getElementById('needle').setAttribute('transform', `rotate(${angle},90,100)`);
   const _ltc  = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
-  const safe  = Math.min(backDTI,_ltc.backWarn)/_ltc.backMax*arcLen;
-  const warnRange = _ltc.backMax - _ltc.backWarn;
-  const warn  = backDTI > _ltc.backWarn ? Math.min(backDTI-_ltc.backWarn, warnRange)/_ltc.backMax*arcLen : 0;
+  // Arc fills proportional to 0-100 scale (not 0-backMax)
+  // Green zone: 0 to backWarn
+  // Yellow zone: backWarn to backMax
+  // Red zone: above backMax
+  const safe = (Math.min(backDTI, _ltc.backWarn) / 100) * arcLen;
+  const warnEnd = Math.min(backDTI, _ltc.backMax);
+  const warn = backDTI > _ltc.backWarn ? ((warnEnd - _ltc.backWarn) / 100) * arcLen : 0;
   const arcS = document.getElementById('arc-safe');
   const arcW = document.getElementById('arc-warn');
   arcS.style.strokeDashoffset = arcLen - safe;
@@ -1433,8 +1483,26 @@ function update() {
   document.getElementById('dti-badge').className   = 'dti-badge ' + cls;
   document.getElementById('dti-badge-text').textContent = txt;
   document.getElementById('needle').setAttribute('stroke', col);
-  arcS.setAttribute('stroke', backDTI > 50 ? '#e05555' : '#3ecf8e');
-  arcW.setAttribute('stroke', backDTI > 50 ? '#e05555' : '#f5a623');
+  arcS.setAttribute('stroke', backDTI > _lt.backMax ? '#e05555' : '#3ecf8e');
+  arcW.setAttribute('stroke', backDTI > _lt.backMax ? '#e05555' : '#f5a623');
+
+  // ── PULSE + WATERMARK ──
+  const isOver = backDTI > _lt.backMax;
+  const isWarn = !isOver && backDTI > _lt.backWarn;
+  // Watermark stamp
+  const stamp = document.getElementById('ineligible-stamp');
+  if (stamp) stamp.className = 'ineligible-stamp' + (isOver ? ' visible' : '');
+  // Pulse needle
+  const needleEl = document.getElementById('needle');
+  needleEl.style.animation = isOver ? 'pulseRed 1.0s ease-in-out infinite'
+                           : isWarn  ? 'pulseYellow 1.8s ease-in-out infinite' : 'none';
+  // Pulse arc
+  arcW.style.animation = isOver ? 'pulseRed 1.0s ease-in-out infinite'
+                       : isWarn  ? 'pulseYellow 1.8s ease-in-out infinite' : 'none';
+  // Pulse badge
+  const badge = document.getElementById('dti-badge');
+  badge.style.animation = isOver ? 'pulseBadgeRed 1.0s ease-in-out infinite'
+                        : isWarn  ? 'pulseBadgeYellow 1.8s ease-in-out infinite' : 'none';
 
   updateStickyDTI(frontDTI, backDTI);
 }
