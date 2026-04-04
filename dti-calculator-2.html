@@ -2166,7 +2166,7 @@ if (hasParams) {
     if(_r>0)_c.push({l:'Rental Income',v:'$'+Math.round(_r).toLocaleString()+'/mo'});
     document.getElementById('summary-chips').innerHTML=_c.map(c=>'<div class="chip">'+c.l+' <strong>'+c.v+'</strong></div>').join('');
     toggleShowRate();
-    const cs=documentgetElementById('sl-county').value!=='';
+    const cs=document.getElementById('sl-county').value!=='';
     if(cs){unlockSliders();}else{lockSliders();}
     update();
   },200);
