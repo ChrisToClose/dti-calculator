@@ -355,7 +355,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.8</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.9</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1205,9 +1205,8 @@ function updatePMILenderSection() {
     return;
   }
   document.getElementById('pmi-lender-section').style.display = 'block';
-  const loanAmt = price * (1 - down / 100);
-  const ltv     = 100 - down;
-  const isJumbo = loanAmt > JUMBO_LIMIT;
+  // loanAmt and isJumbo already declared above
+  const ltv = 100 - down;
   // FICO tier
   const ficoRadio = document.querySelector('input[name="fico-tier"]:checked');
   const ficoTier  = ficoRadio ? +ficoRadio.value : 760;
@@ -1382,8 +1381,8 @@ function update() {
 
   // Threshold
   // Jumbo indicator in breakdown
-  const loanAmt = price * (1 - down/100);
-  const isJumbo = loanAmt > JUMBO_LIMIT;
+  const _jumboLoan = price * (1 - down/100);
+  const isJumbo = _jumboLoan > JUMBO_LIMIT;
   const jumboNote = document.getElementById('jumbo-breakdown-note');
   if (jumboNote) jumboNote.style.display = isJumbo ? 'block' : 'none';
   const jumboDTI = document.getElementById('jumbo-dti-badge');
@@ -1656,14 +1655,15 @@ document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
 
 // ── SELECT ALL ON FOCUS FOR NUMBER INPUTS ──
-// When user clicks into a number field, select all so typing replaces the value
+// setTimeout needed — browsers (especially Safari/iOS) ignore select() on focus without delay
 document.querySelectorAll('input[type="number"]').forEach(input => {
   input.addEventListener('focus', function() {
-    this.select();
+    const el = this;
+    setTimeout(() => el.select(), 50);
   });
-  // Also handle touch devices
-  input.addEventListener('touchstart', function() {
-    setTimeout(() => this.select(), 50);
+  input.addEventListener('touchend', function() {
+    const el = this;
+    setTimeout(() => el.select(), 50);
   });
 });
 
