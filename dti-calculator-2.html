@@ -629,12 +629,14 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 
   <!-- PMI -->
+  <div id="pmi-section-wrap" style="display:none;">
   <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
   <div class="slider-row" id="pmi-row" style="display:none;">
     <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" data-info="info-pmi">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
     <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="1" value="0"></div>
     <div class="slider-range-labels"><span>$0</span><span>$500</span></div>
   </div>
+  </div><!-- end pmi-section-wrap -->
 
   <!-- FLOOD -->
   <div id="info-flood" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-flood">×</button><strong>What is flood insurance and when is it required?</strong><br>If a property is in a FEMA flood zone, your lender requires flood insurance — mandatory, not optional. Standard homeowners insurance does NOT cover floods. In Florida, many properties near water or low-lying areas require it. Cost ranges from $150–$500+/mo depending on flood risk and elevation.</div>
@@ -1292,10 +1294,10 @@ function update() {
     pmiVal = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
     document.getElementById('pmi-row').style.display  = down >= 20 ? 'none' : 'block';
     document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
+    const _pmiWrap = document.getElementById('pmi-section-wrap');
+    if (_pmiWrap) _pmiWrap.style.display = down >= 20 ? 'none' : 'block';
   }
   updateMILabel();
-  document.getElementById('info-pmi').style.display = down >= 20 ? 'none' : 'block';
-
   // Slider labels
   document.getElementById('val-price').textContent = fmt(price);
   document.getElementById('val-down').textContent  = `${down}%  (${fmt(price*down/100)})`;
