@@ -193,6 +193,15 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 /* ══ ZIP/COUNTY ══ */
 .zip-county-wrap{margin-bottom:20px;}
+.county-autocomplete{position:relative;}
+.county-autocomplete input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;font-weight:500;outline:none;transition:border-color 0.2s;}
+.county-autocomplete input:focus{border-color:var(--teal);}
+.county-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface2);border:1px solid var(--teal);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px var(--shadow);}
+.county-dropdown.open{display:block;}
+.county-option{padding:10px 14px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;}
+.county-option:last-child{border-bottom:none;}
+.county-option:hover,.county-option.highlighted{background:rgba(43,127,164,0.2);color:var(--teal);}
+.county-option .county-mills{font-size:10px;color:var(--muted);margin-left:6px;}
 .loc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 .loc-label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
 .loc-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;}
@@ -593,11 +602,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="zip-status" id="zip-status"></div>
     </div>
     <div id="county-wrap" style="display:none;">
-      <div class="input-wrap" style="margin-bottom:6px;">
-        <input type="text" id="county-search" placeholder="Type to filter e.g. Osceola..." style="font-size:13px;" autocomplete="off">
-      </div>
-      <div class="county-select-wrap">
-        <select id="sl-county" size="6" style="height:auto;">
+      <!-- Hidden select keeps the value for all existing JS -->
+      <select id="sl-county" style="display:none;">
           <option value="">— Select County —</option>
           <option value="12.5">Alachua — ~12.5 mills</option><option value="11.0">Baker — ~11.0 mills</option>
           <option value="13.5">Bay — ~13.5 mills</option><option value="11.5">Bradford — ~11.5 mills</option>
@@ -634,6 +640,11 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <option value="11.0">Wakulla — ~11.0 mills</option><option value="11.0">Walton — ~11.0 mills</option>
           <option value="10.5">Washington — ~10.5 mills</option>
         </select>
+      <!-- Autocomplete UI -->
+      <div class="county-autocomplete">
+        <input type="text" id="county-text" placeholder="Type county name e.g. Osceola..." autocomplete="off">
+        <div class="county-dropdown" id="county-dropdown"></div>
+      </div>
       </div>
     </div>
   </div>
@@ -1107,7 +1118,15 @@ function switchZipCounty(mode) {
   document.getElementById('county-wrap').style.display = mode === 'county' ? 'block' : 'none';
   document.getElementById('tab-zip').classList.toggle('active',    mode === 'zip');
   document.getElementById('tab-county').classList.toggle('active', mode === 'county');
-  if (mode === 'county') { document.getElementById('zip-status').textContent = ''; document.getElementById('zip-input').value = ''; }
+  if (mode === 'county') {
+    document.getElementById('zip-status').textContent = '';
+    document.getElementById('zip-input').value = '';
+    // Focus the autocomplete input
+    setTimeout(() => {
+      const ci = document.getElementById('county-text');
+      if (ci) ci.focus();
+    }, 50);
+  }
 }
 
 function onZipInput() {
@@ -1546,13 +1565,14 @@ function update() {
       stamp.className = 'ineligible-stamp';
       if (window._stampTimer) { clearTimeout(window._stampTimer); window._stampTimer = null; }
     } else if (!stamp.classList.contains('visible') && !window._stampTimer) {
-      // Start 5-second countdown only if not already showing or counting
+      // Delay depends on view — 10s for lender, 5s for client
+      const isClientView = document.getElementById('lender-panel').style.display === 'none';
+      const stampDelay = isClientView ? 5000 : 10000;
       window._stampTimer = setTimeout(() => {
-        // Confirm still over limit before showing
         const s = document.getElementById('ineligible-stamp');
         if (s) s.className = 'ineligible-stamp visible';
         window._stampTimer = null;
-      }, 5000);
+      }, stampDelay);
     }
   }
   // Pulse needle
@@ -1908,35 +1928,114 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
   }
 })();
 
-// ── COUNTY SEARCH FILTER ──
-const _countySearch = document.getElementById('county-search');
-if (_countySearch) {
-  _countySearch.addEventListener('input', function() {
-    const q = this.value.toLowerCase();
+// ── COUNTY AUTOCOMPLETE ──
+(function() {
+  let highlightIdx = -1;
+
+  function buildCountyOptions() {
     const sel = document.getElementById('sl-county');
-    Array.from(sel.options).forEach(opt => {
-      if (opt.value === '') { opt.style.display = ''; return; }
-      opt.style.display = opt.text.toLowerCase().includes(q) ? '' : 'none';
+    if (!sel) return [];
+    return Array.from(sel.options)
+      .filter(o => o.value !== '')
+      .map(o => ({
+        value: o.value,
+        name: o.text.split(' —')[0].trim(),
+        mills: o.value,
+        label: o.text
+      }));
+  }
+
+  function selectCounty(opt) {
+    const sel = document.getElementById('sl-county');
+    const input = document.getElementById('county-text');
+    const dd = document.getElementById('county-dropdown');
+    if (!sel || !input || !dd) return;
+    sel.value = opt.value;
+    input.value = opt.name;
+    dd.className = 'county-dropdown';
+    dd.innerHTML = '';
+    highlightIdx = -1;
+    onCountyChange();
+  }
+
+  function showDropdown(matches) {
+    const dd = document.getElementById('county-dropdown');
+    if (!dd) return;
+    if (matches.length === 0) {
+      dd.className = 'county-dropdown';
+      return;
+    }
+    dd.innerHTML = matches.map((m, i) =>
+      '<div class="county-option" data-idx="' + i + '">' +
+        m.name +
+        '<span class="county-mills">~' + m.mills + ' mills</span>' +
+      '</div>'
+    ).join('');
+    dd.className = 'county-dropdown open';
+    highlightIdx = -1;
+    // Click to select
+    dd.querySelectorAll('.county-option').forEach((el, i) => {
+      el.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        selectCounty(matches[i]);
+      });
     });
-    // Auto-select if only one visible match
-    const visible = Array.from(sel.options).filter(o => o.value !== '' && o.style.display !== 'none');
-    if (visible.length === 1) {
-      sel.value = visible[0].value;
-      onCountyChange();
-    }
-  });
-  _countySearch.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      const sel = document.getElementById('sl-county');
-      const visible = Array.from(sel.options).filter(o => o.value !== '' && o.style.display !== 'none');
-      if (visible.length > 0) {
-        sel.value = visible[0].value;
-        onCountyChange();
-        this.value = visible[0].text.split(' —')[0];
+  }
+
+  function initCountyAutocomplete() {
+    const input = document.getElementById('county-text');
+    const dd    = document.getElementById('county-dropdown');
+    if (!input || !dd) return;
+    const ALL = buildCountyOptions();
+
+    input.addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      if (!q) { dd.className = 'county-dropdown'; return; }
+      const matches = ALL.filter(o => o.name.toLowerCase().startsWith(q))
+        .concat(ALL.filter(o => !o.name.toLowerCase().startsWith(q) && o.name.toLowerCase().includes(q)));
+      showDropdown(matches);
+    });
+
+    input.addEventListener('keydown', function(e) {
+      const items = dd.querySelectorAll('.county-option');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightIdx = Math.min(highlightIdx+1, items.length-1);
+        items.forEach((el,i) => el.classList.toggle('highlighted', i === highlightIdx));
+        items[highlightIdx] && items[highlightIdx].scrollIntoView({block:'nearest'});
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightIdx = Math.max(highlightIdx-1, 0);
+        items.forEach((el,i) => el.classList.toggle('highlighted', i === highlightIdx));
+        items[highlightIdx] && items[highlightIdx].scrollIntoView({block:'nearest'});
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const idx = highlightIdx >= 0 ? highlightIdx : 0;
+        const q = this.value.toLowerCase().trim();
+        const matches = ALL.filter(o => o.name.toLowerCase().startsWith(q))
+          .concat(ALL.filter(o => !o.name.toLowerCase().startsWith(q) && o.name.toLowerCase().includes(q)));
+        if (matches[idx]) selectCounty(matches[idx]);
+      } else if (e.key === 'Escape') {
+        dd.className = 'county-dropdown';
       }
-    }
-  });
-}
+    });
+
+    input.addEventListener('blur', function() {
+      setTimeout(() => { dd.className = 'county-dropdown'; }, 150);
+    });
+
+    input.addEventListener('focus', function() {
+      if (this.value) this.dispatchEvent(new Event('input'));
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCountyAutocomplete);
+  } else {
+    setTimeout(initCountyAutocomplete, 200);
+  }
+})();
 
 // ── FIX EMAIL LINK (Cloudflare encodes mailto: in HTML) ──
 const _emailLink = document.getElementById('apm-email-link');
