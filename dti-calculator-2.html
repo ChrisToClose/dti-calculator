@@ -1658,7 +1658,23 @@ function generateLink() {
   if(document.getElementById('show-rate-check').checked) params.showrate='1';
   const p=new URLSearchParams(params);
   const url = BASE_URL + '?' + p.toString();
-  navigator.clipboard.writeText(url).catch(()=>{});
+  // Copy to clipboard — with fallback for local file:// testing
+  const _copyToClipboard = (text) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    } else {
+      // Fallback: create temp textarea
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(ta);
+      return Promise.resolve();
+    }
+  };
+  _copyToClipboard(url).catch(()=>{});
   const box = document.getElementById('link-copied');
   document.getElementById('link-display').textContent = url;
   box.style.display = 'block';
