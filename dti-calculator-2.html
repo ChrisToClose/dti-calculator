@@ -350,7 +350,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   content:'DTI OVER LIMIT';
   position:absolute;
   font-family:'DM Mono',monospace;
-  font-size:clamp(40px,8vw,72px);
+  font-size:clamp(22px,5vw,52px);
   font-weight:700;
   letter-spacing:8px;
   color:rgba(224,85,85,0.12);
@@ -1555,22 +1555,35 @@ function update() {
   // ── PULSE + WATERMARK ──
   const isOver = backDTI > _lt.backMax;
   const isWarn = !isOver && backDTI > _lt.backWarn;
-  // Watermark stamp — delayed 5 seconds, clears immediately if DTI drops
+  // Watermark stamp — delayed 5s client / 10s lender, clears instantly if DTI drops
   const stamp = document.getElementById('ineligible-stamp');
   if (stamp) {
     if (!isOver) {
-      // Clear immediately when back in range
+      // Back in range — clear stamp and reset everything
       stamp.className = 'ineligible-stamp';
       if (window._stampTimer) { clearTimeout(window._stampTimer); window._stampTimer = null; }
-    } else if (!stamp.classList.contains('visible') && !window._stampTimer) {
-      // Delay depends on view — 10s for lender, 5s for client
-      const isClientView = document.getElementById('lender-panel').style.display === 'none';
-      const stampDelay = isClientView ? 5000 : 10000;
-      window._stampTimer = setTimeout(() => {
-        const s = document.getElementById('ineligible-stamp');
-        if (s) s.className = 'ineligible-stamp visible';
-        window._stampTimer = null;
-      }, stampDelay);
+      window._stampOverSince = null;
+    } else {
+      // Gone over limit
+      if (!window._stampOverSince) {
+        // First time we crossed the limit — record the timestamp
+        window._stampOverSince = Date.now();
+      }
+      if (!stamp.classList.contains('visible') && !window._stampTimer) {
+        const isClientView = document.getElementById('lender-panel').style.display === 'none';
+        const stampDelay = isClientView ? 5000 : 10000;
+        // Calculate remaining time (in case update() fired multiple times)
+        const elapsed = Date.now() - window._stampOverSince;
+        const remaining = Math.max(0, stampDelay - elapsed);
+        window._stampTimer = setTimeout(() => {
+          // Only show if still over limit
+          if (window._stampOverSince) {
+            const s = document.getElementById('ineligible-stamp');
+            if (s) s.className = 'ineligible-stamp visible';
+          }
+          window._stampTimer = null;
+        }, remaining);
+      }
     }
   }
   // Pulse needle
