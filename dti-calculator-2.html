@@ -355,7 +355,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.9</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.0</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -414,50 +414,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <div class="show-rate-text">Show interest rate to client</div>
           <div class="show-rate-sub">By default the rate is hidden — check to display it on the client view</div>
         </div>
-      </div>
-    </div>
-
-    <!-- JUMBO INDICATOR — shows any time loan > $726,200 regardless of PMI -->
-    <div class="field-group full" id="jumbo-only-note" style="display:none;">
-      <div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:10px;padding:12px 14px;">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e05555;margin-bottom:4px;">⚠ Jumbo Loan</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.6;">Loan amount exceeds $726,200. Standard conforming guidelines do not apply — verify program eligibility, rate, and MI requirements with your actual quote.</div>
-      </div>
-    </div>
-
-    <!-- PMI ESTIMATOR — lender side only -->
-    <div class="field-group full" id="pmi-lender-section" style="display:none;">
-      <div style="background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:12px;">
-          🔒 PMI Estimator <span id="jumbo-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:6px;">JUMBO</span>
-        </div>
-        <div id="jumbo-warning" style="display:none;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#e05555;line-height:1.6;">
-          ⚠ <strong>Jumbo loan detected</strong> (loan &gt; $726,200). PMI rates on jumbos vary significantly by lender and MI company — treat this as a rough estimate only and confirm with your actual MI quote.
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500;">Client FICO Score Tier</div>
-        <div id="fico-radios" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="760" checked> <span>760+</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="740"> <span>740-759</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="720"> <span>720-739</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="700"> <span>700-719</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="680"> <span>680-699</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="660"> <span>660-679</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="640"> <span>640-659</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="620"> <span>620-639</span></label>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:9px;padding:10px 14px;margin-bottom:10px;">
-          <div>
-            <div style="font-size:11px;color:var(--muted);">Estimated Monthly PMI</div>
-            <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--text);" id="pmi-estimate-val">—</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px;color:var(--muted);">Annual Rate</div>
-            <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--teal);" id="pmi-rate-display">—</div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Have an actual MI quote? Override:</div>
-        <div class="input-wrap"><span class="pfx">$</span><input type="number" id="pmi-override-lender" min="0" step="1" placeholder="e.g. 100"><span class="sfx">/ mo</span></div>
-        <div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:5px;">Leave blank to use the estimate above</div>
       </div>
     </div>
 
@@ -626,11 +582,57 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="slider-range-labels"><span>$0</span><span>$1,500</span></div>
   </div>
 
+    <!-- JUMBO INDICATOR — shows any time loan > $726,200 regardless of PMI -->
+    <div class="field-group full" id="jumbo-only-note" style="display:none;">
+      <div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:10px;padding:12px 14px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e05555;margin-bottom:4px;">⚠ Jumbo Loan</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;">Loan amount exceeds $726,200. Standard conforming guidelines do not apply — verify program eligibility, rate, and MI requirements with your actual quote.</div>
+      </div>
+    </div>
+
+    <!-- PMI ESTIMATOR — lender side only -->
+    <div class="field-group full" id="pmi-lender-section" style="display:none;">
+      <div style="background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:12px;">
+          🔒 PMI Estimator <span id="jumbo-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:6px;">JUMBO</span>
+        </div>
+        <div id="jumbo-warning" style="display:none;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#e05555;line-height:1.6;">
+          ⚠ <strong>Jumbo loan detected</strong> (loan &gt; $726,200). PMI rates on jumbos vary significantly by lender and MI company — treat this as a rough estimate only and confirm with your actual MI quote.
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500;">Client FICO Score Tier</div>
+        <div id="fico-radios" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="760" checked> <span>760+</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="740"> <span>740-759</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="720"> <span>720-739</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="700"> <span>700-719</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="680"> <span>680-699</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="660"> <span>660-679</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="640"> <span>640-659</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="620"> <span>620-639</span></label>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:9px;padding:10px 14px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:11px;color:var(--muted);">Estimated Monthly PMI</div>
+            <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--text);" id="pmi-estimate-val">—</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:var(--muted);">Annual Rate</div>
+            <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--teal);" id="pmi-rate-display">—</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Have an actual MI quote? Override:</div>
+        <div class="input-wrap"><span class="pfx">$</span><input type="number" id="pmi-override-lender" min="0" step="1" placeholder="e.g. 100"><span class="sfx">/ mo</span></div>
+        <div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:5px;">Leave blank to use the estimate above</div>
+      </div>
+    </div>
+
+
+
   <!-- PMI -->
-  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;display:none;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
+  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
   <div class="slider-row" id="pmi-row" style="display:none;">
     <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" data-info="info-pmi">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
-    <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="10" value="0"></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="1" value="0"></div>
     <div class="slider-range-labels"><span>$0</span><span>$500</span></div>
   </div>
 
@@ -1132,6 +1134,9 @@ let currentLoanType = 'conv';
 
 function setLoanType(lt) {
   currentLoanType = lt;
+  // Reset PMI manual flag so auto-estimate takes over for new loan type
+  const slPmi = document.getElementById('sl-pmi');
+  if (slPmi) slPmi.dataset.manual = '';
   const cfg = LOAN_TYPES[lt];
   // Update button active states
   document.querySelectorAll('.loan-type-btn').forEach(b => {
@@ -1200,11 +1205,9 @@ function updatePMILenderSection() {
   // Always show jumbo note if applicable
   const jOn = document.getElementById('jumbo-only-note');
   if (jOn) jOn.style.display = isJumbo ? 'block' : 'none';
-  if (down >= 20) {
-    document.getElementById('pmi-lender-section').style.display = 'none';
-    return;
-  }
-  document.getElementById('pmi-lender-section').style.display = 'block';
+  // Only show PMI/FICO section when down < 20%
+  document.getElementById('pmi-lender-section').style.display = down >= 20 ? 'none' : 'block';
+  if (down >= 20) return;
   // loanAmt and isJumbo already declared above
   const ltv = 100 - down;
   // FICO tier
@@ -1218,13 +1221,12 @@ function updatePMILenderSection() {
   // Display
   document.getElementById('pmi-rate-display').textContent   = annualRate.toFixed(2) + '% / yr';
   document.getElementById('pmi-estimate-val').textContent   = '$' + estimated + '/mo';
-  // Sync to client PMI slider — override takes priority
+  // Sync to client PMI slider — manual adjustment or override takes priority
   const override = +document.getElementById('pmi-override-lender').value;
   const pmiVal   = override > 0 ? override : estimated;
   const slPmi    = document.getElementById('sl-pmi');
-  if (slPmi) {
+  if (slPmi && !slPmi.dataset.manual) {
     slPmi.value = Math.min(pmiVal, 500);
-    // Update fill
     const pct = (Math.min(pmiVal,500) / 500) * 100;
     const fill = document.getElementById('fill-pmi');
     if (fill) fill.style.width = pct + '%';
@@ -1275,16 +1277,16 @@ function update() {
     pmiVal = Math.round(fhaLoan * 0.0055 / 12);
     document.getElementById('pmi-row').style.display  = 'block';
     document.getElementById('pmi-brow').style.display = 'flex';
-    const slPmi = document.getElementById('sl-pmi');
-    if (slPmi) slPmi.value = Math.min(pmiVal, 500);
+    const slPmiFha = document.getElementById('sl-pmi');
+    if (slPmiFha && !slPmiFha.dataset.manual) slPmiFha.value = Math.min(pmiVal, 500);
   } else if (currentLoanType === 'usda') {
     // USDA annual fee: 0.35%/yr monthly
     const usdaLoan = price * (1 - down/100);
     pmiVal = Math.round(usdaLoan * 0.0035 / 12);
     document.getElementById('pmi-row').style.display  = 'block';
     document.getElementById('pmi-brow').style.display = 'flex';
-    const slPmi = document.getElementById('sl-pmi');
-    if (slPmi) slPmi.value = Math.min(pmiVal, 500);
+    const slPmiUsda = document.getElementById('sl-pmi');
+    if (slPmiUsda && !slPmiUsda.dataset.manual) slPmiUsda.value = Math.min(pmiVal, 500);
   } else {
     // Conventional PMI
     pmiVal = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
@@ -1650,6 +1652,7 @@ document.getElementById('in-rate').addEventListener('input',()=>{update();toggle
   document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();updatePMILenderSection();update();});
 });
 document.getElementById('sl-ins').addEventListener('input',()=>{document.getElementById('sl-ins').dataset.manual='yes';update();});
+document.getElementById('sl-pmi').addEventListener('input',()=>{document.getElementById('sl-pmi').dataset.manual='yes';update();});
 document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
