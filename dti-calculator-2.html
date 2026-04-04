@@ -278,6 +278,17 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .fadein{animation:fadeUp 0.4s ease both;}
 
+/* ── LOAN TYPE SELECTOR ── */
+.loan-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.loan-type-btn{flex:1;min-width:70px;padding:8px 6px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;cursor:pointer;text-align:center;transition:all 0.2s;}
+.loan-type-btn:hover{border-color:var(--teal);color:var(--text);}
+.loan-type-btn.active{border-color:var(--teal);background:var(--teal);color:#fff;}
+.loan-type-btn.active.fha{background:#C0392B;border-color:#C0392B;}
+.loan-type-btn.active.va{background:#145A8A;border-color:#145A8A;}
+.loan-type-btn.active.usda{background:#27AE60;border-color:#27AE60;}
+.loan-note-box{font-size:11px;color:var(--muted);background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.2);border-radius:8px;padding:8px 12px;margin-top:6px;line-height:1.6;display:none;}
+.loan-note-box.visible{display:block;}
+
 /* ── FICO RADIO BUTTONS ── */
 .fico-radio{display:flex;align-items:center;gap:5px;cursor:pointer;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);transition:all 0.15s;white-space:nowrap;}
 .fico-radio:hover{border-color:var(--teal);color:var(--text);}
@@ -344,7 +355,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.5</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v5.8</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -362,6 +373,27 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <!-- ══ LENDER PANEL ══ -->
 <div id="lender-panel" class="panel fadein">
   <div class="section-title">Client Financial Profile <span class="badge badge-lender">Lender Only</span></div>
+
+  <!-- LOAN TYPE SELECTOR -->
+  <div style="margin-bottom:18px;">
+    <div style="font-size:12px;color:var(--muted);font-weight:500;margin-bottom:8px;">Loan Type</div>
+    <div class="loan-type-row">
+      <button class="loan-type-btn active" id="lt-conv"  data-lt="conv">CONV</button>
+      <button class="loan-type-btn fha"    id="lt-fha"   data-lt="fha">FHA</button>
+      <button class="loan-type-btn va"     id="lt-va"    data-lt="va">VA</button>
+      <button class="loan-type-btn usda"   id="lt-usda"  data-lt="usda">USDA</button>
+    </div>
+    <div class="loan-note-box" id="loan-note-fha">
+      <strong style="color:#C0392B;">FHA:</strong> Back-end limit 57% (AUS). MIP replaces PMI — upfront 1.75% (financed) + 0.55%/yr monthly. Front-end guideline: 31%.
+    </div>
+    <div class="loan-note-box" id="loan-note-va">
+      <strong style="color:#145A8A;">VA:</strong> No hard DTI cap — residual income governs. Guideline is 41%. No monthly mortgage insurance. Funding fee applies at closing (not monthly).
+    </div>
+    <div class="loan-note-box" id="loan-note-usda">
+      <strong style="color:#27AE60;">USDA:</strong> Back-end limit 46% (GUS). Annual guarantee fee 0.35%/yr (monthly). Income and geographic eligibility limits apply.
+    </div>
+  </div>
+
   <div class="field-grid">
     <div class="field-group full">
       <div class="field-label">Gross Monthly Income</div>
@@ -382,6 +414,14 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <div class="show-rate-text">Show interest rate to client</div>
           <div class="show-rate-sub">By default the rate is hidden — check to display it on the client view</div>
         </div>
+      </div>
+    </div>
+
+    <!-- JUMBO INDICATOR — shows any time loan > $726,200 regardless of PMI -->
+    <div class="field-group full" id="jumbo-only-note" style="display:none;">
+      <div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:10px;padding:12px 14px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e05555;margin-bottom:4px;">⚠ Jumbo Loan</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;">Loan amount exceeds $726,200. Standard conforming guidelines do not apply — verify program eligibility, rate, and MI requirements with your actual quote.</div>
       </div>
     </div>
 
@@ -679,6 +719,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   <div class="gauge-panel" id="gauge-anchor">
     <div class="gauge-eyebrow">
       Debt-to-Income
+      <span id="jumbo-dti-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:4px;font-family:'DM Mono',monospace;letter-spacing:1px;">JUMBO</span>
       <button class="info-btn" data-info="info-dti" style="border-color:var(--teal);">i</button>
     </div>
     <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" data-info="info-dti">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
@@ -707,6 +748,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
     <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
     <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
+      <div class="brow" id="va-no-mi-note" style="display:none;"><span class="bk" style="color:#145A8A;">VA — No monthly MI</span><span class="bv" style="color:#145A8A;font-size:11px;">Funding fee at closing</span></div>
     <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
     <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
     <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
@@ -1047,6 +1089,82 @@ function toggleShowRate() {
 }
 
 // ── HELPER ──
+// ── LOAN TYPE CONFIG ──
+const LOAN_TYPES = {
+  conv: {
+    label: 'Conventional',
+    frontEnd: 28,
+    backWarn: 43,
+    backMax:  50,
+    mipLabel: 'PMI',
+    noMI: false,
+    vaLoan: false,
+  },
+  fha: {
+    label: 'FHA',
+    frontEnd: 31,
+    backWarn: 43,
+    backMax:  57,
+    mipLabel: 'MIP',
+    noMI: false,
+    vaLoan: false,
+  },
+  va: {
+    label: 'VA',
+    frontEnd: null,
+    backWarn: 41,
+    backMax:  50, // informational only — no hard cap
+    mipLabel: null,
+    noMI: true,
+    vaLoan: true,
+  },
+  usda: {
+    label: 'USDA',
+    frontEnd: 29,
+    backWarn: 41,
+    backMax:  46,
+    mipLabel: 'USDA Fee',
+    noMI: false,
+    vaLoan: false,
+  },
+};
+let currentLoanType = 'conv';
+
+function setLoanType(lt) {
+  currentLoanType = lt;
+  const cfg = LOAN_TYPES[lt];
+  // Update button active states
+  document.querySelectorAll('.loan-type-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-lt') === lt);
+  });
+  // Show/hide notes
+  ['fha','va','usda'].forEach(t => {
+    const n = document.getElementById('loan-note-' + t);
+    if (n) n.className = 'loan-note-box' + (t === lt ? ' visible' : '');
+  });
+  // Update MI label in breakdown
+  updateMILabel();
+  // Update PMI lender section visibility
+  updatePMILenderSection();
+  update();
+}
+
+function updateMILabel() {
+  const cfg = LOAN_TYPES[currentLoanType];
+  const pmiRow   = document.getElementById('pmi-brow');
+  const pmiLabel = pmiRow ? pmiRow.querySelector('.bk') : null;
+  const vaNote   = document.getElementById('va-no-mi-note');
+
+  if (cfg.noMI) {
+    // VA — hide PMI row, show no-MI note
+    if (pmiRow) pmiRow.style.display = 'none';
+    if (vaNote) vaNote.style.display = 'flex';
+  } else {
+    if (vaNote) vaNote.style.display = 'none';
+    if (pmiLabel) pmiLabel.textContent = cfg.mipLabel || 'PMI';
+  }
+}
+
 // ── PMI RATE TABLE (MGIC-calibrated, annual %) ──
 // [FICO tier start]: [85-90% LTV, 90-95% LTV, 95-97% LTV]
 const PMI_RATES = {
@@ -1077,6 +1195,11 @@ function calcPMIEstimate(loanAmt, ficoTier, ltv) {
 function updatePMILenderSection() {
   const price = +document.getElementById('sl-price').value || 0;
   const down  = +document.getElementById('sl-down').value  || 20;
+  const loanAmt = price * (1 - down / 100);
+  const isJumbo = loanAmt > JUMBO_LIMIT;
+  // Always show jumbo note if applicable
+  const jOn = document.getElementById('jumbo-only-note');
+  if (jOn) jOn.style.display = isJumbo ? 'block' : 'none';
   if (down >= 20) {
     document.getElementById('pmi-lender-section').style.display = 'none';
     return;
@@ -1139,9 +1262,37 @@ function update() {
   const debts  = getLenderVal('in-debts')  || 0;
   const income = getLenderVal('in-income') || 1;
 
-  // PMI visibility
-  document.getElementById('pmi-row').style.display  = down >= 20 ? 'none' : 'block';
-  document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
+  // PMI / MIP / USDA fee visibility
+  const _ltPMI = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  let pmiVal = +document.getElementById('sl-pmi').value;
+  if (_ltPMI.noMI) {
+    // VA — no MI
+    pmiVal = 0;
+    document.getElementById('pmi-row').style.display  = 'none';
+    document.getElementById('pmi-brow').style.display = 'none';
+  } else if (currentLoanType === 'fha') {
+    // FHA MIP: 0.55%/yr monthly regardless of down payment
+    const fhaLoan = price * (1 - down/100);
+    pmiVal = Math.round(fhaLoan * 0.0055 / 12);
+    document.getElementById('pmi-row').style.display  = 'block';
+    document.getElementById('pmi-brow').style.display = 'flex';
+    const slPmi = document.getElementById('sl-pmi');
+    if (slPmi) slPmi.value = Math.min(pmiVal, 500);
+  } else if (currentLoanType === 'usda') {
+    // USDA annual fee: 0.35%/yr monthly
+    const usdaLoan = price * (1 - down/100);
+    pmiVal = Math.round(usdaLoan * 0.0035 / 12);
+    document.getElementById('pmi-row').style.display  = 'block';
+    document.getElementById('pmi-brow').style.display = 'flex';
+    const slPmi = document.getElementById('sl-pmi');
+    if (slPmi) slPmi.value = Math.min(pmiVal, 500);
+  } else {
+    // Conventional PMI
+    pmiVal = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
+    document.getElementById('pmi-row').style.display  = down >= 20 ? 'none' : 'block';
+    document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
+  }
+  updateMILabel();
   document.getElementById('info-pmi').style.display = down >= 20 ? 'none' : 'block';
 
   // Slider labels
@@ -1234,29 +1385,43 @@ function update() {
   const loanAmt = price * (1 - down/100);
   const isJumbo = loanAmt > JUMBO_LIMIT;
   const jumboNote = document.getElementById('jumbo-breakdown-note');
-  if (jumboNote) jumboNote.style.display = (isJumbo && down < 20) ? 'block' : 'none';
+  if (jumboNote) jumboNote.style.display = isJumbo ? 'block' : 'none';
+  const jumboDTI = document.getElementById('jumbo-dti-badge');
+  if (jumboDTI) jumboDTI.style.display = isJumbo ? 'inline' : 'none';
 
-  const maxPay = income * 0.5;
-  document.getElementById('thresh-bar').className = backDTI > 50 ? 'thresh-bar td' : 'thresh-bar ts';
-  document.getElementById('thresh-text').textContent = backDTI > 50
-    ? `Over limit by ${fmt(total-maxPay)}/mo — max: ${fmt(maxPay)}/mo`
-    : `Max qualifying back-end: ${fmt(maxPay)}/mo (50% DTI)`;
+  const ltCfg   = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const backMax  = ltCfg.backMax;
+  const backWarn = ltCfg.backWarn;
+  const maxPay   = income * (backMax / 100);
+  const warnPay  = income * (backWarn / 100);
+  document.getElementById('thresh-bar').className = backDTI > backMax ? 'thresh-bar td' : 'thresh-bar ts';
+  document.getElementById('thresh-text').textContent = backDTI > backMax
+    ? `Over ${ltCfg.label} limit by ${fmt(total-maxPay)}/mo — max: ${fmt(maxPay)}/mo (${backMax}%)`
+    : `Max qualifying back-end: ${fmt(maxPay)}/mo (${backMax}% — ${ltCfg.label})`;
 
   // GAUGE — always green/yellow/red
-  const arcLen = 251.2;
-  const angle  = -90 + (Math.min(backDTI,100)/100)*180;
+  const arcLen   = 251.2;
+  const angle    = -90 + (Math.min(backDTI,100)/100)*180;
   document.getElementById('needle').setAttribute('transform', `rotate(${angle},90,100)`);
-  const safe = Math.min(backDTI,43)/100*arcLen;
-  const warn = backDTI > 43 ? Math.min(backDTI-43,7)/100*arcLen : 0;
+  const _ltc  = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const safe  = Math.min(backDTI,_ltc.backWarn)/_ltc.backMax*arcLen;
+  const warnRange = _ltc.backMax - _ltc.backWarn;
+  const warn  = backDTI > _ltc.backWarn ? Math.min(backDTI-_ltc.backWarn, warnRange)/_ltc.backMax*arcLen : 0;
   const arcS = document.getElementById('arc-safe');
   const arcW = document.getElementById('arc-warn');
   arcS.style.strokeDashoffset = arcLen - safe;
   arcW.style.strokeDasharray  = `${warn} ${arcLen-warn}`;
   arcW.style.strokeDashoffset = arcLen - safe;
 
-  const col = backDTI > 50 ? '#e05555' : backDTI > 43 ? '#f5a623' : '#3ecf8e';
-  const cls = backDTI > 50 ? 'b-danger' : backDTI > 43 ? 'b-warn' : 'b-safe';
-  const txt = backDTI > 50 ? 'Ineligible — Back-End Over 50%' : backDTI > 43 ? 'Caution — Approaching Limit' : 'Eligible — Looking Good';
+  const _lt  = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const col  = backDTI > _lt.backMax  ? '#e05555' : backDTI > _lt.backWarn ? '#f5a623' : '#3ecf8e';
+  const cls  = backDTI > _lt.backMax  ? 'b-danger' : backDTI > _lt.backWarn ? 'b-warn' : 'b-safe';
+  const _vaWarning = _lt.vaLoan && backDTI > _lt.backWarn ? ' — Residual Income Required' : '';
+  const txt  = backDTI > _lt.backMax
+    ? `Ineligible — ${_lt.label} limit ${_lt.backMax}%`
+    : backDTI > _lt.backWarn
+      ? `Caution — Over ${_lt.backWarn}% guideline${_vaWarning}`
+      : `Eligible — Looking Good (${_lt.label})`;
 
   document.getElementById('front-dti').textContent = frontDTI.toFixed(3) + '%';
   document.getElementById('back-dti').textContent  = backDTI.toFixed(3)  + '%';
@@ -1489,6 +1654,23 @@ document.getElementById('sl-ins').addEventListener('input',()=>{document.getElem
 document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
+
+// ── SELECT ALL ON FOCUS FOR NUMBER INPUTS ──
+// When user clicks into a number field, select all so typing replaces the value
+document.querySelectorAll('input[type="number"]').forEach(input => {
+  input.addEventListener('focus', function() {
+    this.select();
+  });
+  // Also handle touch devices
+  input.addEventListener('touchstart', function() {
+    setTimeout(() => this.select(), 50);
+  });
+});
+
+// ── WIRE LOAN TYPE BUTTONS ──
+document.querySelectorAll('.loan-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => setLoanType(btn.getAttribute('data-lt')));
+});
 
 // ── WIRE PMI FICO RADIOS ──
 document.querySelectorAll('input[name="fico-tier"]').forEach(r =>
