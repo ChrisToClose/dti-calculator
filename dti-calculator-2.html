@@ -47,8 +47,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .apm-photo{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--yellow);box-shadow:0 0 0 4px rgba(245,166,35,0.25);flex-shrink:0;}
 .apm-info{flex:1;min-width:0;}
 .apm-name{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:3px;}
-.apm-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
-.apm-nmls{font-size:13px;color:rgba(255,255,255,0.85);font-family:'DM Mono',monospace;margin-bottom:10px;}
+.apm-title{font-family:'DM Mono',monospace;font-size:16px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
+.apm-nmls{font-size:10px;color:rgba(255,255,255,0.65);font-family:'DM Mono',monospace;margin-bottom:10px;}
 .apm-contacts{display:flex;flex-wrap:wrap;gap:14px;}
 .apm-contact{font-size:18px;color:rgba(255,255,255,0.98);display:flex;align-items:center;gap:5px;text-decoration:none;transition:color 0.15s;white-space:nowrap;}
 .apm-contact:hover{color:var(--yellow);}
@@ -370,9 +370,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
           727.642.1374
         </a>
-        <a class="apm-contact" href="/cdn-cgi/l/email-protection#99fafeebfcfcf7f0fdfefcd9f8e9f4f6ebedfef8fefcb7faf6f4">
+        <a class="apm-contact" id="apm-email-link" href="#">>
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span class="__cf_email__" data-cfemail="1c7f7b6e79797275787b795c7d6c71736e687b7d7b79327f7371">[email&#160;protected]</span>
+          cgreenidge@apmortgage.com
         </a>
         <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -553,13 +553,13 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <span class="rate-display-label">Interest Rate</span>
     <span class="rate-display-val" id="rate-display-val">—</span>
   </div>
+<!-- CLIENT GAUGE TOP -->
+<div id="client-gauge-top" style="display:none;margin-bottom:16px;"><div class="gauge-panel"><div style="display:grid;grid-template-columns:160px 1fr 1fr;align-items:center;gap:16px;padding:4px 0;"><div><svg viewBox="0 0 180 100" width="160" height="90"><path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="var(--border)" stroke-width="14" stroke-linecap="round"/><path id="cgt-arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2 251.2" stroke-dashoffset="251.2"/><path id="cgt-arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 251.2" stroke-dashoffset="251.2"/><line id="cgt-needle" x1="90" y1="100" x2="90" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)"/></svg></div><div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Front-End</div><div id="cgt-front" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#3ecf8e;">--</div><div style="font-size:10px;color:var(--muted);">Housing only</div></div><div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Back-End</div><div id="cgt-back" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#3ecf8e;">--</div><div style="font-size:10px;color:var(--muted);">All obligations</div><div id="cgt-badge" class="dti-badge b-safe" style="margin-top:6px;display:inline-block;font-size:10px;padding:3px 10px;"><span id="cgt-badge-text">--</span></div></div></div></div></div>
 </div>
 
 <!-- ══ CLIENT SLIDERS ══ -->
 <div class="panel fadein" id="client-panel">
 
-<!-- CLIENT GAUGE TOP -->
-<div id="client-gauge-top" style="display:none;margin-bottom:16px;"><div class="gauge-panel"><div style="display:grid;grid-template-columns:160px 1fr 1fr;align-items:center;gap:16px;padding:4px 0;"><div><svg viewBox="0 0 180 100" width="160" height="90"><path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="var(--border)" stroke-width="14" stroke-linecap="round"/><path id="cgt-arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2 251.2" stroke-dashoffset="251.2"/><path id="cgt-arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 251.2" stroke-dashoffset="251.2"/><line id="cgt-needle" x1="90" y1="100" x2="90" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)"/></svg></div><div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Front-End</div><div id="cgt-front" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#3ecf8e;">--</div><div style="font-size:10px;color:var(--muted);">Housing only</div></div><div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Back-End</div><div id="cgt-back" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#3ecf8e;">--</div><div style="font-size:10px;color:var(--muted);">All obligations</div><div id="cgt-badge" class="dti-badge b-safe" style="margin-top:6px;display:inline-block;font-size:10px;padding:3px 10px;"><span id="cgt-badge-text">--</span></div></div></div></div></div>
 
   <div class="section-title">Explore Properties <span class="badge badge-client">Move the sliders</span></div>
 
