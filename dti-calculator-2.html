@@ -170,6 +170,13 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 /* ══ ZIP/COUNTY ══ */
 .zip-county-wrap{margin-bottom:20px;}
+.county-autocomplete{position:relative;margin-top:8px;}
+.county-autocomplete input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;font-weight:500;outline:none;transition:border-color 0.2s;box-sizing:border-box;}
+.county-autocomplete input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(43,127,164,0.15);}
+.county-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface2);border:1px solid var(--teal);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px var(--shadow);}
+.county-dropdown.open{display:block;}
+.county-option{padding:9px 14px;font-size:13px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text);transition:background 0.1s;}
+.county-option:hover,.county-option.highlighted{background:rgba(43,127,164,0.15);color:var(--teal);}
 .loc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 .loc-label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
 .loc-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;}
@@ -280,6 +287,17 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .fadein{animation:fadeUp 0.4s ease both;}
+
+/* ── UNIFORM CHECKBOX SIZE ── */
+.rental-toggle-header input[type="checkbox"],
+.show-rate-row input[type="checkbox"],
+.flood-row input[type="checkbox"]{
+  width:16px!important;height:16px!important;
+  accent-color:var(--teal);cursor:pointer;flex-shrink:0;
+}
+.rental-toggle-header{align-items:center!important;}
+.show-rate-row{align-items:center!important;}
+.flood-row{align-items:center!important;}
 
 /* ── PULSE ANIMATIONS ── */
 @keyframes pulseYellow{0%,100%{opacity:1;filter:drop-shadow(0 0 0px #f5a623);}50%{opacity:0.75;filter:drop-shadow(0 0 8px #f5a623);}}
@@ -1378,6 +1396,8 @@ function setMode(mode) {
     ah.className = 'apm-header visible';
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
     toggleShowRate();
+    // Lock sliders until county selected
+    if (document.getElementById('sl-county').value !== '') { unlockSliders(); } else { lockSliders(); }
   }
   update();
 }
@@ -1856,6 +1876,7 @@ if (hasParams) {
     document.getElementById('client-gauge-top').style.display='block';
     document.body.classList.add('client-mode');
     document.getElementById('client-gauge-top').style.display = 'block';
+    if (document.getElementById('sl-county').value !== '') { unlockSliders(); } else { lockSliders(); }
     document.getElementById('mode-hint').textContent='Select your county, move the sliders, explore how different homes affect your DTI.';
     const _i=+urlParams.income||0,_d=+urlParams.debts||0,_r=+urlParams.rent||0;
     let _c=[{l:'Monthly Income',v:'$'+Math.round(_i).toLocaleString()+'/mo'},{l:'Other Debts',v:'$'+Math.round(_d).toLocaleString()+'/mo'}];
