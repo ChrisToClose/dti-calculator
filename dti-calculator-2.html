@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!-- © 2025 Chris Greenidge, NMLS# 2073018 | ChrisToClose.com | cgreenidge@apmortgage.com
+     Unauthorized reproduction or distribution prohibited.
+     Fingerprint: CG-APM-DTI-2025-ST-PETE -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -33,47 +36,21 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 /* ══ THEME TOGGLE ══ */
 .theme-btn{position:fixed;top:12px;right:12px;z-index:200;background:var(--surface);color:var(--text);border:2px solid var(--teal);border-radius:100px;padding:6px 14px;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px var(--shadow);transition:all 0.2s;}
-.theme-btn:hover{background:var(--teal);color:#fff;border-color:var(--teal);}
+.theme-btn:hover{background:var(--teal);color:#fff;}
 
 /* ══ APM BRAND HEADER ══ */
 .apm-header{width:100%;display:none;flex-direction:column;margin-bottom:0;}
 .apm-header.visible{display:flex;}
-/* ── TESLA COIL POWERED BY STRIPE ── */
-.apm-stripe{
-  background:var(--navy);
-  padding:0;
-  text-align:center;
-  position:relative;
-  overflow:hidden;
-  border-bottom:2px solid var(--yellow);
-  height:44px;
-}
-#lightning-canvas{
-  position:absolute;
-  top:0;left:0;width:100%;height:100%;
-  pointer-events:none;
-}
-.apm-stripe-text{
-  font-family:'DM Mono',monospace;
-  font-size:15px;
-  letter-spacing:5px;
-  text-transform:uppercase;
-  color:var(--yellow);
-  font-weight:700;
-  display:inline-block;
-  position:relative;
-  z-index:2;
-  line-height:44px;
-  text-shadow:0 0 10px rgba(245,166,35,0.4);
-}
+.apm-stripe{background:var(--navy);padding:10px 24px;text-align:center;border-bottom:2px solid var(--yellow);}
+.apm-stripe-text{font-family:'DM Mono',monospace;font-size:13px;letter-spacing:4px;text-transform:uppercase;color:var(--yellow);font-weight:700;display:inline-block;}
 .apm-body{background:var(--navy);display:flex;align-items:center;gap:20px;padding:20px 32px;}
 .apm-photo{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--yellow);box-shadow:0 0 0 4px rgba(245,166,35,0.25);flex-shrink:0;}
 .apm-info{flex:1;min-width:0;}
-.apm-name{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:3px;}
+.apm-name{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:#fff;line-height:1.1;margin-bottom:3px;}
 .apm-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
-.apm-nmls{font-size:10px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-bottom:10px;}
+.apm-nmls{font-size:13px;color:rgba(255,255,255,0.85);font-family:'DM Mono',monospace;margin-bottom:10px;}
 .apm-contacts{display:flex;flex-wrap:wrap;gap:14px;}
-.apm-contact{font-size:17px;color:rgba(255,255,255,0.95);display:flex;align-items:center;gap:5px;text-decoration:none;transition:color 0.15s;white-space:nowrap;}
+.apm-contact{font-size:18px;color:rgba(255,255,255,0.98);display:flex;align-items:center;gap:5px;text-decoration:none;transition:color 0.15s;white-space:nowrap;}
 .apm-contact:hover{color:var(--yellow);}
 .apm-right{flex-shrink:0;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
 .apm-brand-line{font-family:'DM Mono',monospace;font-size:18px;font-weight:700;letter-spacing:3px;line-height:1.15;}
@@ -135,7 +112,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 /* ══ RENTAL BLOCK ══ */
 .rental-block{background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;margin-top:20px;}
 .rental-toggle-header{display:flex;align-items:center;gap:12px;cursor:pointer;}
-.rental-toggle-header input[type="checkbox"]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.rental-toggle-header input[type="checkbox"]{width:17px;height:17px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
 .rental-toggle-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:2px;}
 .rental-toggle-sub{font-size:11px;color:var(--muted);}
 .rental-fields-wrap{display:none;margin-top:16px;}
@@ -193,15 +170,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 /* ══ ZIP/COUNTY ══ */
 .zip-county-wrap{margin-bottom:20px;}
-.county-autocomplete{position:relative;}
-.county-autocomplete input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;font-weight:500;outline:none;transition:border-color 0.2s;}
-.county-autocomplete input:focus{border-color:var(--teal);}
-.county-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface2);border:1px solid var(--teal);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px var(--shadow);}
-.county-dropdown.open{display:block;}
-.county-option{padding:10px 14px;font-family:'DM Mono',monospace;font-size:13px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.1s;}
-.county-option:last-child{border-bottom:none;}
-.county-option:hover,.county-option.highlighted{background:rgba(43,127,164,0.2);color:var(--teal);}
-.county-option .county-mills{font-size:10px;color:var(--muted);margin-left:6px;}
 .loc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 .loc-label{font-size:13px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;}
 .loc-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;}
@@ -242,15 +210,15 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .info-btn{background:none;border:1.5px solid var(--teal);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:var(--teal);font-size:10px;font-weight:700;font-family:serif;line-height:1;transition:all 0.15s;flex-shrink:0;vertical-align:middle;}
 .info-btn:hover{background:var(--teal);color:#fff;}
 .info-dropdown{display:none;margin-top:8px;background:var(--navy);color:#fff;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.7;box-shadow:0 4px 20px rgba(0,0,0,0.3);border:1px solid rgba(43,127,164,0.4);position:relative;z-index:10;}
-.info-dropdown::after{content:'';position:absolute;bottom:-6px;left:16px;width:12px;height:12px;background:var(--navy);transform:rotate(45deg);border-radius:2px;border-bottom:1px solid rgba(43,127,164,0.4);border-right:1px solid rgba(43,127,164,0.4);}
+.info-dropdown::before{content:'';position:absolute;top:-6px;left:16px;width:12px;height:12px;background:var(--navy);transform:rotate(45deg);border-radius:2px;border-top:1px solid rgba(43,127,164,0.4);border-left:1px solid rgba(43,127,164,0.4);}
 .info-dropdown.open{display:block;animation:fadeUp 0.2s ease;}
 .info-dropdown strong{color:var(--yellow);}
 .info-close{float:right;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:18px;line-height:1;margin-left:8px;transition:color 0.15s;}
 .info-close:hover{color:#fff;}
 
 /* ══ SHOW RATE CHECKBOX ══ */
-.show-rate-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;cursor:pointer;}
-.show-rate-row input[type="checkbox"]{width:16px;height:16px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;}
+.show-rate-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;cursor:pointer;}
+.show-rate-row input[type="checkbox"]{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;flex-shrink:0;margin-top:2px;}
 .show-rate-text{font-size:12px;color:var(--muted);font-weight:500;}
 .show-rate-sub{font-size:11px;color:var(--muted);opacity:0.8;margin-top:1px;}
 
@@ -314,60 +282,23 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .fadein{animation:fadeUp 0.4s ease both;}
 
 /* ── PULSE ANIMATIONS ── */
-@keyframes pulseYellow{
-  0%,100%{opacity:1;filter:drop-shadow(0 0 0px #f5a623);}
-  50%{opacity:0.75;filter:drop-shadow(0 0 8px #f5a623);}
-}
-@keyframes pulseRed{
-  0%,100%{opacity:1;filter:drop-shadow(0 0 0px #e05555);}
-  50%{opacity:0.6;filter:drop-shadow(0 0 12px #e05555);}
-}
-@keyframes pulseBadgeRed{
-  0%,100%{box-shadow:0 0 0 0 rgba(224,85,85,0.4);}
-  50%{box-shadow:0 0 0 6px rgba(224,85,85,0);}
-}
-@keyframes pulseBadgeYellow{
-  0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,0.4);}
-  50%{box-shadow:0 0 0 6px rgba(245,166,35,0);}
-}
-.pulse-yellow{animation:pulseYellow 1.8s ease-in-out infinite;}
-.pulse-red{animation:pulseRed 1.0s ease-in-out infinite;}
-.badge-pulse-yellow{animation:pulseBadgeYellow 1.8s ease-in-out infinite;}
-.badge-pulse-red{animation:pulseBadgeRed 1.0s ease-in-out infinite;}
+@keyframes pulseYellow{0%,100%{opacity:1;filter:drop-shadow(0 0 0px #f5a623);}50%{opacity:0.75;filter:drop-shadow(0 0 8px #f5a623);}}
+@keyframes pulseRed{0%,100%{opacity:1;filter:drop-shadow(0 0 0px #e05555);}50%{opacity:0.6;filter:drop-shadow(0 0 12px #e05555);}}
+@keyframes pulseBadgeRed{0%,100%{box-shadow:0 0 0 0 rgba(224,85,85,0.4);}50%{box-shadow:0 0 0 6px rgba(224,85,85,0);}}
+@keyframes pulseBadgeYellow{0%,100%{box-shadow:0 0 0 0 rgba(245,166,35,0.4);}50%{box-shadow:0 0 0 6px rgba(245,166,35,0);}}
 
-/* ── INELIGIBLE WATERMARK — full page ── */
-.ineligible-stamp{
-  display:none;
-  position:fixed;
-  top:0; left:0; right:0; bottom:0;
-  pointer-events:none;
-  z-index:999;
-  overflow:hidden;
-}
+/* ── INELIGIBLE WATERMARK ── */
+.ineligible-stamp{display:none;position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:999;overflow:hidden;}
 .ineligible-stamp.visible{display:block;}
-.ineligible-stamp::before,
-.ineligible-stamp::after {
-  content:'DTI OVER LIMIT';
-  position:absolute;
-  font-family:'DM Mono',monospace;
-  font-size:clamp(22px,5vw,52px);
-  font-weight:700;
-  letter-spacing:8px;
-  color:rgba(224,85,85,0.12);
-  border:5px solid rgba(224,85,85,0.10);
-  border-radius:10px;
-  padding:8px 20px;
-  white-space:nowrap;
-  text-transform:uppercase;
-}
-.ineligible-stamp::before{
-  top:25%; left:50%;
-  transform:translate(-50%,-50%) rotate(-20deg);
-}
-.ineligible-stamp::after{
-  top:72%; left:50%;
-  transform:translate(-50%,-50%) rotate(-20deg);
-}
+.ineligible-stamp::before,.ineligible-stamp::after{content:'DTI OVER LIMIT';position:absolute;font-family:'DM Mono',monospace;font-size:clamp(22px,5vw,52px);font-weight:700;letter-spacing:8px;color:rgba(224,85,85,0.12);border:5px solid rgba(224,85,85,0.10);border-radius:10px;padding:8px 20px;white-space:nowrap;text-transform:uppercase;}
+.ineligible-stamp::before{top:25%;left:50%;transform:translate(-50%,-50%) rotate(-20deg);}
+.ineligible-stamp::after{top:72%;left:50%;transform:translate(-50%,-50%) rotate(-20deg);}
+
+/* ── FICO RADIO BUTTONS ── */
+.fico-radio{display:flex;align-items:center;gap:5px;cursor:pointer;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);transition:all 0.15s;white-space:nowrap;}
+.fico-radio:hover{border-color:var(--teal);color:var(--text);}
+.fico-radio input[type="radio"]{accent-color:var(--teal);width:13px;height:13px;cursor:pointer;}
+.fico-radio:has(input:checked){background:rgba(43,127,164,0.15);border-color:var(--teal);color:var(--text);font-weight:600;}
 
 /* ── LOAN TYPE SELECTOR ── */
 .loan-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
@@ -379,12 +310,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .loan-type-btn.active.usda{background:#27AE60;border-color:#27AE60;}
 .loan-note-box{font-size:11px;color:var(--muted);background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.2);border-radius:8px;padding:8px 12px;margin-top:6px;line-height:1.6;display:none;}
 .loan-note-box.visible{display:block;}
-
-/* ── FICO RADIO BUTTONS ── */
-.fico-radio{display:flex;align-items:center;gap:5px;cursor:pointer;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);transition:all 0.15s;white-space:nowrap;}
-.fico-radio:hover{border-color:var(--teal);color:var(--text);}
-.fico-radio input[type="radio"]{accent-color:var(--teal);width:13px;height:13px;cursor:pointer;}
-.fico-radio:has(input:checked){background:rgba(43,127,164,0.15);border-color:var(--teal);color:var(--text);font-weight:600;}
 </style>
 </head>
 <body>
@@ -405,7 +330,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   <span class="sticky-badge safe" id="sticky-badge">Awaiting input</span>
 </div>
 
-<!-- FULL PAGE INELIGIBLE WATERMARK -->
+<!-- WATERMARK -->
 <div class="ineligible-stamp" id="ineligible-stamp"></div>
 
 <!-- THEME TOGGLE -->
@@ -414,7 +339,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <!-- APM BRAND HEADER — client view only -->
 <div class="apm-header" id="apm-header">
   <div class="apm-stripe">
-    <canvas id="lightning-canvas"></canvas>
     <span class="apm-stripe-text">POWERED BY</span>
   </div>
   <div class="apm-body">
@@ -428,9 +352,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
           727.642.1374
         </a>
-        <a class="apm-contact" id="apm-email-link" href="#">
+        <a class="apm-contact" href="/cdn-cgi/l/email-protection#99fafeebfcfcf7f0fdfefcd9f8e9f4f6ebedfef8fefcb7faf6f4">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span class="__cf_email__" data-cfemail="6c0f0b1e09090205080b092c0d1c01031e180b0d0b09420f0301">[email&#160;protected]</span>
+          <span class="__cf_email__" data-cfemail="1c7f7b6e79797275787b795c7d6c71736e687b7d7b79327f7371">[email&#160;protected]</span>
         </a>
         <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -454,7 +378,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.0</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.1</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -473,24 +397,18 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div id="lender-panel" class="panel fadein">
   <div class="section-title">Client Financial Profile <span class="badge badge-lender">Lender Only</span></div>
 
-  <!-- LOAN TYPE SELECTOR -->
+  <!-- LOAN TYPE -->
   <div style="margin-bottom:18px;">
     <div style="font-size:12px;color:var(--muted);font-weight:500;margin-bottom:8px;">Loan Type</div>
     <div class="loan-type-row">
-      <button class="loan-type-btn active" id="lt-conv"  data-lt="conv">CONV</button>
-      <button class="loan-type-btn fha"    id="lt-fha"   data-lt="fha">FHA</button>
-      <button class="loan-type-btn va"     id="lt-va"    data-lt="va">VA</button>
-      <button class="loan-type-btn usda"   id="lt-usda"  data-lt="usda">USDA</button>
+      <button class="loan-type-btn active" id="lt-conv" data-lt="conv">CONV</button>
+      <button class="loan-type-btn fha" id="lt-fha" data-lt="fha">FHA</button>
+      <button class="loan-type-btn va" id="lt-va" data-lt="va">VA</button>
+      <button class="loan-type-btn usda" id="lt-usda" data-lt="usda">USDA</button>
     </div>
-    <div class="loan-note-box" id="loan-note-fha">
-      <strong style="color:#C0392B;">FHA:</strong> Back-end limit 57% (AUS). MIP replaces PMI — upfront 1.75% (financed) + 0.55%/yr monthly. Front-end guideline: 31%.
-    </div>
-    <div class="loan-note-box" id="loan-note-va">
-      <strong style="color:#145A8A;">VA:</strong> No hard DTI cap — residual income governs. Guideline is 41%. No monthly mortgage insurance. Funding fee applies at closing (not monthly).
-    </div>
-    <div class="loan-note-box" id="loan-note-usda">
-      <strong style="color:#27AE60;">USDA:</strong> Back-end limit 46% (GUS). Annual guarantee fee 0.35%/yr (monthly). Income and geographic eligibility limits apply.
-    </div>
+    <div class="loan-note-box" id="loan-note-fha"><strong style="color:#C0392B;">FHA:</strong> Back-end limit 57% (AUS). MIP replaces PMI — upfront 1.75% (financed) + 0.55%/yr monthly. Front-end guideline: 31%.</div>
+    <div class="loan-note-box" id="loan-note-va"><strong style="color:#145A8A;">VA:</strong> No hard DTI cap — residual income governs. Guideline is 41%. No monthly mortgage insurance. Funding fee applies at closing.</div>
+    <div class="loan-note-box" id="loan-note-usda"><strong style="color:#27AE60;">USDA:</strong> Back-end limit 46% (GUS). Annual guarantee fee 0.35%/yr (monthly). Income and geographic eligibility limits apply.</div>
   </div>
 
   <div class="field-grid">
@@ -513,6 +431,42 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <div class="show-rate-text">Show interest rate to client</div>
           <div class="show-rate-sub">By default the rate is hidden — check to display it on the client view</div>
         </div>
+      </div>
+    </div>
+
+    <!-- JUMBO ONLY NOTE -->
+    <div class="field-group full" id="jumbo-only-note" style="display:none;">
+      <div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:10px;padding:12px 14px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e05555;margin-bottom:4px;">⚠ Jumbo Loan</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.6;">Loan amount exceeds $726,200. Standard conforming guidelines do not apply — verify program eligibility, rate, and MI requirements.</div>
+      </div>
+    </div>
+
+    <!-- PMI ESTIMATOR -->
+    <div class="field-group full" id="pmi-lender-section" style="display:none;">
+      <div style="background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:12px;">
+          🔒 PMI Estimator <span id="jumbo-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:6px;">JUMBO</span>
+        </div>
+        <div id="jumbo-warning" style="display:none;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#e05555;line-height:1.6;">⚠ <strong>Jumbo loan detected</strong> (loan &gt; $726,200). PMI rates on jumbos vary significantly — treat as rough estimate and confirm with actual MI quote.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500;">Client FICO Score Tier</div>
+        <div id="fico-radios" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="760" checked> <span>760+</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="740"> <span>740-759</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="720"> <span>720-739</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="700"> <span>700-719</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="680"> <span>680-699</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="660"> <span>660-679</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="640"> <span>640-659</span></label>
+          <label class="fico-radio"><input type="radio" name="fico-tier" value="620"> <span>620-639</span></label>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:9px;padding:10px 14px;margin-bottom:10px;">
+          <div><div style="font-size:11px;color:var(--muted);">Estimated Monthly PMI</div><div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--text);" id="pmi-estimate-val">—</div></div>
+          <div style="text-align:right;"><div style="font-size:11px;color:var(--muted);">Annual Rate</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--teal);" id="pmi-rate-display">—</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">Have an actual MI quote? Override:</div>
+        <div class="input-wrap"><span class="pfx">$</span><input type="number" id="pmi-override-lender" min="0" step="1" placeholder="e.g. 100"><span class="sfx">/ mo</span></div>
+        <div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:5px;">Leave blank to use the estimate above</div>
       </div>
     </div>
 
@@ -585,6 +539,10 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 <!-- ══ CLIENT SLIDERS ══ -->
 <div class="panel fadein" id="client-panel">
+
+<!-- CLIENT GAUGE TOP -->
+<div id="client-gauge-top" style="display:none;margin-bottom:16px;"><div class="gauge-panel"><div style="display:grid;grid-template-columns:160px 1fr 1fr;align-items:center;gap:16px;padding:4px 0;"><div><svg viewBox="0 0 180 100" width="160" height="90"><path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="var(--border)" stroke-width="14" stroke-linecap="round"/><path id="cgt-arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2 251.2" stroke-dashoffset="251.2"/><path id="cgt-arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 251.2" stroke-dashoffset="251.2"/><line id="cgt-needle" x1="90" y1="100" x2="90" y2="28" stroke="#fff" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)"/></svg></div><div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Front-End</div><div id="cgt-front" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#3ecf8e;">--</div><div style="font-size:10px;color:var(--muted);">Housing only</div></div><div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Back-End</div><div id="cgt-back" style="font-family:'DM Mono',monospace;font-size:26px;font-weight:700;color:#3ecf8e;">--</div><div style="font-size:10px;color:var(--muted);">All obligations</div><div id="cgt-badge" class="dti-badge b-safe" style="margin-top:6px;display:inline-block;font-size:10px;padding:3px 10px;"><span id="cgt-badge-text">--</span></div></div></div></div></div>
+
   <div class="section-title">Explore Properties <span class="badge badge-client">Move the sliders</span></div>
 
   <!-- ZIP OR COUNTY -->
@@ -602,7 +560,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="zip-status" id="zip-status"></div>
     </div>
     <div id="county-wrap" style="display:none;">
-      <!-- Hidden select keeps the value for all existing JS -->
+      <!-- Hidden select for value tracking -->
       <select id="sl-county" style="display:none;">
           <option value="">— Select County —</option>
           <option value="12.5">Alachua — ~12.5 mills</option><option value="11.0">Baker — ~11.0 mills</option>
@@ -649,12 +607,11 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
-  <!-- LOCATION GATE + SLIDERS WRAP -->
+  <!-- LOCATION GATE -->
   <div id="location-gate" style="display:none;padding:10px 14px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:8px;margin-top:8px;margin-bottom:12px;">
     <div style="font-size:12px;color:var(--teal);font-family:'DM Mono',monospace;letter-spacing:1px;">📍 Select a county or enter a zip code above to unlock</div>
   </div>
-  <div id="sliders-wrap">
-
+  <div id="sliders-wrap" style="margin-top:16px;">
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-price">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
   <div class="slider-row">
@@ -686,60 +643,15 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="slider-range-labels"><span>$0</span><span>$1,500</span></div>
   </div>
 
-    <!-- JUMBO INDICATOR — shows any time loan > $726,200 regardless of PMI -->
-    <div class="field-group full" id="jumbo-only-note" style="display:none;">
-      <div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:10px;padding:12px 14px;">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e05555;margin-bottom:4px;">⚠ Jumbo Loan</div>
-        <div style="font-size:11px;color:var(--muted);line-height:1.6;">Loan amount exceeds $726,200. Standard conforming guidelines do not apply — verify program eligibility, rate, and MI requirements with your actual quote.</div>
-      </div>
-    </div>
-
-    <!-- PMI ESTIMATOR — lender side only -->
-    <div class="field-group full" id="pmi-lender-section" style="display:none;">
-      <div style="background:rgba(43,127,164,0.08);border:1px solid rgba(43,127,164,0.25);border-radius:12px;padding:16px;">
-        <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:12px;">
-          🔒 PMI Estimator <span id="jumbo-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:6px;">JUMBO</span>
-        </div>
-        <div id="jumbo-warning" style="display:none;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#e05555;line-height:1.6;">
-          ⚠ <strong>Jumbo loan detected</strong> (loan &gt; $726,200). PMI rates on jumbos vary significantly by lender and MI company — treat this as a rough estimate only and confirm with your actual MI quote.
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500;">Client FICO Score Tier</div>
-        <div id="fico-radios" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="760" checked> <span>760+</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="740"> <span>740-759</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="720"> <span>720-739</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="700"> <span>700-719</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="680"> <span>680-699</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="660"> <span>660-679</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="640"> <span>640-659</span></label>
-          <label class="fico-radio"><input type="radio" name="fico-tier" value="620"> <span>620-639</span></label>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:9px;padding:10px 14px;margin-bottom:10px;">
-          <div>
-            <div style="font-size:11px;color:var(--muted);">Estimated Monthly PMI</div>
-            <div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:600;color:var(--text);" id="pmi-estimate-val">—</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:11px;color:var(--muted);">Annual Rate</div>
-            <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--teal);" id="pmi-rate-display">—</div>
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Have an actual MI quote? Override:</div>
-        <div class="input-wrap"><span class="pfx">$</span><input type="number" id="pmi-override-lender" min="0" step="1" placeholder="e.g. 100"><span class="sfx">/ mo</span></div>
-        <div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:5px;">Leave blank to use the estimate above</div>
-      </div>
-    </div>
-
-
-
   <!-- PMI -->
   <div id="pmi-section-wrap" style="display:none;">
   <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
   <div class="slider-row" id="pmi-row" style="display:none;">
     <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" data-info="info-pmi">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
-    <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="1" value="0"></div>
+    <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="1" value="0" value="0"></div>
     <div class="slider-range-labels"><span>$0</span><span>$500</span></div>
   </div>
+  </div><!-- end pmi-section-wrap -->
   </div><!-- end pmi-section-wrap -->
 
   <!-- FLOOD -->
@@ -802,8 +714,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 </div>
 
-  </div><!-- end sliders-wrap -->
-
 <!-- ══ SCENARIO SAVE ══ -->
 <div class="scenario-box" id="scenario-box" style="display:none;">
   <div class="section-title">Save This Scenario <span class="badge badge-client">PDF + Send to Lender</span></div>
@@ -823,7 +733,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <!-- ══ RIGHT COL ══ -->
 <div class="results-col" id="results-col">
   <div class="gauge-panel" id="gauge-anchor">
-    <div class="ineligible-stamp" id="ineligible-stamp">Over Limit</div>
     <div class="gauge-eyebrow">
       Debt-to-Income
       <span id="jumbo-dti-badge" style="display:none;background:rgba(224,85,85,0.15);color:#e05555;border:1px solid rgba(224,85,85,0.3);border-radius:100px;padding:2px 8px;font-size:9px;margin-left:4px;font-family:'DM Mono',monospace;letter-spacing:1px;">JUMBO</span>
@@ -855,8 +764,10 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
     <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
     <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
-      <div class="brow" id="va-no-mi-note" style="display:none;"><span class="bk" style="color:#145A8A;">VA — No monthly MI</span><span class="bv" style="color:#145A8A;font-size:11px;">Funding fee at closing</span></div>
     <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
+      <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
+      <div class="brow" id="va-no-mi-note" style="display:none;"><span class="bk" style="color:#145A8A;">VA — No monthly MI</span><span class="bv" style="color:#145A8A;font-size:11px;">Funding fee at closing</span></div>
+      <div id="jumbo-breakdown-note" style="display:none;padding:6px 10px;background:rgba(224,85,85,0.08);border-left:3px solid #e05555;border-radius:4px;margin-top:4px;font-size:10px;color:#e05555;">⚠ Jumbo loan — PMI is an estimate. Confirm rate with your MI company.</div>
     <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
     <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
     <div class="brow rental-row" id="b-rental-row" style="display:none;"><span class="bk">+ Rental Shortfall</span><span class="bv" id="b-rental">—</span></div>
@@ -870,7 +781,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 </div><!-- end page-wrap -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 const EMAILJS_PUBKEY   = 'NyULYxc1h8OKkvdOA';
 const EMAILJS_SERVICE  = 'service_jmgkuj5';
 const EMAILJS_TEMPLATE = 'template_9m8q81g';
@@ -911,7 +822,8 @@ function updateStickyDTI(frontDTI, backDTI) {
     document.getElementById('sticky-front').textContent = frontDTI.toFixed(1) + '%';
     document.getElementById('sticky-back').textContent  = backDTI.toFixed(1)  + '%';
     const badge = document.getElementById('sticky-badge');
-    const col = backDTI > 50 ? '#e05555' : backDTI > 43 ? '#f5a623' : '#3ecf8e';
+    const _lt = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const col  = backDTI > _lt.backMax  ? '#e05555' : backDTI > _lt.backWarn ? '#f5a623' : '#3ecf8e';
     const cls  = backDTI > 50 ? 'danger' : backDTI > 43 ? 'warn' : 'safe';
     const txt  = backDTI > 50 ? 'Ineligible' : backDTI > 43 ? 'Caution' : 'Eligible';
     document.getElementById('sticky-front').style.color = col;
@@ -1116,15 +1028,7 @@ function switchZipCounty(mode) {
   document.getElementById('county-wrap').style.display = mode === 'county' ? 'block' : 'none';
   document.getElementById('tab-zip').classList.toggle('active',    mode === 'zip');
   document.getElementById('tab-county').classList.toggle('active', mode === 'county');
-  if (mode === 'county') {
-    document.getElementById('zip-status').textContent = '';
-    document.getElementById('zip-input').value = '';
-    // Focus the autocomplete input
-    setTimeout(() => {
-      const ci = document.getElementById('county-text');
-      if (ci) ci.focus();
-    }, 50);
-  }
+  if (mode === 'county') { document.getElementById('zip-status').textContent = ''; document.getElementById('zip-input').value = ''; }
 }
 
 function onZipInput() {
@@ -1139,14 +1043,14 @@ function onZipInput() {
     }
     status.className = 'zip-status found';
     status.textContent = '✓ ' + county + ' County — ' + (COUNTY_MILLS_MAP[county] || '?') + ' mills';
-    relockTax(); unlockSliders(); update();
+    relockTax(); update();
   } else if (zip.length === 5) {
     status.className = 'zip-status notfound';
     status.textContent = '⚠ ZIP not found — try selecting county manually';
   }
 }
 
-function onCountyChange() { relockTax(); unlockSliders(); update(); }
+function onCountyChange() { relockTax(); update(); }
 
 // ── TAX EDIT ──
 function toggleTaxEdit() {
@@ -1204,148 +1108,6 @@ function toggleShowRate() {
 }
 
 // ── HELPER ──
-// ── LOAN TYPE CONFIG ──
-const LOAN_TYPES = {
-  conv: {
-    label: 'Conventional',
-    frontEnd: 28,
-    backWarn: 43,
-    backMax:  50,
-    mipLabel: 'PMI',
-    noMI: false,
-    vaLoan: false,
-  },
-  fha: {
-    label: 'FHA',
-    frontEnd: 31,
-    backWarn: 43,
-    backMax:  57,
-    mipLabel: 'MIP',
-    noMI: false,
-    vaLoan: false,
-  },
-  va: {
-    label: 'VA',
-    frontEnd: null,
-    backWarn: 41,
-    backMax:  50, // informational only — no hard cap
-    mipLabel: null,
-    noMI: true,
-    vaLoan: true,
-  },
-  usda: {
-    label: 'USDA',
-    frontEnd: 29,
-    backWarn: 41,
-    backMax:  46,
-    mipLabel: 'USDA Fee',
-    noMI: false,
-    vaLoan: false,
-  },
-};
-let currentLoanType = 'conv';
-
-function setLoanType(lt) {
-  currentLoanType = lt;
-  // Reset PMI manual flag so auto-estimate takes over for new loan type
-  const slPmi = document.getElementById('sl-pmi');
-  if (slPmi) slPmi.dataset.manual = '';
-  const cfg = LOAN_TYPES[lt];
-  // Update button active states
-  document.querySelectorAll('.loan-type-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-lt') === lt);
-  });
-  // Show/hide notes
-  ['fha','va','usda'].forEach(t => {
-    const n = document.getElementById('loan-note-' + t);
-    if (n) n.className = 'loan-note-box' + (t === lt ? ' visible' : '');
-  });
-  // Update MI label in breakdown
-  updateMILabel();
-  // Update PMI lender section visibility
-  updatePMILenderSection();
-  update();
-}
-
-function updateMILabel() {
-  const cfg = LOAN_TYPES[currentLoanType];
-  const pmiRow   = document.getElementById('pmi-brow');
-  const pmiLabel = pmiRow ? pmiRow.querySelector('.bk') : null;
-  const vaNote   = document.getElementById('va-no-mi-note');
-
-  if (cfg.noMI) {
-    // VA — hide PMI row, show no-MI note
-    if (pmiRow) pmiRow.style.display = 'none';
-    if (vaNote) vaNote.style.display = 'flex';
-  } else {
-    if (vaNote) vaNote.style.display = 'none';
-    if (pmiLabel) pmiLabel.textContent = cfg.mipLabel || 'PMI';
-  }
-}
-
-// ── PMI RATE TABLE (MGIC-calibrated, annual %) ──
-// [FICO tier start]: [85-90% LTV, 90-95% LTV, 95-97% LTV]
-const PMI_RATES = {
-  760: [0.19, 0.41, 0.58],
-  740: [0.26, 0.51, 0.71],
-  720: [0.37, 0.65, 0.87],
-  700: [0.52, 0.82, 1.06],
-  680: [0.71, 1.02, 1.28],
-  660: [0.91, 1.22, 1.50],
-  640: [1.10, 1.45, 1.75],
-  620: [1.28, 1.65, 1.86],
-};
-const JUMBO_LIMIT = 726200;
-
-function getPMIRate(ficoTier, ltv) {
-  const rates = PMI_RATES[ficoTier] || PMI_RATES[760];
-  if (ltv <= 90)      return rates[0]; // 85-90% LTV
-  else if (ltv <= 95) return rates[1]; // 90-95% LTV
-  else                return rates[2]; // 95-97% LTV
-}
-
-function calcPMIEstimate(loanAmt, ficoTier, ltv) {
-  if (ltv <= 80) return 0;
-  const annualRate = getPMIRate(ficoTier, ltv);
-  return Math.round((loanAmt * annualRate / 100) / 12);
-}
-
-function updatePMILenderSection() {
-  const price = +document.getElementById('sl-price').value || 0;
-  const down  = +document.getElementById('sl-down').value  || 20;
-  const loanAmt = price * (1 - down / 100);
-  const isJumbo = loanAmt > JUMBO_LIMIT;
-  // Always show jumbo note if applicable
-  const jOn = document.getElementById('jumbo-only-note');
-  if (jOn) jOn.style.display = isJumbo ? 'block' : 'none';
-  // Only show PMI/FICO section when down < 20%
-  document.getElementById('pmi-lender-section').style.display = down >= 20 ? 'none' : 'block';
-  if (down >= 20) return;
-  // loanAmt and isJumbo already declared above
-  const ltv = 100 - down;
-  // FICO tier
-  const ficoRadio = document.querySelector('input[name="fico-tier"]:checked');
-  const ficoTier  = ficoRadio ? +ficoRadio.value : 760;
-  const annualRate = getPMIRate(ficoTier, ltv);
-  const estimated  = calcPMIEstimate(loanAmt, ficoTier, ltv);
-  // Show/hide jumbo warning
-  document.getElementById('jumbo-badge').style.display   = isJumbo ? 'inline' : 'none';
-  document.getElementById('jumbo-warning').style.display = isJumbo ? 'block'  : 'none';
-  // Display
-  document.getElementById('pmi-rate-display').textContent   = annualRate.toFixed(2) + '% / yr';
-  document.getElementById('pmi-estimate-val').textContent   = '$' + estimated + '/mo';
-  // Sync to client PMI slider — manual adjustment or override takes priority
-  const override = +document.getElementById('pmi-override-lender').value;
-  const pmiVal   = override > 0 ? override : estimated;
-  const slPmi    = document.getElementById('sl-pmi');
-  if (slPmi && !slPmi.dataset.manual) {
-    slPmi.value = Math.min(pmiVal, 500);
-    const pct = (Math.min(pmiVal,500) / 500) * 100;
-    const fill = document.getElementById('fill-pmi');
-    if (fill) fill.style.width = pct + '%';
-  }
-}
-
 function getLenderVal(id) {
   const key = id.replace('in-', '');
   if (urlParams[key] !== undefined && +urlParams[key] !== 0) return +urlParams[key];
@@ -1376,39 +1138,36 @@ function update() {
   const debts  = getLenderVal('in-debts')  || 0;
   const income = getLenderVal('in-income') || 1;
 
-  // PMI / MIP / USDA fee visibility
+  // PMI / MIP / USDA visibility
   const _ltPMI = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
   let pmiVal = +document.getElementById('sl-pmi').value;
+  const _pmiWrap = document.getElementById('pmi-section-wrap');
   if (_ltPMI.noMI) {
-    // VA — no MI
     pmiVal = 0;
-    document.getElementById('pmi-row').style.display  = 'none';
+    if (_pmiWrap) _pmiWrap.style.display = 'none';
     document.getElementById('pmi-brow').style.display = 'none';
   } else if (currentLoanType === 'fha') {
-    // FHA MIP: 0.55%/yr monthly regardless of down payment
     const fhaLoan = price * (1 - down/100);
     pmiVal = Math.round(fhaLoan * 0.0055 / 12);
-    document.getElementById('pmi-row').style.display  = 'block';
+    if (_pmiWrap) _pmiWrap.style.display = 'block';
     document.getElementById('pmi-brow').style.display = 'flex';
     const slPmiFha = document.getElementById('sl-pmi');
     if (slPmiFha && !slPmiFha.dataset.manual) slPmiFha.value = Math.min(pmiVal, 500);
   } else if (currentLoanType === 'usda') {
-    // USDA annual fee: 0.35%/yr monthly
     const usdaLoan = price * (1 - down/100);
     pmiVal = Math.round(usdaLoan * 0.0035 / 12);
-    document.getElementById('pmi-row').style.display  = 'block';
+    if (_pmiWrap) _pmiWrap.style.display = 'block';
     document.getElementById('pmi-brow').style.display = 'flex';
     const slPmiUsda = document.getElementById('sl-pmi');
     if (slPmiUsda && !slPmiUsda.dataset.manual) slPmiUsda.value = Math.min(pmiVal, 500);
   } else {
-    // Conventional PMI
     pmiVal = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
-    document.getElementById('pmi-row').style.display  = down >= 20 ? 'none' : 'block';
-    document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
-    const _pmiWrap = document.getElementById('pmi-section-wrap');
     if (_pmiWrap) _pmiWrap.style.display = down >= 20 ? 'none' : 'block';
+    document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
   }
   updateMILabel();
+  const _pmiWrapShow = down >= 20 ? 'none' : 'block';
+  if (_pmiWrap && _ltPMI.noMI) {} // already handled
   // Slider labels
   document.getElementById('val-price').textContent = fmt(price);
   document.getElementById('val-down').textContent  = `${down}%  (${fmt(price*down/100)})`;
@@ -1495,7 +1254,7 @@ function update() {
   if (rentalShortfall > 0) document.getElementById('b-rental').textContent = fmtMo(rentalShortfall);
 
   // Threshold
-  // Jumbo indicator in breakdown
+  // Jumbo
   const _jumboLoan = price * (1 - down/100);
   const isJumbo = _jumboLoan > JUMBO_LIMIT;
   const jumboNote = document.getElementById('jumbo-breakdown-note');
@@ -1503,44 +1262,33 @@ function update() {
   const jumboDTI = document.getElementById('jumbo-dti-badge');
   if (jumboDTI) jumboDTI.style.display = isJumbo ? 'inline' : 'none';
 
-  const ltCfg   = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
-  const backMax  = ltCfg.backMax;
-  const backWarn = ltCfg.backWarn;
-  const maxPay   = income * (backMax / 100);
-  const warnPay  = income * (backWarn / 100);
-  document.getElementById('thresh-bar').className = backDTI > backMax ? 'thresh-bar td' : 'thresh-bar ts';
-  document.getElementById('thresh-text').textContent = backDTI > backMax
+  const ltCfg = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const backMax = ltCfg.backMax;
+  const maxPay = income * (backMax/100);
+  document.getElementById('thresh-bar').className = backDTI > ltCfg.backMax ? 'thresh-bar td' : 'thresh-bar ts';
+  document.getElementById('thresh-text').textContent = backDTI > ltCfg.backMax
     ? `Over ${ltCfg.label} limit by ${fmt(total-maxPay)}/mo — max: ${fmt(maxPay)}/mo (${backMax}%)`
     : `Max qualifying back-end: ${fmt(maxPay)}/mo (${backMax}% — ${ltCfg.label})`;
 
   // GAUGE — always green/yellow/red
-  const arcLen   = 251.2;
-  // Needle spans full 0-100 range
-  const angle    = -90 + (Math.min(backDTI,100)/100)*180;
+  const arcLen = 251.2;
+  const angle  = -90 + (Math.min(backDTI,100)/100)*180;
   document.getElementById('needle').setAttribute('transform', `rotate(${angle},90,100)`);
-  const _ltc  = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
-  // Arc fills proportional to 0-100 scale (not 0-backMax)
-  // Green zone: 0 to backWarn
-  // Yellow zone: backWarn to backMax
-  // Red zone: above backMax
-  const safe = (Math.min(backDTI, _ltc.backWarn) / 100) * arcLen;
-  const warnEnd = Math.min(backDTI, _ltc.backMax);
-  const warn = backDTI > _ltc.backWarn ? ((warnEnd - _ltc.backWarn) / 100) * arcLen : 0;
+  const _ltc = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const safe = (Math.min(backDTI,_ltc.backWarn)/100) * arcLen;
+  const warnEnd = Math.min(backDTI,_ltc.backMax);
+  const warn = backDTI > _ltc.backWarn ? ((warnEnd - _ltc.backWarn)/100) * arcLen : 0;
   const arcS = document.getElementById('arc-safe');
   const arcW = document.getElementById('arc-warn');
   arcS.style.strokeDashoffset = arcLen - safe;
   arcW.style.strokeDasharray  = `${warn} ${arcLen-warn}`;
   arcW.style.strokeDashoffset = arcLen - safe;
 
-  const _lt  = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+  const _lt = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
   const col  = backDTI > _lt.backMax  ? '#e05555' : backDTI > _lt.backWarn ? '#f5a623' : '#3ecf8e';
-  const cls  = backDTI > _lt.backMax  ? 'b-danger' : backDTI > _lt.backWarn ? 'b-warn' : 'b-safe';
-  const _vaWarning = _lt.vaLoan && backDTI > _lt.backWarn ? ' — Residual Income Required' : '';
-  const txt  = backDTI > _lt.backMax
-    ? `Ineligible — ${_lt.label} limit ${_lt.backMax}%`
-    : backDTI > _lt.backWarn
-      ? `Caution — Over ${_lt.backWarn}% guideline${_vaWarning}`
-      : `Eligible — Looking Good (${_lt.label})`;
+  const cls  = backDTI > _lt.backMax ? 'b-danger' : backDTI > _lt.backWarn ? 'b-warn' : 'b-safe';
+  const _vaW = _lt.vaLoan && backDTI > _lt.backWarn ? ' — Residual Income Required' : '';
+  const txt  = backDTI > _lt.backMax ? `Ineligible — ${_lt.label} limit ${_lt.backMax}%` : backDTI > _lt.backWarn ? `Caution — Over ${_lt.backWarn}% guideline${_vaW}` : `Eligible — Looking Good (${_lt.label})`;
 
   document.getElementById('front-dti').textContent = frontDTI.toFixed(3) + '%';
   document.getElementById('back-dti').textContent  = backDTI.toFixed(3)  + '%';
@@ -1552,51 +1300,49 @@ function update() {
   arcS.setAttribute('stroke', backDTI > _lt.backMax ? '#e05555' : '#3ecf8e');
   arcW.setAttribute('stroke', backDTI > _lt.backMax ? '#e05555' : '#f5a623');
 
-  // ── PULSE + WATERMARK ──
+  // Pulse + watermark
   const isOver = backDTI > _lt.backMax;
   const isWarn = !isOver && backDTI > _lt.backWarn;
-  // Watermark stamp — delayed 5s client / 10s lender, clears instantly if DTI drops
-  const stamp = document.getElementById('ineligible-stamp');
+  const stamp  = document.getElementById('ineligible-stamp');
   if (stamp) {
     if (!isOver) {
-      // Back in range — clear stamp and reset everything
       stamp.className = 'ineligible-stamp';
       if (window._stampTimer) { clearTimeout(window._stampTimer); window._stampTimer = null; }
       window._stampOverSince = null;
     } else {
-      // Gone over limit
-      if (!window._stampOverSince) {
-        // First time we crossed the limit — record the timestamp
-        window._stampOverSince = Date.now();
-      }
+      if (!window._stampOverSince) window._stampOverSince = Date.now();
       if (!stamp.classList.contains('visible') && !window._stampTimer) {
         const isClientView = document.getElementById('lender-panel').style.display === 'none';
-        const stampDelay = isClientView ? 5000 : 10000;
-        // Calculate remaining time (in case update() fired multiple times)
-        const elapsed = Date.now() - window._stampOverSince;
-        const remaining = Math.max(0, stampDelay - elapsed);
+        const delay = isClientView ? 5000 : 10000;
+        const remaining = Math.max(0, delay - (Date.now() - window._stampOverSince));
         window._stampTimer = setTimeout(() => {
-          // Only show if still over limit
-          if (window._stampOverSince) {
-            const s = document.getElementById('ineligible-stamp');
-            if (s) s.className = 'ineligible-stamp visible';
-          }
+          if (window._stampOverSince) { const s=document.getElementById('ineligible-stamp'); if(s) s.className='ineligible-stamp visible'; }
           window._stampTimer = null;
         }, remaining);
       }
     }
   }
-  // Pulse needle
   const needleEl = document.getElementById('needle');
-  needleEl.style.animation = isOver ? 'pulseRed 1.0s ease-in-out infinite'
-                           : isWarn  ? 'pulseYellow 1.8s ease-in-out infinite' : 'none';
-  // Pulse arc
-  arcW.style.animation = isOver ? 'pulseRed 1.0s ease-in-out infinite'
-                       : isWarn  ? 'pulseYellow 1.8s ease-in-out infinite' : 'none';
-  // Pulse badge
+  needleEl.style.animation = isOver ? 'pulseRed 1.0s ease-in-out infinite' : isWarn ? 'pulseYellow 1.8s ease-in-out infinite' : 'none';
+  arcW.style.animation = isOver ? 'pulseRed 1.0s ease-in-out infinite' : isWarn ? 'pulseYellow 1.8s ease-in-out infinite' : 'none';
   const badge = document.getElementById('dti-badge');
-  badge.style.animation = isOver ? 'pulseBadgeRed 1.0s ease-in-out infinite'
-                        : isWarn  ? 'pulseBadgeYellow 1.8s ease-in-out infinite' : 'none';
+  badge.style.animation = isOver ? 'pulseBadgeRed 1.0s ease-in-out infinite' : isWarn ? 'pulseBadgeYellow 1.8s ease-in-out infinite' : 'none';
+
+  // Sync client top gauge
+  const cgtF = document.getElementById('cgt-front');
+  const cgtB = document.getElementById('cgt-back');
+  if (cgtF) {
+    cgtF.textContent = frontDTI.toFixed(3)+'%'; cgtF.style.color = col;
+    cgtB.textContent = backDTI.toFixed(3)+'%';  cgtB.style.color = col;
+    const cgtBadge = document.getElementById('cgt-badge');
+    if (cgtBadge) { cgtBadge.className='dti-badge '+cls; document.getElementById('cgt-badge-text').textContent=txt; }
+    const cgtN = document.getElementById('cgt-needle');
+    const cgtS = document.getElementById('cgt-arc-safe');
+    const cgtW = document.getElementById('cgt-arc-warn');
+    if (cgtN) cgtN.setAttribute('transform', `rotate(${angle},90,100)`);
+    if (cgtS) { cgtS.style.strokeDashoffset=arcLen-safe; cgtS.setAttribute('stroke', backDTI>_lt.backMax?'#e05555':'#3ecf8e'); }
+    if (cgtW) { cgtW.style.strokeDasharray=`${warn} ${arcLen-warn}`; cgtW.style.strokeDashoffset=arcLen-safe; cgtW.setAttribute('stroke', backDTI>_lt.backMax?'#e05555':'#f5a623'); }
+  }
 
   updateStickyDTI(frontDTI, backDTI);
 }
@@ -1654,26 +1400,10 @@ function generateLink() {
     pmi:   document.getElementById('sl-pmi').value,
   };
   if(cv){const cn=sel.options[sel.selectedIndex].text.split(' —')[0].trim();params.county=cn;params.mills=cv;}
-  if(taxManual){const tv=document.getElementById('tax-override').value;if(tv)params.tax=tv;}
+  if(typeof taxManual !== 'undefined' && taxManual){const tv=document.getElementById('tax-override').value;if(tv)params.tax=tv;}
   if(document.getElementById('show-rate-check').checked) params.showrate='1';
   const p=new URLSearchParams(params);
   const url = BASE_URL + '?' + p.toString();
-  // Copy to clipboard — with fallback for local file:// testing
-  const _copyToClipboard = (text) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text);
-    } else {
-      // Fallback: create temp textarea
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
-      document.body.appendChild(ta);
-      ta.focus(); ta.select();
-      try { document.execCommand('copy'); } catch(e) {}
-      document.body.removeChild(ta);
-      return Promise.resolve();
-    }
-  };
   _copyToClipboard(url).catch(()=>{});
   const box = document.getElementById('link-copied');
   document.getElementById('link-display').textContent = url;
@@ -1807,23 +1537,15 @@ async function saveScenario() {
     doc.setTextColor(150,180,220); doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text('This document is for informational purposes only and does not constitute a loan commitment.',W/2,y+16,{align:'center'});
     doc.text('American Pacific Mortgage · NMLS#1850 · Generated by ChrisToClose.com',W/2,y+30,{align:'center'});
-    // ── PDF WATERMARK — always included if DTI is over limit ──
-    const _lt = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
-    if (state.backDTI > _lt.backMax) {
-      const pageW = 612, pageH = 792;
-      doc.setFontSize(52);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(224, 85, 85);
-      // Draw watermark — jsPDF opacity via setTextColor alpha not supported,
-      // use light color to simulate transparency
-      doc.setTextColor(224, 85, 85);
-      const cx = pageW / 2, cy1 = pageH * 0.32, cy2 = pageH * 0.68;
-      doc.text('DTI OVER LIMIT', cx, cy1, {align:'center', angle: 20});
-      doc.text('DTI OVER LIMIT', cx, cy2, {align:'center', angle: 20});
-      // Reset color
-      doc.setTextColor(0, 0, 0);
+    // PDF watermark if over limit
+    const _ltPdf = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
+    if (state.backDTI > _ltPdf.backMax) {
+      const pageW=612,pageH=792,cx=pageW/2;
+      doc.setFontSize(48);doc.setFont('helvetica','bold');doc.setTextColor(224,85,85);
+      doc.text('DTI OVER LIMIT',cx,pageH*0.32,{align:'center',angle:20});
+      doc.text('DTI OVER LIMIT',cx,pageH*0.68,{align:'center',angle:20});
+      doc.setTextColor(0,0,0);
     }
-
     doc.save(`DTI_${(name||'Scenario').replace(/\s+/g,'_')}_${(address||'').replace(/[^a-zA-Z0-9]/g,'_').slice(0,25)}.pdf`);
     emailjs.init(EMAILJS_PUBKEY);
     const clientEmail = document.getElementById('sc-email').value.trim();
@@ -1842,246 +1564,58 @@ async function saveScenario() {
   btn.innerHTML='<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14l4-4 2.5 2.5L13 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Save PDF &amp; Send to Lender';
 }
 
+// ── WIRE BUTTONS VIA addEventListener ──
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+document.getElementById('tab-lender').addEventListener('click', ()=>setMode('lender'));
+document.getElementById('tab-client').addEventListener('click', ()=>setMode('client'));
+document.getElementById('sl-county').addEventListener('change', ()=>{onCountyChange();});
+document.getElementById('zip-input').addEventListener('input', onZipInput);
+document.querySelector('.rental-toggle-header').addEventListener('click', function(e){if(e.target.id==='rental-enabled')return;const cb=document.getElementById('rental-enabled');cb.checked=!cb.checked;toggleRental();});
+document.getElementById('rental-enabled').addEventListener('change', toggleRental);
+document.querySelector('.flood-row').addEventListener('click', function(e){if(e.target.id==='flood-check')return;document.getElementById('flood-check').checked=!document.getElementById('flood-check').checked;toggleFlood();});
+document.getElementById('flood-check').addEventListener('change', toggleFlood);
+document.getElementById('tax-pencil').addEventListener('click', toggleTaxEdit);
+document.getElementById('ins-pencil').addEventListener('click', toggleInsEdit);
+document.querySelector('.show-rate-row').addEventListener('click', function(e){if(e.target.id==='show-rate-check')return;const cb=document.getElementById('show-rate-check');cb.checked=!cb.checked;toggleShowRate();});
+document.getElementById('show-rate-check').addEventListener('change', toggleShowRate);
+document.getElementById('gen-link-btn').addEventListener('click', generateLink);
+document.getElementById('go-client-btn').addEventListener('click', ()=>setMode('client'));
+document.getElementById('save-btn').addEventListener('click', saveScenario);
+document.getElementById('tab-zip').addEventListener('click', ()=>switchZipCounty('zip'));
+document.getElementById('tab-county').addEventListener('click', ()=>switchZipCounty('county'));
+document.querySelectorAll('input[name="fico-tier"]').forEach(r=>r.addEventListener('change',()=>{updatePMILenderSection();update();}));
+document.getElementById('pmi-override-lender').addEventListener('input',()=>{updatePMILenderSection();update();});
+document.getElementById('sl-pmi').addEventListener('input',()=>{document.getElementById('sl-pmi').dataset.manual='yes';update();});
+document.addEventListener('click', function(e){
+  if(e.target.classList.contains('info-close')){e.stopPropagation();const d=e.target.closest('.info-dropdown');if(d)d.classList.remove('open');return;}
+  const ib=e.target.closest('[data-info]');
+  if(ib){e.stopPropagation();toggleInfo(ib.getAttribute('data-info'));return;}
+  if(!e.target.closest('.info-dropdown'))document.querySelectorAll('.info-dropdown.open').forEach(d=>d.classList.remove('open'));
+});
+document.querySelectorAll('.loan-type-btn').forEach(btn=>btn.addEventListener('click',()=>setLoanType(btn.getAttribute('data-lt'))));
+const _emailLink = document.getElementById('apm-email-link');
+if (_emailLink) _emailLink.href = 'mai'+'lto:'+'cgreenidge'+'@'+'apmortgage.com';
+const _copyToClipboard = (text) => {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;top:0;left:0;opacity:0;';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);return Promise.resolve();
+};
+
 // ── EVENTS ──
+// ── SELECT ALL ON FOCUS ──
+document.querySelectorAll('input[type="number"]').forEach(input => {
+  input.addEventListener('focus', function() { const el=this; setTimeout(()=>el.select(),50); });
+  input.addEventListener('touchend', function() { const el=this; setTimeout(()=>el.select(),50); });
+});
+
 ['in-income','in-debts','in-rent','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
 document.getElementById('in-rate').addEventListener('input',()=>{update();toggleShowRate();});
 ['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();updatePMILenderSection();update();});
+  document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();update();});
 });
 document.getElementById('sl-ins').addEventListener('input',()=>{document.getElementById('sl-ins').dataset.manual='yes';update();});
-document.getElementById('sl-pmi').addEventListener('input',()=>{document.getElementById('sl-pmi').dataset.manual='yes';update();});
 document.getElementById('sl-flood').addEventListener('input',update);
 document.getElementById('tax-override').addEventListener('input',update);
 document.getElementById('ins-override').addEventListener('input',update);
-
-// ── SELECT ALL ON FOCUS FOR NUMBER INPUTS ──
-// setTimeout needed — browsers (especially Safari/iOS) ignore select() on focus without delay
-document.querySelectorAll('input[type="number"]').forEach(input => {
-  input.addEventListener('focus', function() {
-    const el = this;
-    setTimeout(() => el.select(), 50);
-  });
-  input.addEventListener('touchend', function() {
-    const el = this;
-    setTimeout(() => el.select(), 50);
-  });
-});
-
-// ── TESLA COIL LIGHTNING ANIMATION ──
-(function() {
-  function initLightning() {
-    const canvas = document.getElementById('lightning-canvas');
-    if (!canvas) return;
-    const stripe = canvas.parentElement;
-    canvas.width  = stripe.offsetWidth;
-    canvas.height = stripe.offsetHeight;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-
-    // Get text element position for origin points
-    const textEl = stripe.querySelector('.apm-stripe-text');
-
-    function bolt(x1, y1, x2, y2, ctx, color, width, branches) {
-      const dx = x2 - x1, dy = y2 - y1;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      if (dist < 4) return;
-      const midX = (x1+x2)/2 + (Math.random()-0.5) * dist * 0.6;
-      const midY = (y1+y2)/2 + (Math.random()-0.5) * dist * 0.3;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(midX, midY);
-      ctx.lineTo(x2, y2);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = width;
-      ctx.globalAlpha = 0.6 + Math.random() * 0.4;
-      ctx.stroke();
-      if (branches > 0 && Math.random() > 0.4) {
-        const bx = midX + (Math.random()-0.5) * dist * 0.8;
-        const by = midY + (Math.random()-0.5) * H * 0.8;
-        bolt(midX, midY, bx, by, ctx, color, width*0.6, branches-1);
-      }
-    }
-
-    function flash() {
-      ctx.clearRect(0, 0, W, H);
-      const textRect = textEl ? textEl.getBoundingClientRect() : null;
-      const stripeRect = stripe.getBoundingClientRect();
-      // Origin points along text edges
-      const origins = textRect ? [
-        {x: textRect.left - stripeRect.left - 2, y: textRect.top - stripeRect.top + textRect.height/2},
-        {x: textRect.right - stripeRect.left + 2, y: textRect.top - stripeRect.top + textRect.height/2},
-        {x: textRect.left - stripeRect.left + textRect.width * Math.random(), y: textRect.top - stripeRect.top},
-        {x: textRect.left - stripeRect.left + textRect.width * Math.random(), y: textRect.bottom - stripeRect.top},
-      ] : [{x: W/2, y: H/2}];
-
-      // Fire 2-4 bolts per flash
-      const count = 2 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < count; i++) {
-        const origin = origins[Math.floor(Math.random() * origins.length)];
-        const angle  = Math.random() * Math.PI * 2;
-        const length = 20 + Math.random() * 50;
-        const tx = origin.x + Math.cos(angle) * length;
-        const ty = origin.y + Math.sin(angle) * length * 0.5;
-        // Main bolt — white/yellow
-        const color = Math.random() > 0.5 ? 'rgba(255,255,255,0.9)' : 'rgba(245,166,35,0.95)';
-        bolt(origin.x, origin.y, tx, ty, ctx, color, 1.5 + Math.random(), 2);
-      }
-
-      // Fade out
-      setTimeout(() => {
-        ctx.clearRect(0, 0, W, H);
-      }, 60 + Math.random() * 80);
-    }
-
-    // Fire bolts randomly — feels organic like real lightning
-    function scheduleNext() {
-      const delay = 300 + Math.random() * 1200;
-      setTimeout(() => { flash(); scheduleNext(); }, delay);
-    }
-    scheduleNext();
-
-    // Resize handler
-    window.addEventListener('resize', () => {
-      canvas.width  = stripe.offsetWidth;
-      canvas.height = stripe.offsetHeight;
-    });
-  }
-
-  // Init after DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initLightning);
-  } else {
-    setTimeout(initLightning, 100);
-  }
-})();
-
-// ── COUNTY AUTOCOMPLETE ──
-(function() {
-  let highlightIdx = -1;
-
-  function buildCountyOptions() {
-    const sel = document.getElementById('sl-county');
-    if (!sel) return [];
-    return Array.from(sel.options)
-      .filter(o => o.value !== '')
-      .map(o => ({
-        value: o.value,
-        name: o.text.split(' —')[0].trim(),
-        mills: o.value,
-        label: o.text
-      }));
-  }
-
-  function selectCounty(opt) {
-    const sel = document.getElementById('sl-county');
-    const input = document.getElementById('county-text');
-    const dd = document.getElementById('county-dropdown');
-    if (!sel || !input || !dd) return;
-    sel.value = opt.value;
-    input.value = opt.name;
-    dd.className = 'county-dropdown';
-    dd.innerHTML = '';
-    highlightIdx = -1;
-    onCountyChange();
-  }
-
-  function showDropdown(matches) {
-    const dd = document.getElementById('county-dropdown');
-    if (!dd) return;
-    if (matches.length === 0) {
-      dd.className = 'county-dropdown';
-      return;
-    }
-    dd.innerHTML = matches.map((m, i) =>
-      '<div class="county-option" data-idx="' + i + '">' +
-        m.name +
-        '<span class="county-mills">~' + m.mills + ' mills</span>' +
-      '</div>'
-    ).join('');
-    dd.className = 'county-dropdown open';
-    highlightIdx = -1;
-    // Click to select
-    dd.querySelectorAll('.county-option').forEach((el, i) => {
-      el.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        selectCounty(matches[i]);
-      });
-    });
-  }
-
-  function initCountyAutocomplete() {
-    const input = document.getElementById('county-text');
-    const dd    = document.getElementById('county-dropdown');
-    if (!input || !dd) return;
-    const ALL = buildCountyOptions();
-
-    input.addEventListener('input', function() {
-      const q = this.value.toLowerCase().trim();
-      if (!q) { dd.className = 'county-dropdown'; return; }
-      const matches = ALL.filter(o => o.name.toLowerCase().startsWith(q))
-        .concat(ALL.filter(o => !o.name.toLowerCase().startsWith(q) && o.name.toLowerCase().includes(q)));
-      showDropdown(matches);
-    });
-
-    input.addEventListener('keydown', function(e) {
-      const items = dd.querySelectorAll('.county-option');
-      if (!items.length) return;
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        highlightIdx = Math.min(highlightIdx+1, items.length-1);
-        items.forEach((el,i) => el.classList.toggle('highlighted', i === highlightIdx));
-        items[highlightIdx] && items[highlightIdx].scrollIntoView({block:'nearest'});
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        highlightIdx = Math.max(highlightIdx-1, 0);
-        items.forEach((el,i) => el.classList.toggle('highlighted', i === highlightIdx));
-        items[highlightIdx] && items[highlightIdx].scrollIntoView({block:'nearest'});
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        const idx = highlightIdx >= 0 ? highlightIdx : 0;
-        const q = this.value.toLowerCase().trim();
-        const matches = ALL.filter(o => o.name.toLowerCase().startsWith(q))
-          .concat(ALL.filter(o => !o.name.toLowerCase().startsWith(q) && o.name.toLowerCase().includes(q)));
-        if (matches[idx]) selectCounty(matches[idx]);
-      } else if (e.key === 'Escape') {
-        dd.className = 'county-dropdown';
-      }
-    });
-
-    input.addEventListener('blur', function() {
-      setTimeout(() => { dd.className = 'county-dropdown'; }, 150);
-    });
-
-    input.addEventListener('focus', function() {
-      if (this.value) this.dispatchEvent(new Event('input'));
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCountyAutocomplete);
-  } else {
-    setTimeout(initCountyAutocomplete, 200);
-  }
-})();
-
-// ── FIX EMAIL LINK (Cloudflare encodes mailto: in HTML) ──
-const _emailLink = document.getElementById('apm-email-link');
-if (_emailLink) {
-  _emailLink.href = 'mai' + 'lto:' + 'cgreenidge' + '@' + 'apmortgage.com';
-}
-
-// ── WIRE LOAN TYPE BUTTONS ──
-document.querySelectorAll('.loan-type-btn').forEach(btn => {
-  btn.addEventListener('click', () => setLoanType(btn.getAttribute('data-lt')));
-});
-
-// ── WIRE PMI FICO RADIOS ──
-document.querySelectorAll('input[name="fico-tier"]').forEach(r =>
-  r.addEventListener('change', () => { updatePMILenderSection(); update(); })
-);
-document.getElementById('pmi-override-lender').addEventListener('input', () => {
-  updatePMILenderSection(); update();
-});
 
 // ── WIRE BUTTONS VIA addEventListener (Cloudflare splits scripts so onclick fails) ──
 document.getElementById('theme-btn').addEventListener('click', toggleTheme);
@@ -2129,20 +1663,84 @@ document.getElementById('tab-county').addEventListener('click', ()=>switchZipCou
 
 // Info buttons — event delegation
 document.addEventListener('click', function(e){
-  // Close button — always closes
-  if(e.target.classList.contains('info-close')){
-    e.stopPropagation();
-    const dropdown=e.target.closest('.info-dropdown');
-    if(dropdown) dropdown.classList.remove('open');
-    return;
-  }
-  // Info button — toggles
   const ib=e.target.closest('[data-info]');
   if(ib){ e.stopPropagation(); toggleInfo(ib.getAttribute('data-info')); return; }
-  // Click outside — close all
   if(!e.target.closest('.info-dropdown'))
     document.querySelectorAll('.info-dropdown.open').forEach(d=>d.classList.remove('open'));
 });
+
+// ── LOCK/UNLOCK SLIDERS ──
+function unlockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}if(g)g.style.display='none';}
+function lockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='0.25';w.style.pointerEvents='none';w.style.filter='blur(1px)';}if(g)g.style.display='block';}
+
+// ── LOAN TYPE CONFIG ──
+const LOAN_TYPES = {
+  conv: {label:'Conventional',frontEnd:28,backWarn:43,backMax:50,mipLabel:'PMI',noMI: false,vaLoan:false},
+  fha:  {label:'FHA',frontEnd:31,backWarn:43,backMax:57,mipLabel:'MIP',noMI: false,vaLoan:false},
+  va:   {label:'VA',frontEnd:null,backWarn:41,backMax:50,mipLabel:null,noMI: true,vaLoan:true},
+  usda: {label:'USDA',frontEnd:29,backWarn:41,backMax:46,mipLabel:'USDA Fee',noMI: false,vaLoan:false},
+};
+let currentLoanType = 'conv';
+
+function setLoanType(lt) {
+  currentLoanType = lt;
+  const slPmi = document.getElementById('sl-pmi');
+  if (slPmi) slPmi.dataset.manual = '';
+  document.querySelectorAll('.loan-type-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-lt') === lt));
+  ['fha','va','usda'].forEach(t => { const n=document.getElementById('loan-note-'+t); if(n) n.className='loan-note-box'+(t===lt?' visible':''); });
+  updateMILabel(); updatePMILenderSection(); update();
+}
+
+function updateMILabel() {
+  const cfg = LOAN_TYPES[currentLoanType];
+  const pmiRow = document.getElementById('pmi-brow');
+  const pmiLabel = pmiRow ? pmiRow.querySelector('.bk') : null;
+  const vaNote = document.getElementById('va-no-mi-note');
+  if (cfg.noMI) {
+    if (pmiRow) pmiRow.style.display = 'none';
+    if (vaNote) vaNote.style.display = 'flex';
+  } else {
+    if (vaNote) vaNote.style.display = 'none';
+    if (pmiLabel) pmiLabel.textContent = cfg.mipLabel || 'PMI';
+  }
+}
+
+// ── PMI RATE TABLE ──
+const PMI_RATES = {760:[0.19,0.41,0.58],740:[0.26,0.51,0.71],720:[0.37,0.65,0.87],700:[0.52,0.82,1.06],680:[0.71,1.02,1.28],660:[0.91,1.22,1.50],640:[1.10,1.45,1.75],620:[1.28,1.65,1.86]};
+const JUMBO_LIMIT = 726200;
+
+function getPMIRate(fico, ltv) {
+  const r = PMI_RATES[fico] || PMI_RATES[760];
+  return ltv <= 90 ? r[0] : ltv <= 95 ? r[1] : r[2];
+}
+
+function updatePMILenderSection() {
+  const price = +document.getElementById('sl-price').value || 0;
+  const down  = +document.getElementById('sl-down').value  || 20;
+  const loanAmt = price * (1 - down/100);
+  const isJumbo = loanAmt > JUMBO_LIMIT;
+  const jOn = document.getElementById('jumbo-only-note');
+  if (jOn) jOn.style.display = isJumbo ? 'block' : 'none';
+  document.getElementById('pmi-lender-section').style.display = down >= 20 ? 'none' : 'block';
+  if (down >= 20) return;
+  const ltv = 100 - down;
+  const ficoRadio = document.querySelector('input[name="fico-tier"]:checked');
+  const ficoTier = ficoRadio ? +ficoRadio.value : 760;
+  const annualRate = getPMIRate(ficoTier, ltv);
+  const estimated = Math.round(loanAmt * annualRate / 100 / 12);
+  document.getElementById('jumbo-badge').style.display = isJumbo ? 'inline' : 'none';
+  document.getElementById('jumbo-warning').style.display = isJumbo ? 'block' : 'none';
+  document.getElementById('pmi-rate-display').textContent = annualRate.toFixed(2) + '% / yr';
+  document.getElementById('pmi-estimate-val').textContent = '$' + estimated + '/mo';
+  const override = +document.getElementById('pmi-override-lender').value;
+  const pmiVal = override > 0 ? override : estimated;
+  const slPmi = document.getElementById('sl-pmi');
+  if (slPmi && !slPmi.dataset.manual) {
+    slPmi.value = Math.min(pmiVal, 500);
+    const fill = document.getElementById('fill-pmi');
+    if (fill) fill.style.width = (Math.min(pmiVal,500)/500*100) + '%';
+  }
+}
 
 // ── LOCK/UNLOCK SLIDERS ──
 function unlockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}if(g)g.style.display='none';}
@@ -2160,6 +1758,11 @@ if (hasParams) {
     document.getElementById('tab-lender').classList.remove('active');
     document.getElementById('tab-client').classList.add('active');
     document.getElementById('apm-header').className='apm-header visible';
+    document.getElementById('client-gauge-top').style.display='block';
+    document.body.classList.add('client-mode');
+    document.getElementById('client-gauge-top').style.display='block';
+    document.body.classList.add('client-mode');
+    document.getElementById('client-gauge-top').style.display = 'block';
     document.getElementById('mode-hint').textContent='Select your county, move the sliders, explore how different homes affect your DTI.';
     const _i=+urlParams.income||0,_d=+urlParams.debts||0,_r=+urlParams.rent||0;
     let _c=[{l:'Monthly Income',v:'$'+Math.round(_i).toLocaleString()+'/mo'},{l:'Other Debts',v:'$'+Math.round(_d).toLocaleString()+'/mo'}];
