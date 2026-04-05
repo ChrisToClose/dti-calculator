@@ -1043,7 +1043,7 @@ function onZipInput() {
     }
     status.className = 'zip-status found';
     status.textContent = '✓ ' + county + ' County — ' + (COUNTY_MILLS_MAP[county] || '?') + ' mills';
-    relockTax(); update();
+    relockTax(); unlockSliders(); update();
   } else if (zip.length === 5) {
     status.className = 'zip-status notfound';
     status.textContent = '⚠ ZIP not found — try selecting county manually';
@@ -1745,6 +1745,99 @@ function updatePMILenderSection() {
 // ── LOCK/UNLOCK SLIDERS ──
 function unlockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}if(g)g.style.display='none';}
 function lockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='0.25';w.style.pointerEvents='none';w.style.filter='blur(1px)';}if(g)g.style.display='block';}
+
+// ── COUNTY AUTOCOMPLETE ──
+(function() {
+  const input  = document.getElementById('county-text');
+  const dd     = document.getElementById('county-dropdown');
+  const sel    = document.getElementById('sl-county');
+  if (!input || !dd || !sel) return;
+
+  let highlightIdx = -1;
+
+  function getOptions() {
+    return Array.from(sel.options).filter(o => o.value !== '');
+  }
+
+  function renderDropdown(q) {
+    const filtered = getOptions().filter(o => o.text.toLowerCase().includes(q.toLowerCase()));
+    dd.innerHTML = '';
+    highlightIdx = -1;
+    if (!filtered.length || !q) { dd.classList.remove('open'); return; }
+    filtered.forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'county-option';
+      div.textContent = opt.text;
+      div.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectCounty(opt);
+      });
+      dd.appendChild(div);
+    });
+    dd.classList.add('open');
+  }
+
+  function selectCounty(opt) {
+    sel.value = opt.value;
+    input.value = opt.text.split(' —')[0].trim();
+    dd.classList.remove('open');
+    dd.innerHTML = '';
+    highlightIdx = -1;
+    onCountyChange();
+    unlockSliders();
+  }
+
+  input.addEventListener('input', function() {
+    renderDropdown(this.value);
+  });
+
+  input.addEventListener('keydown', function(e) {
+    const items = dd.querySelectorAll('.county-option');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlightIdx = Math.min(highlightIdx + 1, items.length - 1);
+      items.forEach((el, i) => el.classList.toggle('highlighted', i === highlightIdx));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlightIdx = Math.max(highlightIdx - 1, 0);
+      items.forEach((el, i) => el.classList.toggle('highlighted', i === highlightIdx));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlightIdx >= 0 && items[highlightIdx]) {
+        items[highlightIdx].dispatchEvent(new MouseEvent('mousedown'));
+      } else {
+        // Auto-select first visible match
+        const q = this.value.toLowerCase();
+        const match = getOptions().find(o => o.text.toLowerCase().startsWith(q));
+        if (match) selectCounty(match);
+      }
+    } else if (e.key === 'Escape') {
+      dd.classList.remove('open');
+    }
+  });
+
+  input.addEventListener('blur', function() {
+    setTimeout(() => dd.classList.remove('open'), 150);
+  });
+
+  input.addEventListener('focus', function() {
+    if (this.value) renderDropdown(this.value);
+  });
+
+  // Show current county in input on tab switch
+  const origSwitch = window.switchZipCounty;
+  window.switchZipCounty = function(mode) {
+    origSwitch && origSwitch(mode);
+    if (mode === 'county' && sel.value) {
+      input.value = sel.options[sel.selectedIndex].text.split(' —')[0].trim();
+    }
+  };
+})();
+
+// Add highlighted style
+const _countyStyle = document.createElement('style');
+_countyStyle.textContent = '.county-option.highlighted{background:rgba(43,127,164,0.2);}';
+document.head.appendChild(_countyStyle);
 
 // ── INIT ──
 initTheme();
