@@ -401,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.3</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.4</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -803,6 +803,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="auto-note">Starting estimate at 0.5% annually. Use slider to adjust or ✏️ to enter exact quote.</div>
   </div>
 </div>
+  </div><!-- end sliders-wrap -->
 
 <!-- ══ SCENARIO SAVE ══ -->
 <div class="scenario-box" id="scenario-box" style="display:none;">
@@ -850,7 +851,7 @@ function toggleTheme() {
 }
 function initTheme() {
   const h = new Date().getHours();
-  applyTheme(h >= 19 || h < 7 ? 'dark' : 'light');
+  applyTheme(h >= 20 || h < 7 ? 'dark' : 'light');
 }
 
 // ── STICKY DTI ──
@@ -1667,6 +1668,8 @@ document.querySelector('.show-rate-row').addEventListener('click', function(e){i
 document.getElementById('show-rate-check').addEventListener('change', toggleShowRate);
 document.getElementById('gen-link-btn').addEventListener('click', generateLink);
 document.getElementById('go-client-btn').addEventListener('click', ()=>setMode('client'));
+(function(){ const b=document.getElementById('go-client-btn-2'); if(b) b.addEventListener('click',()=>setMode('client')); })();
+
 document.getElementById('save-btn').addEventListener('click', saveScenario);
 document.getElementById('tab-zip').addEventListener('click', ()=>switchZipCounty('zip'));
 document.getElementById('tab-county').addEventListener('click', ()=>switchZipCounty('county'));
@@ -1707,10 +1710,18 @@ const _copyToClipboard = (text) => {
 };
 
 // ── EVENTS ──
-// ── SELECT ALL ON FOCUS ──
+// ── SELECT ALL ON FOCUS + CLEAR LEADING ZERO ──
 document.querySelectorAll('input[type="number"]').forEach(input => {
-  input.addEventListener('focus', function() { const el=this; setTimeout(()=>el.select(),50); });
-  input.addEventListener('touchend', function() { const el=this; setTimeout(()=>el.select(),50); });
+  input.addEventListener('focus', function() {
+    if (+this.value === 0) this.value = '';
+    const el = this; setTimeout(() => el.select(), 50);
+  });
+  input.addEventListener('blur', function() {
+    if (this.value === '' || this.value === '-') this.value = '0';
+  });
+  input.addEventListener('touchend', function() {
+    const el = this; setTimeout(() => el.select(), 50);
+  });
 });
 
 ['in-income','in-debts','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
@@ -1774,6 +1785,8 @@ document.getElementById('show-rate-check').addEventListener('change', toggleShow
 // Buttons
 document.getElementById('gen-link-btn').addEventListener('click', generateLink);
 document.getElementById('go-client-btn').addEventListener('click', ()=>setMode('client'));
+(function(){ const b=document.getElementById('go-client-btn-2'); if(b) b.addEventListener('click',()=>setMode('client')); })();
+
 document.getElementById('save-btn').addEventListener('click', saveScenario);
 
 // Zip/county tabs
