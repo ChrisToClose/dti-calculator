@@ -401,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.5</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.6</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -618,7 +618,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
         <span class="slider-value" id="val-rent">$0/mo</span>
       </div>
       <div class="slider-track-wrap">
-        <div class="slider-fill-bg"><div class="slider-fill" id="fill-rent"></div></div>
         <input type="range" id="sl-rent" min="0" max="7500" step="100" value="0">
       </div>
       <div class="slider-range-labels"><span>$0</span><span>$7,500</span></div>
@@ -1422,8 +1421,7 @@ function setMode(mode) {
     if (_slRent) {
       _slRent.value = Math.min(_rentVal, 7500);
       document.getElementById('val-rent').textContent = '$' + Math.round(_rentVal).toLocaleString() + '/mo';
-      const _rf = document.getElementById('fill-rent');
-      if (_rf) _rf.style.width = (Math.min(_rentVal,7500)/7500*100) + '%';
+
     }
     // Show contextual note
     const _rLenderNote = document.getElementById('rent-lender-note');
@@ -1496,8 +1494,7 @@ function loadFromURL() {
       _sr.value = Math.min(_rv, 7500);
       const _vr = document.getElementById('val-rent');
       if (_vr) _vr.textContent = '$' + _rv.toLocaleString() + '/mo';
-      const _fr = document.getElementById('fill-rent');
-      if (_fr) _fr.style.width = (Math.min(_rv,7500)/7500*100) + '%';
+
     }
     const _rcs = document.getElementById('rental-client-section');
     if (_rcs) _rcs.style.display = 'block';
