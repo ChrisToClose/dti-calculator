@@ -401,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.6</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.7</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -617,9 +617,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
         <span class="slider-label">Gross Monthly Rental Income <button class="info-btn" data-info="info-rent">i</button></span>
         <span class="slider-value" id="val-rent">$0/mo</span>
       </div>
-      <div class="slider-track-wrap">
-        <input type="range" id="sl-rent" min="0" max="7500" step="100" value="0">
-      </div>
+      <div class="slider-track"><div class="slider-fill" id="fill-rent"></div><input type="range" id="sl-rent" min="0" max="7500" step="100" value="0"></div>
       <div class="slider-range-labels"><span>$0</span><span>$7,500</span></div>
       <div id="rent-lender-note" style="display:none;font-size:11px;color:var(--muted);margin-top:10px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:4px;padding:8px 12px;line-height:1.6;">
         This rental estimate was provided by Chris. If you believe it would be different, or want to see how a different amount impacts your ability to purchase — adjust here.
@@ -1664,6 +1662,8 @@ document.getElementById('sl-pmi').addEventListener('input',()=>{document.getElem
 document.getElementById('sl-rent').addEventListener('input', () => {
   const val = +document.getElementById('sl-rent').value;
   document.getElementById('val-rent').textContent = '$' + val.toLocaleString() + '/mo';
+  const _fillR = document.getElementById('fill-rent');
+  if (_fillR) _fillR.style.width = (val/7500*100) + '%';
   const pct = (val / 7500) * 100;
   const fill = document.getElementById('fill-rent');
   if (fill) fill.style.width = pct + '%';
