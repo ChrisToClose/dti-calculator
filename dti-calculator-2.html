@@ -128,6 +128,10 @@ body.client-mode #results-col{position:sticky;top:16px;}
 .rental-toggle-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:2px;}
 .rental-toggle-sub{font-size:11px;color:var(--muted);}
 .rental-fields-wrap{display:none;margin-top:16px;}
+/* ── RENTAL SLIDER ON CLIENT VIEW ── */
+#rental-client-section{display:none;margin-top:16px;}
+#rental-client-section .slider-label{font-size:13px;color:var(--text);font-weight:500;}
+#rental-client-section .slider-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--teal);}
 .rental-warning{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:9px;padding:11px 14px;margin-bottom:14px;}
 .rental-warning-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
 .rental-warning-body{font-size:11px;color:var(--muted);line-height:1.6;}
@@ -399,7 +403,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.2</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.3</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -606,6 +610,24 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <!-- ══ CLIENT SLIDERS ══ -->
 <div class="panel fadein" id="client-panel">
   <div class="section-title">Explore Properties <span class="badge badge-client">Move the sliders</span></div>
+
+  <!-- RENTAL INCOME SLIDER — only shows when rental is active -->
+  <div id="rental-client-section">
+    <div class="panel fadein" style="margin-bottom:16px;border-left:3px solid var(--yellow);padding:16px 20px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:12px;">🏡 Departing Property — Rental Income</div>
+      <div class="slider-row">
+        <span class="slider-label">Gross Monthly Rental Income <button class="info-btn" data-info="info-rent">i</button></span>
+        <span class="slider-value" id="val-rent">$0/mo</span>
+      </div>
+      <div class="slider-track-wrap">
+        <div class="slider-fill-bg"><div class="slider-fill" id="fill-rent"></div></div>
+        <input type="range" id="sl-rent" min="0" max="7500" step="100" value="0">
+      </div>
+      <div class="slider-range-labels"><span>$0</span><span>$7,500</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic;">Adjust if your expected rental income has changed.</div>
+    </div>
+    <div id="info-rent" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-rent">×</button><strong>Gross Monthly Rental Income</strong><br>Enter the expected monthly rent before expenses. 75% of this amount is used in the DTI calculation per Encompass FM0132. If no lease yet, use the expected market rent.</div>
+  </div>
 
   <!-- ZIP OR COUNTY -->
   <div class="zip-county-wrap">
@@ -849,6 +871,9 @@ window.addEventListener('scroll', () => {
 function toggleRental() {
   const enabled = document.getElementById('rental-enabled').checked;
   document.getElementById('rental-fields-wrap').style.display = enabled ? 'block' : 'none';
+  // Show rental slider on client view when rental is enabled
+  const rcs = document.getElementById('rental-client-section');
+  if (rcs) rcs.style.display = enabled ? 'block' : 'none';
   if (!enabled) {
     document.getElementById('in-rent').value  = 0;
     document.getElementById('in-pitia').value = 0;
@@ -1388,6 +1413,19 @@ function setMode(mode) {
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
     toggleShowRate();
     if (document.getElementById('sl-county').value !== '') { unlockSliders(); } else { lockSliders(); }
+    // Sync rental slider from lender input
+    const _rentVal = getLenderVal('in-rent') || 0;
+    const _slRent = document.getElementById('sl-rent');
+    if (_slRent) {
+      _slRent.value = Math.min(_rentVal, 7500);
+      document.getElementById('val-rent').textContent = '$' + Math.round(_rentVal).toLocaleString() + '/mo';
+      const _rf = document.getElementById('fill-rent');
+      if (_rf) _rf.style.width = (Math.min(_rentVal,7500)/7500*100) + '%';
+    }
+    // Show rental section if enabled
+    const _rEnabled = document.getElementById('rental-enabled').checked;
+    const _rcs = document.getElementById('rental-client-section');
+    if (_rcs) _rcs.style.display = _rEnabled ? 'block' : 'none';
   }
   update();
 }
@@ -1438,6 +1476,18 @@ function loadFromURL() {
   if (+p.get('rent')>0||+p.get('pitia')>0) {
     const cb=document.getElementById('rental-enabled');
     if(cb){cb.checked=true;document.getElementById('rental-fields-wrap').style.display='block';}
+    // Sync rental slider
+    const _rv = +p.get('rent') || 0;
+    const _sr = document.getElementById('sl-rent');
+    if (_sr) {
+      _sr.value = Math.min(_rv, 7500);
+      const _vr = document.getElementById('val-rent');
+      if (_vr) _vr.textContent = '$' + _rv.toLocaleString() + '/mo';
+      const _fr = document.getElementById('fill-rent');
+      if (_fr) _fr.style.width = (Math.min(_rv,7500)/7500*100) + '%';
+    }
+    const _rcs = document.getElementById('rental-client-section');
+    if (_rcs) _rcs.style.display = 'block';
   }
   if (p.has('county')) {
     switchZipCounty('county');
@@ -1595,6 +1645,17 @@ document.getElementById('tab-county').addEventListener('click', ()=>switchZipCou
 document.querySelectorAll('input[name="fico-tier"]').forEach(r=>r.addEventListener('change',()=>{updatePMILenderSection();update();}));
 document.getElementById('pmi-override-lender').addEventListener('input',()=>{updatePMILenderSection();update();});
 document.getElementById('sl-pmi').addEventListener('input',()=>{document.getElementById('sl-pmi').dataset.manual='yes';update();});
+document.getElementById('sl-rent').addEventListener('input', () => {
+  const val = +document.getElementById('sl-rent').value;
+  document.getElementById('val-rent').textContent = '$' + val.toLocaleString() + '/mo';
+  const pct = (val / 7500) * 100;
+  const fill = document.getElementById('fill-rent');
+  if (fill) fill.style.width = pct + '%';
+  // Update the hidden lender rent field so update() picks it up
+  const inRent = document.getElementById('in-rent');
+  if (inRent) inRent.value = val;
+  update();
+});
 document.addEventListener('click', function(e){
   if(e.target.classList.contains('info-close')){e.stopPropagation();const d=e.target.closest('.info-dropdown');if(d)d.classList.remove('open');return;}
   const ib=e.target.closest('[data-info]');
