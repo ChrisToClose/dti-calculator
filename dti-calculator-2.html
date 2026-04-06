@@ -408,7 +408,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="mode-bar">
   <div class="mode-tabs">
     <button class="mode-tab active" id="tab-lender" >⚙️ Lender Setup</button>
-    <button class="mode-tab" id="tab-client" id="go-client-btn">🏠 Client View</button>
+    <button class="mode-tab" id="tab-client">🏠 Client View</button>
   </div>
   <div class="mode-hint" id="mode-hint">Fill in your client's profile, then switch to Client View.</div>
 </div>
@@ -602,7 +602,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
   <button class="gen-link-btn" id="gen-link-btn">🔗 Generate Client Link — Copy to Clipboard</button>
   <div class="link-copied" id="link-copied">✓ Copied! Send this link to your client — their numbers will be pre-filled.<br><span id="link-display" style="font-size:11px;color:var(--teal);display:block;margin-top:4px;"></span></div>
-  <button class="go-client-btn" id="go-client-btn">→ Done — Switch to Client View</button>
+  <button class="go-client-btn" id="go-client-btn-2">→ Done — Switch to Client View</button>
 </div>
 
 <!-- ══ CLIENT SUMMARY ══ -->
@@ -734,6 +734,15 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     <div class="slider-range-labels"><span>$0</span><span>$1,500</span></div>
   </div>
 
+
+  <!-- PMI (client view - shown when down < 20%) -->
+  <div id="pmi-section-client" style="display:none;">
+    <div class="slider-row" id="pmi-row-client">
+      <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" data-info="info-pmi">i</button></span><span class="slider-value" id="val-pmi-client">$0/mo</span></div>
+    </div>
+    <div class="slider-track"><div class="slider-fill" id="fill-pmi-client"></div><input type="range" id="sl-pmi-client" min="0" max="500" step="1" value="0"></div>
+    <div class="slider-range-labels"><span>$0</span><span>$500/mo</span></div>
+  </div>
 
   <!-- FLOOD -->
   <div id="info-flood" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-flood">×</button><strong>What is flood insurance and when is it required?</strong><br>If a property is in a FEMA flood zone, your lender requires flood insurance — mandatory, not optional. Standard homeowners insurance does NOT cover floods. In Florida, many properties near water or low-lying areas require it. Cost ranges from $150–$500+/mo depending on flood risk and elevation.</div>
@@ -1252,7 +1261,8 @@ function update() {
 
   // RENTAL
   const rentalEnabled = document.getElementById('rental-enabled').checked;
-  const grossRent = rentalEnabled ? (getLenderVal('in-rent')  || 0) : 0;
+  const _slRentEl = document.getElementById('sl-rent');
+  const grossRent = rentalEnabled ? (+(_slRentEl ? _slRentEl.value : 0) || getLenderVal('in-rent') || 0) : 0;
   const pitia     = rentalEnabled ? (getLenderVal('in-pitia') || 0) : 0;
   let rentalShortfall = 0;
   if (rentalEnabled && (grossRent > 0 || pitia > 0)) {
