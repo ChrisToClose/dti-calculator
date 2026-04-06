@@ -401,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.2</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.3</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1262,7 +1262,7 @@ function update() {
   // RENTAL
   const rentalEnabled = document.getElementById('rental-enabled').checked;
   const _slRentEl = document.getElementById('sl-rent');
-  const grossRent = rentalEnabled ? (+(_slRentEl ? _slRentEl.value : 0) || getLenderVal('in-rent') || 0) : 0;
+  const grossRent = rentalEnabled ? (+(_slRentEl ? _slRentEl.value : 0) || 0) : 0;
   const pitia     = rentalEnabled ? (getLenderVal('in-pitia') || 0) : 0;
   let rentalShortfall = 0;
   if (rentalEnabled && (grossRent > 0 || pitia > 0)) {
@@ -1681,9 +1681,10 @@ document.getElementById('sl-rent').addEventListener('input', () => {
   const pct = (val / 7500) * 100;
   const fill = document.getElementById('fill-rent');
   if (fill) fill.style.width = pct + '%';
-  // Update the hidden lender rent field so update() picks it up
+  // Sync to lender field and urlParams
   const inRent = document.getElementById('in-rent');
   if (inRent) inRent.value = val;
+  urlParams['rent'] = String(val);
   update();
 });
 document.addEventListener('click', function(e){
