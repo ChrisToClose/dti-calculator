@@ -390,7 +390,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.6</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.7</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -610,6 +610,12 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       </div>
     </div>
   </div>
+
+  <!-- LOCATION GATE -->
+  <div id="location-gate" style="display:none;padding:10px 14px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:8px;margin-bottom:12px;">
+    <div style="font-size:12px;color:var(--teal);font-family:'DM Mono',monospace;letter-spacing:1px;">📍 Select a county or enter a zip code above to unlock</div>
+  </div>
+  <div id="sliders-wrap">
 
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-price">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
@@ -1664,9 +1670,6 @@ document.addEventListener('click', function(e){
 });
 
 // ── LOCK/UNLOCK SLIDERS ──
-function unlockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='1';w.style.pointerEvents='all';w.style.filter='none';}if(g)g.style.display='none';}
-function lockSliders(){const w=document.getElementById('sliders-wrap'),g=document.getElementById('location-gate');if(w){w.style.opacity='0.25';w.style.pointerEvents='none';w.style.filter='blur(1px)';}if(g)g.style.display='block';}
-
 // ── LOAN TYPE CONFIG ──
 const LOAN_TYPES = {
   conv: {label:'Conventional',frontEnd:28,backWarn:43,backMax:50,mipLabel:'PMI',noMI:false,vaLoan:false},
