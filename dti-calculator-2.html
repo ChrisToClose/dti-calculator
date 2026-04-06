@@ -84,7 +84,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .mode-hint{font-size:12px;color:var(--muted);font-style:italic;}
 
 /* ══ LAYOUT ══ */
-.layout{display:grid;grid-template-columns:1fr 310px;gap:20px;align-items:start;}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;}
+#left-col{min-height:100%;}
+.results-col{position:sticky;top:16px;align-self:start;}
 /* client-mode: single col — gauge on right in 2-col layout */
 body.client-mode .layout{grid-template-columns:1fr 340px;}
 body.client-mode #results-col{position:sticky;top:16px;}
@@ -257,7 +259,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .sticky-badge.danger{background:rgba(224,85,85,0.2);color:#e05555;}
 
 /* ══ RESULTS ══ */
-.results-col{display:flex;flex-direction:column;gap:16px;position:sticky;top:16px;}
+.results-col{display:flex;flex-direction:column;gap:16px;}
 .gauge-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px;text-align:center;box-shadow:0 2px 12px var(--shadow);}
 .gauge-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
 .gauge-svg-wrap{width:180px;height:100px;margin:0 auto 12px;}
@@ -390,7 +392,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.8</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.9</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1136,7 +1138,7 @@ function update() {
   const pmi    = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
   const rate   = getLenderVal('in-rate')   || 7.0;
   const debts  = getLenderVal('in-debts')  || 0;
-  const income = getLenderVal('in-income') || 1;
+  const income = getLenderVal('in-income') || 0;
 
   // PMI / MIP / USDA visibility
   const _ltPMI = LOAN_TYPES[currentLoanType] || LOAN_TYPES.conv;
