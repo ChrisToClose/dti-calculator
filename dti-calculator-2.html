@@ -1176,10 +1176,9 @@ function update() {
     document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
   }
   updateMILabel();
+  updatePMILenderSection();
   const _pmiWrapShow = down >= 20 ? 'none' : 'block';
   if (_pmiWrap && _ltPMI.noMI) {} // already handled
-  document.getElementById('info-pmi').style.display = down >= 20 ? 'none' : 'block';
-
   // Slider labels
   document.getElementById('val-price').textContent = fmt(price);
   document.getElementById('val-down').textContent  = `${down}%  (${fmt(price*down/100)})`;
