@@ -432,6 +432,12 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
       <div class="field-label">Interest Rate <small>Not shown to client by default</small></div>
       <div class="input-wrap"><input type="number" id="in-rate" value="7.0" min="1" max="20" step="0.125" style="text-align:right;"><span class="sfx">%</span></div>
     </div>
+    <div class="field-group">
+      <div>
+        <div class="field-label">Down Payment <small>For PMI estimate</small></div>
+        <div class="input-wrap"><input type="number" id="in-down-pct" value="20" min="3" max="50" step="1" style="text-align:right;"><span class="sfx">%</span></div>
+      </div>
+    </div>
     <div class="field-group full">
       <div class="show-rate-row" class="show-rate-row">
         <input type="checkbox" id="show-rate-check">
@@ -512,6 +518,10 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <div class="field-group">
             <div class="field-label">Gross Monthly Rental Income <small>Expected rent on departing property</small></div>
             <div class="input-wrap"><span class="pfx">$</span><input type="number" id="in-rent" value="0" min="0" step="50"><span class="sfx">/ mo</span></div>
+          <div style="margin-top:8px;">
+            <input type="range" id="sl-rent-lender" min="0" max="7500" step="100" value="0" style="width:100%;">
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;">Client slider will be pre-set to <span id="rent-lender-preview">$0</span>/mo</div>
+          </div>
           </div>
           <div class="field-group">
             <div class="field-label">Departing Property Total Expenses <small>All mortgages + that property's own tax + insurance + HOA</small></div>
@@ -1649,7 +1659,28 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
 });
 
 ['in-income','in-debts','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
-document.getElementById('in-rent').addEventListener('input',function(){const v=Math.min(+this.value||0,7500);const sr=document.getElementById('sl-rent');if(sr)sr.value=v;const ve=document.getElementById('val-rent');if(ve)ve.textContent='$'+v.toLocaleString()+'/mo';const fe=document.getElementById('fill-rent');if(fe)fe.style.width=(v/7500*100)+'%';urlParams['rent']=String(v);update();});
+document.getElementById('in-rent').addEventListener('input',function(){
+  const v=Math.min(+this.value||0,7500);
+  const sr=document.getElementById('sl-rent'); if(sr) sr.value=v;
+  const srl=document.getElementById('sl-rent-lender'); if(srl) srl.value=v;
+  const rp=document.getElementById('rent-lender-preview'); if(rp) rp.textContent='$'+v.toLocaleString();
+  const ve=document.getElementById('val-rent'); if(ve) ve.textContent='$'+v.toLocaleString()+'/mo';
+  const fe=document.getElementById('fill-rent'); if(fe) fe.style.width=(v/7500*100)+'%';
+  urlParams['rent']=String(v); update();
+});
+(function(){
+  const srl=document.getElementById('sl-rent-lender');
+  if(!srl) return;
+  srl.addEventListener('input',function(){
+    const v=+this.value;
+    const ir=document.getElementById('in-rent'); if(ir) ir.value=v;
+    const sr=document.getElementById('sl-rent'); if(sr) sr.value=v;
+    const rp=document.getElementById('rent-lender-preview'); if(rp) rp.textContent='$'+v.toLocaleString();
+    const ve=document.getElementById('val-rent'); if(ve) ve.textContent='$'+v.toLocaleString()+'/mo';
+    const fe=document.getElementById('fill-rent'); if(fe) fe.style.width=(v/7500*100)+'%';
+    urlParams['rent']=String(v); update();
+  });
+})();
 document.getElementById('in-rate').addEventListener('input',()=>{update();toggleShowRate();});
 ['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id=>{
   document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();update();});
@@ -1759,7 +1790,8 @@ function getPMIRate(fico, ltv) {
 
 function updatePMILenderSection() {
   const price = +document.getElementById('sl-price').value || 0;
-  const down  = +document.getElementById('sl-down').value  || 20;
+  const _idp = document.getElementById('in-down-pct');
+  const down  = _idp && +_idp.value > 0 ? +_idp.value : (+document.getElementById('sl-down').value || 20);
   const loanAmt = price * (1 - down/100);
   const isJumbo = loanAmt > JUMBO_LIMIT;
   const jOn = document.getElementById('jumbo-only-note');
