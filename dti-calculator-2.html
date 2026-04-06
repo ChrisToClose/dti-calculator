@@ -85,8 +85,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 /* ══ LAYOUT ══ */
 .layout{display:grid;grid-template-columns:1fr 310px;gap:20px;align-items:start;}
-/* client-mode: single col on mobile only */
-@media(max-width:760px){body.client-mode .layout{display:block;}}
+/* client-mode: single col — gauge on right in 2-col layout */
+body.client-mode .layout{grid-template-columns:1fr 340px;}
+body.client-mode #results-col{position:sticky;top:16px;}
 @media(max-width:760px){.layout{grid-template-columns:1fr;}}
 
 /* ══ PANEL ══ */
@@ -256,7 +257,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .sticky-badge.danger{background:rgba(224,85,85,0.2);color:#e05555;}
 
 /* ══ RESULTS ══ */
-.results-col{display:flex;flex-direction:column;gap:16px;}
+.results-col{display:flex;flex-direction:column;gap:16px;position:sticky;top:16px;}
 .gauge-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px;text-align:center;box-shadow:0 2px 12px var(--shadow);}
 .gauge-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal);margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;}
 .gauge-svg-wrap{width:180px;height:100px;margin:0 auto 12px;}
@@ -389,7 +390,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.5</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.6</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -642,7 +643,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 
   <!-- PMI -->
-  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;display:none;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
+  <div id="info-pmi" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-pmi">×</button><strong>What is PMI?</strong><br>Private Mortgage Insurance — required when you put down less than 20%. It typically adds 0.5%–1.5% of the loan per year to your monthly payment. Once you reach 20% equity you can request it removed. The best way to avoid it is to put 20% or more down.</div>
   <div class="slider-row" id="pmi-row" style="display:none;">
     <div class="slider-header"><span class="slider-label">PMI <button class="info-btn" data-info="info-pmi">i</button></span><span class="slider-value" id="val-pmi">$0/mo</span></div>
     <div class="slider-track"><div class="slider-fill" id="fill-pmi"></div><input type="range" id="sl-pmi" min="0" max="500" step="1" value="0" value="0"></div>
@@ -1161,8 +1162,6 @@ function update() {
   updateMILabel();
   const _pmiWrapShow = down >= 20 ? 'none' : 'block';
   if (_pmiWrap && _ltPMI.noMI) {} // already handled
-  document.getElementById('info-pmi').style.display = down >= 20 ? 'none' : 'block';
-
   // Slider labels
   document.getElementById('val-price').textContent = fmt(price);
   document.getElementById('val-down').textContent  = `${down}%  (${fmt(price*down/100)})`;
