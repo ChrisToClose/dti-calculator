@@ -373,9 +373,9 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M14 10.7c-.4-.4-2.5-1.7-3-1.7-.5 0-.8.4-1.1.8-.3.4-.6.7-1 .6C7.3 10 5.5 8.3 5 7c-.1-.5.2-.8.6-1.1C6 5.6 6.4 5.3 6.4 4.8c0-.5-1.3-2.7-1.7-3C4.3 1.5 3.8 1.5 3.4 1.5 2 1.5 1 3 1 4c0 6.1 7.4 11.5 10 11.5 1 0 4-1 4-3 0-.5-.6-1.4-1-1.8z" fill="currentColor"/></svg>
           727.642.1374
         </a>
-        <a class="apm-contact" href="/cdn-cgi/l/email-protection#583b3f2a3d3d36313c3f3d18392835372a2c3f393f3d763b3735">
+        <a class="apm-contact" id="apm-email-link" href="#">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1" stroke="currentColor" stroke-width="1.5"/><path d="M1 3l7 6 7-6" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span class="__cf_email__" data-cfemail="abc8ccd9cecec5c2cfccceebcadbc6c4d9dfcccaccce85c8c4c6">[email&#160;protected]</span>
+          <span id="apm-email-text"></span>
         </a>
         <a class="apm-contact" href="https://www.christoclose.com" target="_blank">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5C6 4 5 6 5 8s1 4 3 6.5M8 1.5C10 4 11 6 11 8s-1 4-3 6.5M1.5 8h13" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -1603,7 +1603,12 @@ document.addEventListener('click', function(e){
 });
 document.querySelectorAll('.loan-type-btn').forEach(btn=>btn.addEventListener('click',()=>setLoanType(btn.getAttribute('data-lt'))));
 const _emailLink = document.getElementById('apm-email-link');
-if (_emailLink) _emailLink.href = 'mai'+'lto:'+'cgreenidge'+'@'+'apmortgage.com';
+if (_emailLink) {
+  const _em = ['cgreenidge','apmortgage.com'].join('@');
+  _emailLink.href = 'mai'+'lto:'+_em;
+  const _et = document.getElementById('apm-email-text');
+  if (_et) _et.textContent = _em;
+}
 const _copyToClipboard = (text) => {
   if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
   const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;top:0;left:0;opacity:0;';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);return Promise.resolve();
