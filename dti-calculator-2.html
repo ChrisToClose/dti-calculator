@@ -389,7 +389,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.4</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.5</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -725,9 +725,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </button>
   <div class="save-status" id="save-status"></div>
 </div>
-
-</div>
-
 
 <!-- ══ RIGHT COL ══ -->
 <div class="results-col" id="results-col">
@@ -1233,8 +1230,8 @@ function update() {
   }
 
   const total    = housing + debts + rentalShortfall;
-  const frontDTI = (housing / income) * 100;
-  const backDTI  = (total   / income) * 100;
+  const frontDTI = income > 0 ? (housing / income) * 100 : 0;
+  const backDTI  = income > 0 ? (total   / income) * 100 : 0;
   state = {pi,tax,ins,flood,floodOn,hoa,pmi,debts,housing,total,frontDTI,backDTI,income,price,down,rate,term,grossRent,pitia,rentalShortfall,rentalEnabled,mills};
 
   // Breakdown
