@@ -62,6 +62,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .apm-apply:hover{background:#fff;}
 @media(max-width:640px){
   .apm-body{flex-wrap:wrap;padding:16px;}
+  .gauge-panel{padding:16px 12px;}
+  .dti-readout{gap:8px;}
+  .front-back{font-size:28px;}
   .apm-right{width:100%;flex-direction:row;align-items:center;justify-content:space-between;}
   .apm-name{font-size:36px;}
   .apm-contact{font-size:18px;}
@@ -84,13 +87,16 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .mode-hint{font-size:12px;color:var(--muted);font-style:italic;}
 
 /* ══ LAYOUT ══ */
-.layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;}
-#left-col{min-height:100%;}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start;}
 .results-col{position:sticky;top:16px;align-self:start;}
 /* client-mode: single col — gauge on right in 2-col layout */
 body.client-mode .layout{grid-template-columns:1fr 340px;}
 body.client-mode #results-col{position:sticky;top:16px;}
-@media(max-width:760px){.layout{grid-template-columns:1fr;}}
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr;display:flex;flex-direction:column;}
+  #results-col{order:-1;position:static;margin-bottom:16px;}
+  #left-col{order:1;}
+}
 
 /* ══ PANEL ══ */
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:0 2px 12px var(--shadow);transition:background 0.3s,border-color 0.3s;}
@@ -392,7 +398,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.9</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.1</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
