@@ -84,12 +84,12 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .mode-hint{font-size:12px;color:var(--muted);font-style:italic;}
 
 /* ══ LAYOUT ══ */
-.layout{display:grid;grid-template-columns:1fr 310px;gap:20px;}
+.layout{display:grid;grid-template-columns:1fr 310px;gap:20px;align-items:start;}
 @media(max-width:760px){.layout{grid-template-columns:1fr;}}
-/* Client view — single column, gauge at top */
+/* Client view — single column, gauge moves to top */
 body.client-mode .layout{grid-template-columns:1fr;}
-body.client-mode #results-col{display:none !important;}
-body.client-mode #client-gauge-top{display:block !important;}
+body.client-mode #results-col{grid-column:1;grid-row:1;margin-bottom:20px;}
+body.client-mode #left-col{grid-column:1;grid-row:2;}
 
 /* ══ PANEL ══ */
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:0 2px 12px var(--shadow);transition:background 0.3s,border-color 0.3s;}
@@ -400,7 +400,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.2</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.3</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -413,7 +413,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 
 <div class="layout">
-<div>
+<div id="left-col">
 
 <!-- ══ LENDER PANEL ══ -->
 <div id="lender-panel" class="panel fadein">
