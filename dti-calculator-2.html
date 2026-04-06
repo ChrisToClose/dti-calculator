@@ -389,7 +389,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.6</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.7</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -818,7 +818,7 @@ function toggleTheme() {
 }
 function initTheme() {
   const h = new Date().getHours();
-  applyTheme(h >= 20 || h < 7 ? 'dark' : 'light');
+  applyTheme('light');
 }
 
 // ── STICKY DTI ──
@@ -1374,6 +1374,7 @@ function setMode(mode) {
 
   if (mode === 'lender') {
     lp.style.display = 'block'; cs.style.display = 'none'; sb.style.display = 'none';
+    document.getElementById('client-panel').style.display = 'none';
     tl.style.display = ''; tl.classList.add('active'); tc.classList.remove('active');
     ah.className = 'apm-header';
     hm.textContent = "Fill in your client's profile, then switch to Client View.";
@@ -1389,6 +1390,7 @@ function setMode(mode) {
     document.getElementById('summary-chips').innerHTML = chips.map(c =>
       `<div class="chip">${c.l} <strong>${c.v}</strong></div>`).join('');
     lp.style.display = 'none'; cs.style.display = 'block'; sb.style.display = 'block';
+    document.getElementById('client-panel').style.display = 'block';
     tl.style.display = 'none'; tl.classList.remove('active'); tc.classList.add('active');
     ah.className = 'apm-header visible';
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
@@ -1623,6 +1625,11 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
     if (+this.value === 0) this.value = '';
     const el = this; setTimeout(() => el.select(), 50);
   });
+  input.addEventListener('input', function() {
+    if (this.value.length > 1 && this.value.startsWith('0')) {
+      this.value = this.value.replace(/^0+/, '') || '0';
+    }
+  });
   input.addEventListener('blur', function() {
     if (this.value === '' || this.value === '-') this.value = '0';
   });
@@ -1795,7 +1802,10 @@ if (hasParams) {
     update();
   },200);
 } else {
+  document.getElementById("client-panel").style.display = "none";
+  updatePMILenderSection();
   update();
+  lockSliders();
 }
 </script>
 </body>
