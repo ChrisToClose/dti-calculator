@@ -85,9 +85,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 /* ══ LAYOUT ══ */
 .layout{display:grid;grid-template-columns:1fr 310px;gap:20px;align-items:start;}
-body.client-mode .layout{display:block;}
-body.client-mode #results-col{margin-bottom:20px;}
-body.client-mode .gauge-panel{max-width:none;}
+/* client-mode: single col on mobile only */
+@media(max-width:760px){body.client-mode .layout{display:block;}}
 @media(max-width:760px){.layout{grid-template-columns:1fr;}}
 
 /* ══ PANEL ══ */
@@ -390,7 +389,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.3</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v6.4</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -549,50 +548,6 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 </div>
 
-<!-- ══ RIGHT COL ══ -->
-<div class="results-col" id="results-col">
-  <div class="gauge-panel" id="gauge-anchor">
-    <div class="gauge-eyebrow">
-      Debt-to-Income
-      <button class="info-btn" data-info="info-dti" style="border-color:var(--teal);">i</button>
-    </div>
-    <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" data-info="info-dti">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
-    <div class="gauge-svg-wrap">
-      <svg viewBox="0 0 180 100" width="180" height="100">
-        <path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#1c2a3e" stroke-width="14" stroke-linecap="round"/>
-        <path id="arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
-        <path id="arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
-        <line id="needle" x1="90" y1="100" x2="90" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)" style="transition:transform 0.4s cubic-bezier(0.4,0,0.2,1)"/>
-        <circle cx="90" cy="100" r="5" fill="white" opacity="0.9"/>
-      </svg>
-    </div>
-    <div class="dti-dual">
-      <div class="dti-box"><div class="dti-box-label">Front-End</div><div class="dti-box-num" id="front-dti">—</div><div class="dti-box-sub">Housing only</div></div>
-      <div class="dti-box"><div class="dti-box-label">Back-End</div><div class="dti-box-num" id="back-dti">—</div><div class="dti-box-sub">All obligations</div></div>
-    </div>
-    <div class="dti-badge b-safe" id="dti-badge"><div class="dot"></div><span id="dti-badge-text">Awaiting input</span></div>
-  </div>
-
-  <div class="breakdown-panel">
-    <div class="section-title" style="margin-bottom:14px;">Monthly Breakdown</div>
-    <div class="brow head-row"><span class="bk">Front-End — Housing</span></div>
-    <div class="brow"><span class="bk">Principal &amp; Interest</span><span class="bv" id="b-pi">—</span></div>
-    <div class="brow"><span class="bk">Property Tax</span><span class="bv" id="b-tax">—</span></div>
-    <div class="brow"><span class="bk">Insurance</span><span class="bv" id="b-ins">—</span></div>
-    <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
-    <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
-    <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
-    <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
-    <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
-    <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
-    <div class="brow rental-row" id="b-rental-row" style="display:none;"><span class="bk">+ Rental Shortfall</span><span class="bv" id="b-rental">—</span></div>
-    <div class="brow total"><span class="bk">Total All Obligations</span><span class="bv" id="b-total">—</span></div>
-    <div class="thresh-bar ts" id="thresh-bar">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span id="thresh-text">Max qualifying back-end: —</span>
-    </div>
-  </div>
-</div>
 
 <!-- ══ CLIENT SLIDERS ══ -->
 <div class="panel fadein" id="client-panel">
@@ -771,6 +726,52 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   <div class="save-status" id="save-status"></div>
 </div>
 
+</div>
+
+
+<!-- ══ RIGHT COL ══ -->
+<div class="results-col" id="results-col">
+  <div class="gauge-panel" id="gauge-anchor">
+    <div class="gauge-eyebrow">
+      Debt-to-Income
+      <button class="info-btn" data-info="info-dti" style="border-color:var(--teal);">i</button>
+    </div>
+    <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" data-info="info-dti">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
+    <div class="gauge-svg-wrap">
+      <svg viewBox="0 0 180 100" width="180" height="100">
+        <path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#1c2a3e" stroke-width="14" stroke-linecap="round"/>
+        <path id="arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        <path id="arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        <line id="needle" x1="90" y1="100" x2="90" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)" style="transition:transform 0.4s cubic-bezier(0.4,0,0.2,1)"/>
+        <circle cx="90" cy="100" r="5" fill="white" opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="dti-dual">
+      <div class="dti-box"><div class="dti-box-label">Front-End</div><div class="dti-box-num" id="front-dti">—</div><div class="dti-box-sub">Housing only</div></div>
+      <div class="dti-box"><div class="dti-box-label">Back-End</div><div class="dti-box-num" id="back-dti">—</div><div class="dti-box-sub">All obligations</div></div>
+    </div>
+    <div class="dti-badge b-safe" id="dti-badge"><div class="dot"></div><span id="dti-badge-text">Awaiting input</span></div>
+  </div>
+
+  <div class="breakdown-panel">
+    <div class="section-title" style="margin-bottom:14px;">Monthly Breakdown</div>
+    <div class="brow head-row"><span class="bk">Front-End — Housing</span></div>
+    <div class="brow"><span class="bk">Principal &amp; Interest</span><span class="bv" id="b-pi">—</span></div>
+    <div class="brow"><span class="bk">Property Tax</span><span class="bv" id="b-tax">—</span></div>
+    <div class="brow"><span class="bk">Insurance</span><span class="bv" id="b-ins">—</span></div>
+    <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
+    <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
+    <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
+    <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
+    <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
+    <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
+    <div class="brow rental-row" id="b-rental-row" style="display:none;"><span class="bk">+ Rental Shortfall</span><span class="bv" id="b-rental">—</span></div>
+    <div class="brow total"><span class="bk">Total All Obligations</span><span class="bv" id="b-total">—</span></div>
+    <div class="thresh-bar ts" id="thresh-bar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="thresh-text">Max qualifying back-end: —</span>
+    </div>
+  </div>
 </div>
 
 </div>
@@ -1375,6 +1376,7 @@ function setMode(mode) {
     ah.className = 'apm-header visible';
     hm.textContent = 'Select your county, move the sliders, explore how different homes affect your DTI.';
     toggleShowRate();
+    if (document.getElementById('sl-county').value !== '') { unlockSliders(); } else { lockSliders(); }
   }
   update();
 }
@@ -1765,7 +1767,9 @@ if (hasParams) {
     update();
   },200);
 } else {
+  updatePMILenderSection();
   update();
+  lockSliders();
 }
 </script>
 </body>
