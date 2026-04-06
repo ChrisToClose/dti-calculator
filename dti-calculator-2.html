@@ -130,8 +130,6 @@ body.client-mode #results-col{position:sticky;top:16px;}
 .rental-fields-wrap{display:none;margin-top:16px;}
 /* ── RENTAL SLIDER ON CLIENT VIEW ── */
 #rental-client-section{display:none;margin-top:16px;}
-#rental-client-section .slider-label{font-size:13px;color:var(--text);font-weight:500;}
-#rental-client-section .slider-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--teal);}
 .rental-warning{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:9px;padding:11px 14px;margin-bottom:14px;}
 .rental-warning-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
 .rental-warning-body{font-size:11px;color:var(--muted);line-height:1.6;}
@@ -403,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.3</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v7.5</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -624,7 +622,12 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
         <input type="range" id="sl-rent" min="0" max="7500" step="100" value="0">
       </div>
       <div class="slider-range-labels"><span>$0</span><span>$7,500</span></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px;font-style:italic;">Adjust if your expected rental income has changed.</div>
+      <div id="rent-lender-note" style="display:none;font-size:11px;color:var(--muted);margin-top:10px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:4px;padding:8px 12px;line-height:1.6;">
+        This rental estimate was provided by Chris. If you believe it would be different, or want to see how a different amount impacts your ability to purchase — adjust here.
+      </div>
+      <div id="rent-zero-note" style="display:none;font-size:11px;color:var(--muted);margin-top:10px;font-style:italic;">
+        Expected gross monthly rental income before expenses.
+      </div>
     </div>
     <div id="info-rent" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-rent">×</button><strong>Gross Monthly Rental Income</strong><br>Enter the expected monthly rent before expenses. 75% of this amount is used in the DTI calculation per Encompass FM0132. If no lease yet, use the expected market rent.</div>
   </div>
@@ -1422,6 +1425,16 @@ function setMode(mode) {
       const _rf = document.getElementById('fill-rent');
       if (_rf) _rf.style.width = (Math.min(_rentVal,7500)/7500*100) + '%';
     }
+    // Show contextual note
+    const _rLenderNote = document.getElementById('rent-lender-note');
+    const _rZeroNote = document.getElementById('rent-zero-note');
+    if (_rentVal > 0) {
+      if (_rLenderNote) _rLenderNote.style.display = 'block';
+      if (_rZeroNote) _rZeroNote.style.display = 'none';
+    } else {
+      if (_rLenderNote) _rLenderNote.style.display = 'none';
+      if (_rZeroNote) _rZeroNote.style.display = 'block';
+    }
     // Show rental section if enabled
     const _rEnabled = document.getElementById('rental-enabled').checked;
     const _rcs = document.getElementById('rental-client-section');
@@ -1488,6 +1501,11 @@ function loadFromURL() {
     }
     const _rcs = document.getElementById('rental-client-section');
     if (_rcs) _rcs.style.display = 'block';
+    // Contextual note
+    const _rln = document.getElementById('rent-lender-note');
+    const _rzn = document.getElementById('rent-zero-note');
+    if (_rv > 0) { if(_rln)_rln.style.display='block'; if(_rzn)_rzn.style.display='none'; }
+    else { if(_rln)_rln.style.display='none'; if(_rzn)_rzn.style.display='block'; }
   }
   if (p.has('county')) {
     switchZipCounty('county');
@@ -1609,7 +1627,8 @@ async function saveScenario() {
     emailjs.init(EMAILJS_PUBKEY);
     const clientEmail = document.getElementById('sc-email').value.trim();
     const summary = `Purchase: ${fmt(state.price)} | Down: ${state.down}% | Front: ${state.frontDTI.toFixed(3)}% | Back: ${state.backDTI.toFixed(3)}% | Housing: ${fmtMo(state.housing)} | Total: ${fmtMo(state.total)}`;
-    const payload = {scenario_name:label,client_name:name,address,front_end_dti:state.frontDTI.toFixed(3)+'%',back_end_dti:state.backDTI.toFixed(3)+'%',total_payment:fmtMo(state.total),summary};
+    const rentalLine = state.rentalEnabled ? `Gross Rental Income: ${fmtMo(state.grossRent||0)} | Rental Shortfall: ${fmtMo(state.rentalShortfall)}` : '';
+    const payload = {scenario_name:label,client_name:name,address,front_end_dti:state.frontDTI.toFixed(3)+'%',back_end_dti:state.backDTI.toFixed(3)+'%',total_payment:fmtMo(state.total),rental_income:rentalLine,summary};
     await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{...payload,to_email:LENDER_EMAIL});
     if (clientEmail) await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{...payload,to_email:clientEmail});
     statusEl.className='save-status ok';
