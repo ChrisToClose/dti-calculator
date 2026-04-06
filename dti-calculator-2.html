@@ -401,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 <div class="page-wrap">
 
 <div class="header">
-  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.0</div>
+  <div class="header-eyebrow">Florida Mortgage Qualification Tool &nbsp;·&nbsp; v8.2</div>
   <h1>Buyer <span>DTI</span> Calculator</h1>
 </div>
 
@@ -1201,6 +1201,7 @@ function update() {
     pmiVal = down >= 20 ? 0 : +document.getElementById('sl-pmi').value;
     if (_pmiWrap) _pmiWrap.style.display = down >= 20 ? 'none' : 'block';
     document.getElementById('pmi-brow').style.display = down >= 20 ? 'none' : 'flex';
+    if (down < 20) updatePMILenderSection();
   }
   updateMILabel();
   const _pmiWrapShow = down >= 20 ? 'none' : 'block';
@@ -1701,10 +1702,23 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
   input.addEventListener('touchend', function() { const el=this; setTimeout(()=>el.select(),50); });
 });
 
-['in-income','in-debts','in-rent','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+['in-income','in-debts','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+
+// in-rent syncs to sl-rent slider bidirectionally
+document.getElementById('in-rent').addEventListener('input', function() {
+  const val = Math.min(+this.value || 0, 7500);
+  const slRent = document.getElementById('sl-rent');
+  if (slRent) slRent.value = val;
+  const valEl = document.getElementById('val-rent');
+  if (valEl) valEl.textContent = '$' + val.toLocaleString() + '/mo';
+  const fillEl = document.getElementById('fill-rent');
+  if (fillEl) fillEl.style.width = (val/7500*100) + '%';
+  urlParams['rent'] = String(val);
+  update();
+});
 document.getElementById('in-rate').addEventListener('input',()=>{update();toggleShowRate();});
 ['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id=>{
-  document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();update();});
+  document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();updatePMILenderSection();update();});
 });
 document.getElementById('sl-ins').addEventListener('input',()=>{document.getElementById('sl-ins').dataset.manual='yes';update();});
 document.getElementById('sl-flood').addEventListener('input',update);
@@ -1857,6 +1871,22 @@ if (hasParams) {
     toggleShowRate();
     const cs=document.getElementById('sl-county').value!=='';
     if(cs){unlockSliders();}else{lockSliders();}
+    // Sync rental slider from URL params
+    const _rentFromUrl = +urlParams.rent || 0;
+    const _slR = document.getElementById('sl-rent');
+    const _valR = document.getElementById('val-rent');
+    if (_slR) _slR.value = Math.min(_rentFromUrl, 7500);
+    if (_valR) _valR.textContent = '$' + _rentFromUrl.toLocaleString() + '/mo';
+    // Show contextual note
+    const _rln = document.getElementById('rent-lender-note');
+    const _rzn = document.getElementById('rent-zero-note');
+    if (_rentFromUrl > 0) { if(_rln)_rln.style.display='block'; if(_rzn)_rzn.style.display='none'; }
+    else { if(_rln)_rln.style.display='none'; if(_rzn)_rzn.style.display='block'; }
+    // Show rental section if rental is enabled
+    const _rentalOn = document.getElementById('rental-enabled').checked;
+    const _rcs = document.getElementById('rental-client-section');
+    if (_rcs) _rcs.style.display = _rentalOn ? 'block' : 'none';
+    updatePMILenderSection();
     update();
   },200);
 } else {
