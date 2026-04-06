@@ -85,10 +85,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 /* ══ LAYOUT ══ */
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start;}
-#results-col{grid-column:2;grid-row:1;position:sticky;top:16px;align-self:start;}
-#left-col{grid-column:1;grid-row:1;}
-@media(max-width:760px){.layout{grid-template-columns:1fr;} #results-col{grid-column:1;position:static;margin-bottom:16px;} #left-col{grid-column:1;}}
-
+.results-col{position:sticky;top:16px;align-self:start;}
+@media(max-width:760px){.layout{grid-template-columns:1fr;} .results-col{position:static;margin-bottom:16px;}}
+@media(max-width:760px){.layout{grid-template-columns:1fr;}}
 
 /* ══ PANEL ══ */
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:0 2px 12px var(--shadow);transition:background 0.3s,border-color 0.3s;}
@@ -119,7 +118,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .rental-toggle-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:2px;}
 .rental-toggle-sub{font-size:11px;color:var(--muted);}
 .rental-fields-wrap{display:none;margin-top:16px;}
-#rental-client-section{display:none;margin-top:0;margin-bottom:16px;}
+#rental-client-section{display:none;margin-bottom:16px;}
 .rental-warning{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:9px;padding:11px 14px;margin-bottom:14px;}
 .rental-warning-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:5px;}
 .rental-warning-body{font-size:11px;color:var(--muted);line-height:1.6;}
@@ -176,8 +175,8 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 .zip-county-wrap{margin-bottom:20px;}
 .county-autocomplete{position:relative;margin-top:8px;}
 .county-autocomplete input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;outline:none;transition:border-color 0.2s;box-sizing:border-box;}
-.county-autocomplete input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(43,127,164,0.15);}
-.county-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface2);border:1px solid var(--teal);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px var(--shadow);}
+.county-autocomplete input:focus{border-color:var(--teal);}
+.county-dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--surface2);border:1px solid var(--teal);border-radius:9px;margin-top:4px;max-height:220px;overflow-y:auto;}
 .county-dropdown.open{display:block;}
 .county-option{padding:9px 14px;font-size:13px;cursor:pointer;font-family:'DM Mono',monospace;color:var(--text);}
 .county-option:hover,.county-option.highlighted{background:rgba(43,127,164,0.15);color:var(--teal);}
@@ -402,7 +401,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 </div>
 
 <div class="layout">
-<div id="left-col">
+<div>
 
 <!-- ══ LENDER PANEL ══ -->
 <div id="lender-panel" class="panel fadein">
@@ -610,14 +609,11 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
     </div>
   </div>
 
-  <!-- RENTAL INCOME SLIDER (client view) -->
+  <!-- RENTAL INCOME (client) -->
   <div id="rental-client-section">
     <div class="panel fadein" style="border-left:3px solid var(--yellow);padding:16px 20px;margin-bottom:4px;">
       <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--yellow);margin-bottom:12px;">🏡 Gross Monthly Rental Income</div>
-      <div class="slider-row">
-        <span class="slider-label">Rental Income</span>
-        <span class="slider-value" id="val-rent">$0/mo</span>
-      </div>
+      <div class="slider-row"><span class="slider-label">Rental Income</span><span class="slider-value" id="val-rent">$0/mo</span></div>
       <div class="slider-track"><div class="slider-fill" id="fill-rent"></div><input type="range" id="sl-rent" min="0" max="7500" step="100" value="0"></div>
       <div class="slider-range-labels"><span>$0</span><span>$7,500</span></div>
       <div id="rent-lender-note" style="display:none;font-size:11px;color:var(--muted);margin-top:10px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:4px;padding:8px 12px;line-height:1.6;">This rental estimate was provided by Chris. If you believe it would be different, or want to see how a different amount impacts your ability to purchase — adjust here.</div>
@@ -626,9 +622,7 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
   </div>
 
   <!-- LOCATION GATE -->
-  <div id="location-gate" style="display:none;padding:10px 14px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:8px;margin-bottom:12px;">
-    <div style="font-size:12px;color:var(--teal);font-family:'DM Mono',monospace;letter-spacing:1px;">📍 Select a county or enter a zip code above to unlock</div>
-  </div>
+  <div id="location-gate" style="display:none;padding:10px 14px;background:rgba(43,127,164,0.08);border-left:3px solid var(--teal);border-radius:8px;margin-bottom:12px;"><div style="font-size:12px;color:var(--teal);font-family:'DM Mono',monospace;">📍 Select a county or enter a zip code above to unlock</div></div>
   <div id="sliders-wrap">
   <!-- PURCHASE PRICE -->
   <div id="info-price" class="info-dropdown" style="margin-bottom:8px;"><button class="info-close" data-info="info-price">×</button><strong>How does purchase price affect your DTI?</strong><br>The higher the price, the bigger the loan, the higher your monthly payment — and the more it eats into your DTI. Every $50,000 more in purchase price adds roughly $250–350/mo to your payment depending on your rate and term. That extra payment has to come from your income allowance.</div>
@@ -750,6 +744,50 @@ input[type="range"]::-webkit-slider-runnable-track{background:transparent;height
 
 </div>
 
+<!-- ══ RIGHT COL ══ -->
+<div class="results-col" id="results-col">
+  <div class="gauge-panel" id="gauge-anchor">
+    <div class="gauge-eyebrow">
+      Debt-to-Income
+      <button class="info-btn" data-info="info-dti" style="border-color:var(--teal);">i</button>
+    </div>
+    <div id="info-dti" class="info-dropdown" style="margin-bottom:12px;text-align:left;"><button class="info-close" data-info="info-dti">×</button><strong>What is DTI and why does 50% matter?</strong><br>DTI = Debt-to-Income ratio. It compares your total monthly debt payments to your gross monthly income.<br><br><strong>Front-End</strong> = housing payment ÷ income.<br><strong>Back-End</strong> = all monthly debts ÷ income.<br><br>Most loans require back-end DTI at <strong>50% or below</strong>. Think of it as: for every dollar you earn, no more than 50 cents can go toward debt payments. Lower DTI = stronger application = better rate options.</div>
+    <div class="gauge-svg-wrap">
+      <svg viewBox="0 0 180 100" width="180" height="100">
+        <path d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#1c2a3e" stroke-width="14" stroke-linecap="round"/>
+        <path id="arc-safe" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#3ecf8e" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        <path id="arc-warn" d="M10,100 A80,80 0 0,1 170,100" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+        <line id="needle" x1="90" y1="100" x2="90" y2="28" stroke="white" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90,90,100)" style="transition:transform 0.4s cubic-bezier(0.4,0,0.2,1)"/>
+        <circle cx="90" cy="100" r="5" fill="white" opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="dti-dual">
+      <div class="dti-box"><div class="dti-box-label">Front-End</div><div class="dti-box-num" id="front-dti">—</div><div class="dti-box-sub">Housing only</div></div>
+      <div class="dti-box"><div class="dti-box-label">Back-End</div><div class="dti-box-num" id="back-dti">—</div><div class="dti-box-sub">All obligations</div></div>
+    </div>
+    <div class="dti-badge b-safe" id="dti-badge"><div class="dot"></div><span id="dti-badge-text">Awaiting input</span></div>
+  </div>
+
+  <div class="breakdown-panel">
+    <div class="section-title" style="margin-bottom:14px;">Monthly Breakdown</div>
+    <div class="brow head-row"><span class="bk">Front-End — Housing</span></div>
+    <div class="brow"><span class="bk">Principal &amp; Interest</span><span class="bv" id="b-pi">—</span></div>
+    <div class="brow"><span class="bk">Property Tax</span><span class="bv" id="b-tax">—</span></div>
+    <div class="brow"><span class="bk">Insurance</span><span class="bv" id="b-ins">—</span></div>
+    <div class="brow flood-row" id="b-flood-row" style="display:none;"><span class="bk">Flood Insurance</span><span class="bv" id="b-flood">—</span></div>
+    <div class="brow"><span class="bk">HOA</span><span class="bv" id="b-hoa">—</span></div>
+    <div class="brow" id="pmi-brow" style="display:none;"><span class="bk">PMI</span><span class="bv" id="b-pmi">—</span></div>
+    <div class="brow total"><span class="bk">Total Housing (PITIA)</span><span class="bv" id="b-housing">—</span></div>
+    <div class="brow head-row" style="margin-top:8px;"><span class="bk">Back-End — Additional</span></div>
+    <div class="brow"><span class="bk">Other Monthly Debts</span><span class="bv" id="b-debts">—</span></div>
+    <div class="brow rental-row" id="b-rental-row" style="display:none;"><span class="bk">+ Rental Shortfall</span><span class="bv" id="b-rental">—</span></div>
+    <div class="brow total"><span class="bk">Total All Obligations</span><span class="bv" id="b-total">—</span></div>
+    <div class="thresh-bar ts" id="thresh-bar">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span id="thresh-text">Max qualifying back-end: —</span>
+    </div>
+  </div>
+</div>
 </div>
 </div><!-- end page-wrap -->
 
@@ -812,7 +850,7 @@ window.addEventListener('scroll', () => {
 function toggleRental() {
   const enabled = document.getElementById('rental-enabled').checked;
   document.getElementById('rental-fields-wrap').style.display = enabled ? 'block' : 'none';
-  const rcs = document.getElementById('rental-client-section'); if(rcs) rcs.style.display = enabled ? 'block' : 'none';
+  const _rcs2=document.getElementById('rental-client-section');if(_rcs2)_rcs2.style.display=enabled?'block':'none';
   if (!enabled) {
     document.getElementById('in-rent').value  = 0;
     document.getElementById('in-pitia').value = 0;
@@ -1189,8 +1227,8 @@ function update() {
 
   // RENTAL
   const rentalEnabled = document.getElementById('rental-enabled').checked;
-  const _slR = document.getElementById('sl-rent');
-  const grossRent = rentalEnabled ? (+(_slR ? _slR.value : 0) || 0) : 0;
+  const _slRentR=document.getElementById('sl-rent');
+  const grossRent=rentalEnabled?(+(_slRentR?_slRentR.value:0)||0):0;
   const pitia     = rentalEnabled ? (getLenderVal('in-pitia') || 0) : 0;
   let rentalShortfall = 0;
   if (rentalEnabled && (grossRent > 0 || pitia > 0)) {
@@ -1555,7 +1593,7 @@ document.querySelector('.show-rate-row').addEventListener('click', function(e){i
 document.getElementById('show-rate-check').addEventListener('change', toggleShowRate);
 document.getElementById('gen-link-btn').addEventListener('click', generateLink);
 document.getElementById('go-client-btn').addEventListener('click', ()=>setMode('client'));
-(function(){ const d=document.getElementById('go-client-btn-done'); if(d) d.addEventListener('click',()=>setMode('client')); })();
+(function(){const d=document.getElementById('go-client-btn-done');if(d)d.addEventListener('click',()=>setMode('client'));})();
 document.getElementById('save-btn').addEventListener('click', saveScenario);
 document.getElementById('tab-zip').addEventListener('click', ()=>switchZipCounty('zip'));
 document.getElementById('tab-county').addEventListener('click', ()=>switchZipCounty('county'));
@@ -1569,19 +1607,7 @@ document.addEventListener('click', function(e){
   if(!e.target.closest('.info-dropdown'))document.querySelectorAll('.info-dropdown.open').forEach(d=>d.classList.remove('open'));
 });
 document.querySelectorAll('.loan-type-btn').forEach(btn=>btn.addEventListener('click',()=>setLoanType(btn.getAttribute('data-lt'))));
-
-// ── RENTAL SLIDER ──
-const _slRentEl = document.getElementById('sl-rent');
-if (_slRentEl) {
-  _slRentEl.addEventListener('input', function() {
-    const val = +this.value;
-    const ve = document.getElementById('val-rent'); if(ve) ve.textContent = '$'+val.toLocaleString()+'/mo';
-    const fe = document.getElementById('fill-rent'); if(fe) fe.style.width=(val/7500*100)+'%';
-    const ir = document.getElementById('in-rent'); if(ir) ir.value = val;
-    urlParams['rent'] = String(val);
-    update();
-  });
-}
+(function(){const sr=document.getElementById('sl-rent');if(!sr)return;sr.addEventListener('input',function(){const v=+this.value;const ve=document.getElementById('val-rent');if(ve)ve.textContent='$'+v.toLocaleString()+'/mo';const fe=document.getElementById('fill-rent');if(fe)fe.style.width=(v/7500*100)+'%';const ir=document.getElementById('in-rent');if(ir)ir.value=v;urlParams['rent']=String(v);update();});})();
 const _emailLink = document.getElementById('apm-email-link');
 if (_emailLink) { const _em=['cgreenidge','apmortgage.com'].join('@'); _emailLink.href='mai'+'lto:'+_em; const _et=document.getElementById('apm-email-text'); if(_et) _et.textContent=_em; }
 const _copyToClipboard = (text) => {
@@ -1605,14 +1631,7 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
 });
 
 ['in-income','in-debts','in-pitia'].forEach(id=>document.getElementById(id).addEventListener('input',update));
-document.getElementById('in-rent').addEventListener('input', function() {
-  const val = Math.min(+this.value || 0, 7500);
-  const sr = document.getElementById('sl-rent'); if(sr) sr.value = val;
-  const ve = document.getElementById('val-rent'); if(ve) ve.textContent='$'+val.toLocaleString()+'/mo';
-  const fe = document.getElementById('fill-rent'); if(fe) fe.style.width=(val/7500*100)+'%';
-  urlParams['rent'] = String(val);
-  update();
-});
+document.getElementById('in-rent').addEventListener('input',function(){const v=Math.min(+this.value||0,7500);const sr=document.getElementById('sl-rent');if(sr)sr.value=v;const ve=document.getElementById('val-rent');if(ve)ve.textContent='$'+v.toLocaleString()+'/mo';const fe=document.getElementById('fill-rent');if(fe)fe.style.width=(v/7500*100)+'%';urlParams['rent']=String(v);update();});
 document.getElementById('in-rate').addEventListener('input',()=>{update();toggleShowRate();});
 ['sl-price','sl-down','sl-term','sl-hoa','sl-pmi'].forEach(id=>{
   document.getElementById(id).addEventListener('input',()=>{relockTax();relockIns();update();});
@@ -1660,7 +1679,7 @@ document.getElementById('show-rate-check').addEventListener('change', toggleShow
 // Buttons
 document.getElementById('gen-link-btn').addEventListener('click', generateLink);
 document.getElementById('go-client-btn').addEventListener('click', ()=>setMode('client'));
-(function(){ const d=document.getElementById('go-client-btn-done'); if(d) d.addEventListener('click',()=>setMode('client')); })();
+(function(){const d=document.getElementById('go-client-btn-done');if(d)d.addEventListener('click',()=>setMode('client'));})();
 document.getElementById('save-btn').addEventListener('click', saveScenario);
 
 // Zip/county tabs
@@ -1750,46 +1769,7 @@ function updatePMILenderSection() {
 
 // ── LOCK/UNLOCK SLIDERS ──
 // ── COUNTY AUTOCOMPLETE ──
-(function() {
-  const input = document.getElementById('county-text');
-  const dd    = document.getElementById('county-dropdown');
-  const sel   = document.getElementById('sl-county');
-  if (!input || !dd || !sel) return;
-  let hi = -1;
-  function opts() { return Array.from(sel.options).filter(o => o.value !== ''); }
-  function render(q) {
-    const f = opts().filter(o => o.text.toLowerCase().includes(q.toLowerCase()));
-    dd.innerHTML = ''; hi = -1;
-    if (!f.length || !q) { dd.classList.remove('open'); return; }
-    f.forEach(opt => {
-      const d = document.createElement('div');
-      d.className = 'county-option';
-      d.textContent = opt.text;
-      d.addEventListener('mousedown', e => { e.preventDefault(); pick(opt); });
-      dd.appendChild(d);
-    });
-    dd.classList.add('open');
-  }
-  function pick(opt) {
-    sel.value = opt.value;
-    input.value = opt.text.split(' —')[0].trim();
-    dd.classList.remove('open');
-    dd.innerHTML = '';
-    hi = -1;
-    onCountyChange();
-    unlockSliders();
-  }
-  input.addEventListener('input', function() { render(this.value); });
-  input.addEventListener('keydown', function(e) {
-    const items = dd.querySelectorAll('.county-option');
-    if (e.key === 'ArrowDown') { e.preventDefault(); hi = Math.min(hi+1, items.length-1); items.forEach((el,i) => el.classList.toggle('highlighted', i===hi)); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); hi = Math.max(hi-1, 0); items.forEach((el,i) => el.classList.toggle('highlighted', i===hi)); }
-    else if (e.key === 'Enter') { e.preventDefault(); if(hi>=0&&items[hi]) items[hi].dispatchEvent(new MouseEvent('mousedown')); else { const m=opts().find(o=>o.text.toLowerCase().startsWith(this.value.toLowerCase())); if(m) pick(m); } }
-    else if (e.key === 'Escape') dd.classList.remove('open');
-  });
-  input.addEventListener('blur', () => setTimeout(()=>dd.classList.remove('open'), 150));
-  input.addEventListener('focus', function() { if(this.value) render(this.value); });
-})();
+(function(){const input=document.getElementById('county-text'),dd=document.getElementById('county-dropdown'),sel=document.getElementById('sl-county');if(!input||!dd||!sel)return;let hi=-1;function opts(){return Array.from(sel.options).filter(o=>o.value!=='')}function render(q){const f=opts().filter(o=>o.text.toLowerCase().includes(q.toLowerCase()));dd.innerHTML='';hi=-1;if(!f.length||!q){dd.classList.remove('open');return;}f.forEach(opt=>{const d=document.createElement('div');d.className='county-option';d.textContent=opt.text;d.addEventListener('mousedown',e=>{e.preventDefault();pick(opt);});dd.appendChild(d);});dd.classList.add('open');}function pick(opt){sel.value=opt.value;input.value=opt.text.split(' —')[0].trim();dd.classList.remove('open');dd.innerHTML='';hi=-1;onCountyChange();unlockSliders();}input.addEventListener('input',function(){render(this.value);});input.addEventListener('keydown',function(e){const items=dd.querySelectorAll('.county-option');if(e.key==='ArrowDown'){e.preventDefault();hi=Math.min(hi+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('highlighted',i===hi));}else if(e.key==='ArrowUp'){e.preventDefault();hi=Math.max(hi-1,0);items.forEach((el,i)=>el.classList.toggle('highlighted',i===hi));}else if(e.key==='Enter'){e.preventDefault();if(hi>=0&&items[hi])items[hi].dispatchEvent(new MouseEvent('mousedown'));else{const m=opts().find(o=>o.text.toLowerCase().startsWith(this.value.toLowerCase()));if(m)pick(m);}}else if(e.key==='Escape')dd.classList.remove('open');});input.addEventListener('blur',()=>setTimeout(()=>dd.classList.remove('open'),150));input.addEventListener('focus',function(){if(this.value)render(this.value);});})();
 
 // ── INIT ──
 initTheme();
