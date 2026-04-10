@@ -657,7 +657,7 @@ body.dark-mode .pmi-box-value { color: var(--teal); }
    ============================================================ */
 #mode-toggle {
   position: fixed;
-  bottom: 24px; right: 24px;
+  bottom: 40px; right: 24px;
   width: 48px; height: 48px;
   border-radius: 50%;
   background: var(--toggle-float-bg);
@@ -800,7 +800,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--teal); }
 <!-- Help button — client view only, stacked below mode toggle -->
 <button id="help-btn" title="How to use this calculator" style="
   display:none;
-  position:fixed; bottom:82px; right:24px;
+  position:fixed; bottom:98px; right:24px;
   width:48px; height:48px; border-radius:50%;
   background:var(--teal); color:#fff;
   border:none; cursor:pointer; font-size:20px; font-weight:800;
@@ -1671,9 +1671,9 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--teal); }
       <div id="client-rental-section" style="display:none;padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Gross Monthly Rental Income</span>
+            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Monthly Rent on Home You're Keeping</span>
             <span class="tip-anchor"><button class="info-btn" data-tip="ctip-rent">i</button>
-              <div class="tooltip-popup" id="ctip-rent"><button class="tooltip-close" data-close="ctip-rent">&times;</button>The monthly rent on the home you're keeping. Your lender can only count 75% of this toward offsetting that home's expenses. If 75% of your rent doesn't cover the full mortgage payment on that property, the gap is added to your qualifying debt total.</div>
+              <div class="tooltip-popup" id="ctip-rent"><button class="tooltip-close" data-close="ctip-rent">&times;</button>This is about your <strong>current home</strong> — the one you're converting to a rental, not the home you're buying. Lenders can only count 75% of this rent to offset that property's existing mortgage. If 75% of the rent doesn't fully cover it, the gap is added to your monthly debt total and affects your DTI.</div>
             </span>
           </div>
           <span style="font-size:14px;font-weight:800;color:var(--navy);" id="client-rent-val">$0/mo</span>
@@ -2898,7 +2898,7 @@ function initClientView(p) {
     CS.countyName = countyName;
     CS.countyMillRate = millRate;
     document.getElementById('client-location-confirmed').style.display = '';
-    document.getElementById('client-location-label').textContent = '\u2713 '+countyName+' County';
+    document.getElementById('client-location-label').textContent = countyName+' County';
     document.getElementById('client-location-entry').style.display = 'none';
     document.getElementById('client-sliders-section').classList.remove('sliders-locked');
     /* Easter egg 4: sliders unlock confirmation */
@@ -3247,7 +3247,7 @@ function initClientView(p) {
       color='#f39c12'; badgeText='Approaching DTI Limit';
       badgeBg='#fef9e7'; badgeColor='#c87f00'; pulseClass='thermo-warn';
     } else {
-      color='#27ae60'; badgeText='\u2705 Looking good \u2014 Chris would be happy with these numbers';
+      color='#27ae60'; badgeText='Debt-to-Income looks great!';
       badgeBg='#e8f7ee'; badgeColor='#27ae60'; pulseClass='';
     }
     if(fill) { fill.style.background=color; fill.className=pulseClass; }
@@ -3425,7 +3425,7 @@ function initClientView(p) {
           setTimeout(function(){ miniBar.style.display = 'none'; }, 300);
         }
       });
-    }, {threshold: 0.1});
+    }, {threshold: 0});
     observer.observe(thermoSection);
   }
 
@@ -3558,6 +3558,7 @@ function initClientView(p) {
 
     var templateParams = {
       to_email:         email,
+      cc_email:         CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1],
       lender_email:     CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1],
       scenario_label:   label,
       property_address: address,
@@ -3593,22 +3594,24 @@ function initClientView(p) {
     var btn=document.getElementById('btn-save-scenario');
     btn.textContent='Sending\u2026'; btn.disabled=true;
 
+    /* Open print window immediately on user tap — before async send,
+       so mobile browsers don't block it as a popup */
+    triggerClientPrint(result, templateParams);
+
     if(typeof emailjs!=='undefined'){
       emailjs.init(CONFIG.emailjs.publicKey);
       emailjs.send(CONFIG.emailjs.serviceId, CONFIG.emailjs.templateId, templateParams)
         .then(function(){
           confirmEl.style.display='block'; btn.style.display='none';
-          triggerClientPrint(result, templateParams);
         })
         .catch(function(err){
           errEl.textContent='Send failed. Please try again or contact Chris directly.';
-          errEl.style.display='block'; btn.textContent='Send to Chris \uD83D\uDCCB'; btn.disabled=false;
+          errEl.style.display='block'; btn.textContent='Save Scenario \uD83D\uDCCB'; btn.disabled=false;
           console.error('EmailJS error:', err);
         });
     } else {
-      /* EmailJS not loaded — show confirm and trigger print */
+      /* EmailJS not loaded — just show confirm */
       confirmEl.style.display='block'; btn.style.display='none';
-      triggerClientPrint(result, templateParams);
     }
   });
 
