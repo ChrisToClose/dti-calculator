@@ -350,6 +350,13 @@ body.dark-mode #lender-thermo-wrap {
   border-bottom: 3px solid var(--yellow);
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
+body.dark-mode #client-mini-bar {
+  background: #ffffff !important;
+  border-top: 3px solid var(--yellow);
+  border-bottom: 3px solid var(--yellow);
+}
+body.dark-mode #client-mini-bar * { color: var(--navy) !important; }
+body.dark-mode #client-mini-bar #mini-thermo-fill { background: #27ae60 !important; }
 body.dark-mode #lender-thermo-wrap .lender-thermo-dti-label { color: rgba(0,0,0,0.45); }
 body.dark-mode #lender-thermo-wrap .lender-thermo-front { color: rgba(0,0,0,0.7); }
 body.dark-mode #lender-thermo-wrap .lender-thermo-back { color: #1B3A6B; }
@@ -952,7 +959,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.6</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.7</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1622,8 +1629,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="font-size:13px;color:rgba(255,255,255,0.72);margin-top:2px;">Chris Greenidge &bull; Senior Loan Officer</div>
       <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">American Pacific Mortgage &bull; NMLS# 2073018</div>
       <div style="display:flex;gap:8px;margin-top:16px;justify-content:center;flex-wrap:wrap;">
-        <a id="client-tel-link" href="tel:7276421374" style="flex:1;min-width:110px;max-width:160px;height:40px;background:rgba(255,255,255,0.12);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;text-decoration:none;font-size:13px;font-weight:600;"><span style="font-size:18px;color:var(--yellow);line-height:1;display:flex;align-items:center;">☎</span> Call Chris</a>
-        <a id="client-email-link" href="#" style="flex:1;min-width:110px;max-width:160px;height:40px;background:rgba(255,255,255,0.12);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;text-decoration:none;font-size:13px;font-weight:600;"><span style="font-size:20px;color:var(--yellow);line-height:1;display:flex;align-items:center;margin-bottom:2px;">✉</span> Email Chris</a>
+        <a id="client-tel-link" href="tel:7276421374" style="flex:1;min-width:110px;max-width:160px;height:40px;background:var(--navy);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;text-decoration:none;font-size:13px;font-weight:600;"><span style="font-size:18px;color:var(--yellow);line-height:1;display:flex;align-items:center;">☎</span> Call Chris</a>
+        <a id="client-email-link" href="#" style="flex:1;min-width:110px;max-width:160px;height:40px;background:var(--navy);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;gap:6px;color:#fff;text-decoration:none;font-size:13px;font-weight:600;"><span style="font-size:20px;color:var(--yellow);line-height:1;display:flex;align-items:center;margin-bottom:2px;">✉</span> Email Chris</a>
         <a href="https://christoclose.com" target="_blank" rel="noopener" style="flex:1;min-width:110px;max-width:160px;height:40px;background:var(--yellow);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;gap:5px;color:var(--navy);text-decoration:none;font-size:13px;font-weight:800;">Apply Now &#8594;</a>
       </div>
       <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:10px;">Equal Housing Opportunity &bull; Proud to be Employee Owned</div>
@@ -1682,7 +1689,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <!-- Total obligations -->
         <div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 12px;background:var(--surface2);border-top:2px solid var(--border);">
           <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Total Monthly Obligations</span>
-          <span style="font-size:18px;font-weight:800;color:var(--navy);" id="cbr-total">&mdash;</span>
+          <span style="font-size:18px;font-weight:800;color:var(--navy);" class="client-val-text" id="cbr-total">&mdash;</span>
         </div>
         <div id="cbr-ufmip-note" style="display:none;font-size:11px;color:var(--text-light);text-align:center;padding:4px 10px;border-top:1px solid var(--border);"></div>
       </div>
@@ -1946,7 +1953,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.6
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.7
       </div>
     </div>
 
@@ -3190,7 +3197,7 @@ function initClientView(p) {
   var chipsEl = document.getElementById('client-chips');
   if (chipsEl && CP.income > 0) {
     var chipStyle='display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--text-muted);';
-    var chips = '<span style="'+chipStyle+'">&#128176; Income: <strong style="color:var(--navy);">'+fmt(CP.income)+'/mo</strong></span>';
+    var chips = '<span style="'+chipStyle+'">&#128176; Income: <strong class="chip-val">'+fmt(CP.income)+'/mo</strong></span>';
     if (CP.otherDebts > 0) chips += '<span style="'+chipStyle+'">&#128179; Other Debts: <strong class="chip-val">'+fmt(CP.otherDebts)+'/mo</strong></span>';
     if (CP.rentalActive) chips += '<span style="'+chipStyle+'">&#127968; Rental Income: <strong class="chip-val">'+fmt(CP.grossRent)+'/mo (est.)</strong></span>';
     chipsEl.innerHTML = chips;
