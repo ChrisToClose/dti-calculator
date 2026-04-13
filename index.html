@@ -108,9 +108,9 @@ body.dark-mode .onboarding-dot.active { background:var(--yellow); }
 }
 body.dark-mode .client-val-text { color: #fff !important; }
 body.dark-mode .chip-val { color: #fff !important; }
-body.dark-mode #btn-share-scenario { background:var(--surface2); color:#fff; border-color:rgba(255,255,255,0.2); }
-body.dark-mode #btn-save-scenario { background:var(--teal); color:#fff; }
-body.dark-mode #btn-share-scenario { background:var(--surface2); color:#fff; border-color:rgba(255,255,255,0.2); }
+body.dark-mode #btn-share-scenario { background:var(--navy); color:#fff; border-color:#fff; }
+body.dark-mode #btn-save-scenario { background:#fff; color:var(--navy); }
+body.dark-mode #btn-share-scenario { background:var(--navy); color:#fff; border-color:#fff; }
 /* Client content max-width for mobile margins */
 #client-location-section,
 #client-sliders-section > div,
@@ -980,7 +980,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.17</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.20</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1717,7 +1717,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     </div>
 
     <!-- LOCATION GATE -->
-    <div style="height:135px;display:flex;align-items:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <div style="height:145px;display:flex;align-items:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
       <div id="client-chips" style="padding:0 14px;display:flex;gap:8px;flex-wrap:wrap;width:100%;"></div>
     </div>
     <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" id="client-location-section">
@@ -1977,7 +1977,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.17
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.20
       </div>
     </div>
 
@@ -4024,12 +4024,12 @@ function initClientView(p) {
       flood:            CS.floodActive?fmt(CS.floodIns)+'/mo':'None',
       hoa:              CS.hoa>0?fmt(CS.hoa)+'/mo':'None',
       cdd:              CS.cddActive?fmt(CS.cddAnnual)+'/yr ('+fmt(Math.round(CS.cddAnnual/12))+'/mo)':'None',
-      pmi:              result&&result.monthlyMI>0?fmt(result.monthlyMI)+'/mo':'None',
+      pmi:              result&&result.monthlyMI>0?fmt(result.monthlyMI):'None',
       rental_active:    CP.rentalActive?'Yes':'No',
-      gross_rent:       CP.rentalActive?fmt(CS.grossRent)+'/mo':'N/A',
-      rental_shortfall: (result&&result.rentalShortfall>0)?fmt(result.rentalShortfall)+'/mo':'None',
+      gross_rent:       CP.rentalActive?fmt(CS.grossRent):'N/A',
+      rental_shortfall: (result&&result.rentalShortfall>0)?fmt(result.rentalShortfall):'None',
       housing_payment:  result?fmt(result.housingPayment):'N/A',
-      other_debts:      fmt(CS.otherDebts)+'/mo',
+      other_debts:      fmt(CS.otherDebts),
       total_obligations:result?fmt(result.housingPayment+CS.otherDebts+(result.rentalShortfall||0)):'N/A',
       front_dti:        result&&!result.error?fmtDTI(result.frontDTI):'N/A',
       back_dti:         result&&!result.error?fmtDTI(result.backDTI):'N/A',
@@ -4145,6 +4145,27 @@ function initClientView(p) {
     var light = [240, 243, 247];
     var white = [255, 255, 255];
     var pageW = 215.9, margin = 16, contentW = pageW - margin * 2;
+
+    /* ---- Pre-calculate expected height to derive scale factor ---- */
+    var pageH = 279.4;
+    /* Count expected data rows */
+    var rowCount = 8; /* base: P&I, Tax, Ins, MI, Housing total, Debts, Obligations total, spacer */
+    if(CS.floodActive) rowCount++;
+    if(CS.hoa > 0) rowCount++;
+    if(CS.cddActive) rowCount++;
+    if(params.rental_shortfall !== 'None') rowCount++;
+    rowCount += 5; /* Loan details */
+    if(params.rate !== 'Not disclosed') rowCount++;
+    rowCount += 3; /* Location */
+    if(CP.rentalActive) rowCount += 2; /* Rental section */
+    /* Estimate total height: header(50) + scenario(16) + DTI boxes(26) + badge(14) + sections(rowCount*7 + 4 section headers*15) + disclaimer(16) + QR(25) */
+    var estH = 50 + 16 + 26 + 14 + (rowCount * 7) + (CP.rentalActive ? 4 : 3) * 15 + 16 + 25;
+    var sf = estH > (pageH - margin) ? (pageH - margin) / estH : 1.0;
+    /* Apply scale to row/section dimensions */
+    var rowH = Math.floor(7 * sf * 10) / 10;
+    var secH = Math.floor(9 * sf * 10) / 10;
+    var totalRowH = Math.floor(10 * sf * 10) / 10;
+
     var y = margin;
 
     /* ---- Header band ---- */
@@ -4153,14 +4174,23 @@ function initClientView(p) {
     /* Teal accent bar on left */
     doc.setFillColor(teal[0], teal[1], teal[2]);
     doc.rect(0, 0, 4, 42, 'F');
-    /* Headshot circle */
-    var hsB64 = document.querySelector('img[alt="Chris Greenidge"]');
-    if (hsB64 && hsB64.src && hsB64.src.indexOf('data:image') === 0) {
+    /* Headshot circle — clip to circle via canvas */
+    var hsEl = document.querySelector('img[alt="Chris Greenidge"]');
+    if (hsEl && hsEl.src && hsEl.src.indexOf('data:image') === 0) {
       try {
-        doc.addImage(hsB64.src, 'JPEG', margin, 5, 22, 22);
-        /* Circular clip approximation — white ring */
-        doc.setDrawColor(245, 166, 35); doc.setLineWidth(1);
-        doc.circle(margin + 11, 16, 11.5);
+        var hsCanvas = document.createElement('canvas');
+        hsCanvas.width = 200; hsCanvas.height = 200;
+        var hsCtx = hsCanvas.getContext('2d');
+        hsCtx.beginPath();
+        hsCtx.arc(100, 100, 100, 0, Math.PI*2);
+        hsCtx.closePath();
+        hsCtx.clip();
+        hsCtx.drawImage(hsEl, 0, 0, 200, 200);
+        var hsCircular = hsCanvas.toDataURL('image/png');
+        /* Yellow border circle */
+        doc.setFillColor(245, 166, 35);
+        doc.circle(margin + 11, 16, 12, 'F');
+        doc.addImage(hsCircular, 'PNG', margin + 0.5, 5.5, 21, 21);
       } catch(e) {}
     }
     /* ChrisToClose label + DTI Calculator */
@@ -4224,30 +4254,30 @@ function initClientView(p) {
     /* ---- Section helper ---- */
     function sectionHeader(title){
       doc.setFillColor(teal[0],teal[1],teal[2]);
-      doc.rect(margin, y, contentW, 6, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
-      doc.text(title, margin+3, y+4.2);
-      y += 9;
+      doc.rect(margin, y, contentW, 6*sf, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8*sf); doc.setTextColor(255,255,255);
+      doc.text(title, margin+3, y+4.2*sf);
+      y += secH;
     }
     function dataRow(label, value, highlight){
       doc.setFillColor(light[0],light[1],light[2]);
       if(highlight){ doc.setFillColor(255,245,245); }
-      doc.rect(margin, y, contentW, 6, 'F');
-      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.rect(margin, y, contentW, 6*sf, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(9*sf);
       doc.setTextColor(highlight ? red[0] : gray[0], highlight ? red[1] : gray[1], highlight ? red[2] : gray[2]);
-      doc.text(label, margin+3, y+4.2);
+      doc.text(label, margin+3, y+4.2*sf);
       doc.setFont('helvetica','bold');
       doc.setTextColor(highlight ? red[0] : navy[0], highlight ? red[1] : navy[1], highlight ? red[2] : navy[2]);
-      doc.text(value, margin+contentW-3, y+4.2, {align:'right'});
-      y += 7;
+      doc.text(value, margin+contentW-3, y+4.2*sf, {align:'right'});
+      y += rowH;
     }
     function totalRow(label, value){
       doc.setFillColor(navy[0],navy[1],navy[2]);
-      doc.rect(margin, y, contentW, 7, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
-      doc.text(label, margin+3, y+5);
-      doc.text(value, margin+contentW-3, y+5, {align:'right'});
-      y += 10;
+      doc.rect(margin, y, contentW, 7*sf, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(10*sf); doc.setTextColor(255,255,255);
+      doc.text(label, margin+3, y+5*sf);
+      doc.text(value, margin+contentW-3, y+5*sf, {align:'right'});
+      y += totalRowH;
     }
 
     /* ---- Monthly Payment Breakdown ---- */
@@ -4263,7 +4293,7 @@ function initClientView(p) {
     dataRow('Other Monthly Debts', params.other_debts);
     if(params.rental_shortfall !== 'None') dataRow('Rental Property Shortfall', params.rental_shortfall, true);
     totalRow('Total Monthly Obligations', params.total_obligations);
-    y += 4;
+    y += 4*sf;
 
     /* ---- Loan Details ---- */
     sectionHeader('LOAN DETAILS');
@@ -4272,26 +4302,27 @@ function initClientView(p) {
     dataRow('Down Payment', params.down_payment);
     dataRow('Loan Term', params.term);
     if(params.rate !== 'Not disclosed') dataRow('Interest Rate', params.rate);
-    y += 4;
+    y += 4*sf;
 
     /* ---- Location & Tax ---- */
     sectionHeader('LOCATION & TAX');
     dataRow('County', params.county);
     dataRow('Mill Rate', params.mill_rate);
     dataRow('Homestead Exemption', params.homestead);
-    y += 4;
+    y += 4*sf;
 
     /* ---- Departing Property ---- */
     if(CP.rentalActive){
       sectionHeader('CURRENT HOME (CONVERTING TO RENTAL)');
       dataRow('Gross Monthly Rent', params.gross_rent);
       dataRow('Rental Shortfall', params.rental_shortfall);
-      y += 4;
+      y += 4*sf;
     }
 
+    /* ---- New page if needed ---- */
     /* ---- Disclaimer ---- */
     doc.setDrawColor(220,225,235); doc.setLineWidth(0.3);
-    doc.line(margin, y, margin+contentW, y); y += 4;
+    doc.line(margin, y, margin+contentW, y); y += 4*sf;
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(150,160,175);
     var disclaimerLines = doc.splitTextToSize(params.disclaimer + ' • Equal Housing Opportunity • Proud to be Employee Owned', contentW);
     doc.text(disclaimerLines, margin, y); y += disclaimerLines.length * 4 + 4;
