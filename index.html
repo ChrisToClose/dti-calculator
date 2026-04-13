@@ -108,6 +108,9 @@ body.dark-mode .onboarding-dot.active { background:var(--yellow); }
 }
 body.dark-mode .client-val-text { color: #fff !important; }
 body.dark-mode .chip-val { color: #fff !important; }
+body.dark-mode #btn-share-scenario { background:var(--surface2); color:#fff; border-color:rgba(255,255,255,0.2); }
+body.dark-mode #btn-save-scenario { background:var(--teal); color:#fff; }
+body.dark-mode #btn-share-scenario { background:var(--surface2); color:#fff; border-color:rgba(255,255,255,0.2); }
 /* Client content max-width for mobile margins */
 #client-location-section,
 #client-sliders-section > div,
@@ -375,9 +378,9 @@ body.dark-mode #client-mini-bar {
 }
 body.dark-mode #client-mini-bar * { color: var(--navy) !important; }
 body.dark-mode #client-mini-bar #mini-thermo-fill { background: #27ae60 !important; }
-body.dark-mode #lender-thermo-wrap .lender-thermo-dti-label { color: rgba(0,0,0,0.45); }
-body.dark-mode #lender-thermo-wrap .lender-thermo-front { color: rgba(0,0,0,0.7); }
-body.dark-mode #lender-thermo-wrap .lender-thermo-back { color: #1B3A6B; }
+body.dark-mode #lender-thermo-wrap .lender-thermo-dti-label { color: rgba(0,0,0,0.6); }
+body.dark-mode #lender-thermo-wrap .lender-thermo-front { color: var(--navy); }
+body.dark-mode #lender-thermo-wrap .lender-thermo-back { color: var(--navy); }
 body.dark-mode #lender-thermo-wrap #lender-thermo-bar-wrap { background: rgba(0,0,0,0.08); }
 body.dark-mode #lender-thermo-wrap .lbr-row { color: rgba(0,0,0,0.5); }
 body.dark-mode #lender-thermo-wrap .lbr-row span:last-child { color: #1B3A6B; }
@@ -977,7 +980,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.15</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.17</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1663,12 +1666,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:12px;">
         <div style="text-align:center;">
           <div class="dti-label-text" style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Front-End DTI</div>
-          <div style="font-size:26px;font-weight:800;color:var(--text-muted);font-variant-numeric:tabular-nums;transition:color 0.3s;" id="client-front-dti">&mdash;</div>
+          <div style="font-size:26px;font-weight:800;color:var(--text-muted);font-variant-numeric:tabular-nums;transition:color 0.3s;" class="client-val-text" id="client-front-dti">&mdash;</div>
         </div>
         <div style="width:1px;height:36px;background:var(--border);flex-shrink:0;"></div>
         <div style="text-align:center;">
           <div class="dti-label-text" style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Back-End DTI</div>
-          <div style="font-size:26px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;transition:color 0.3s;" id="client-back-dti">&mdash;</div>
+          <div style="font-size:26px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;transition:color 0.3s;" class="client-val-text" id="client-back-dti">&mdash;</div>
         </div>
       </div>
       <!-- Bar -->
@@ -1714,7 +1717,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     </div>
 
     <!-- LOCATION GATE -->
-    <div style="height:110px;display:flex;align-items:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <div style="height:135px;display:flex;align-items:center;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
       <div id="client-chips" style="padding:0 14px;display:flex;gap:8px;flex-wrap:wrap;width:100%;"></div>
     </div>
     <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" id="client-location-section">
@@ -1974,7 +1977,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.15
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.17
       </div>
     </div>
 
