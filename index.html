@@ -283,8 +283,8 @@ select:focus {
 /* ============================================================
    SECTION: LAYOUT
    ============================================================ */
-#setup-page { max-width: 600px; margin: 0 auto; padding: 0 0 80px; }
-#setup-page-header { width: 100%; overflow: visible; }
+#setup-page { max-width: 600px; margin: 0 auto; padding: 0 16px 80px; }
+#setup-page-header { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; overflow: visible; }
 
 .setup-header {
   background: var(--header-bg);
@@ -335,7 +335,7 @@ select:focus {
   border-left: none;
   border-right: none;
   border-radius: 0;
-  margin: 0 -16px 16px -16px;
+  margin: 0;
   box-shadow: 0 4px 20px rgba(27,58,107,0.3);
   transition: background 0.3s;
 }
@@ -952,7 +952,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.5</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.6</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1946,7 +1946,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.5
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.6
       </div>
     </div>
 
