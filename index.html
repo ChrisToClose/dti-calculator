@@ -119,8 +119,50 @@ body.dark-mode #client-onboard-card p { color: #5a6a80; }
 body.dark-mode #client-onboard-card strong { color: var(--navy); }
 body.dark-mode #client-onboard-dismiss { background: var(--navy); color: #fff; }
 body.dark-mode #client-thermo-section.is-sticky {
-  background: #0f1e32 !important;
-  border-bottom: 2px solid var(--yellow) !important;
+  background: #ffffff !important;
+  border-bottom: 3px solid var(--yellow) !important;
+  border-top: 3px solid var(--yellow) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .cbr-row {
+  background: #ffffff !important;
+  border-bottom: 1px solid rgba(0,0,0,0.1) !important;
+  color: #5a6a80 !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .cbr-row:nth-child(even) {
+  background: #f5f7fa !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .cbr-row span:first-child {
+  color: #5a6a80 !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .cbr-row span:last-child {
+  color: var(--navy) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .compact-breakdown {
+  border-color: rgba(0,0,0,0.15) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .cbr-total-row {
+  background: rgba(27,58,107,0.07) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .cbr-total-row span {
+  color: var(--navy) !important;
+}
+/* DTI % values, labels, total, badge — flip to navy on white sticky bar */
+body.dark-mode #client-thermo-section.is-sticky #client-front-dti,
+body.dark-mode #client-thermo-section.is-sticky #client-back-dti {
+  color: var(--navy) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky .dti-label-text {
+  color: rgba(27,58,107,0.65) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky #client-housing-total {
+  color: var(--navy) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky #client-housing-label {
+  color: rgba(27,58,107,0.65) !important;
+}
+body.dark-mode #client-thermo-section.is-sticky #client-status-badge {
+  background: rgba(27,58,107,0.08) !important;
+  color: var(--navy) !important;
 }
 
 /* Location pulse animation when no county set */
@@ -984,7 +1026,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.32</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.33</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2037,7 +2079,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.32
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.33
       </div>
     </div>
 
