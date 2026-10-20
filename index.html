@@ -400,10 +400,11 @@ select:focus {
   box-shadow: 0 4px 20px rgba(27,58,107,0.3);
   transition: background 0.3s;
 }
-/* Spacer to push content below the fixed FT */
+/* Spacer to push content below the sticky lender bar */
 #lender-thermo-spacer {
   height: 0;
-  transition: height 0.1s;
+  transition: height 0.15s ease;
+  overflow: hidden;
 }
 body.dark-mode #lender-thermo-wrap {
   background: #ffffff;
@@ -619,6 +620,28 @@ body.dark-mode .info-btn:hover { background: #fff; color: var(--navy); border-co
 @media (max-width: 600px) {
   .tooltip-popup { width: min(280px, calc(100vw - 32px)); max-width: calc(100vw - 32px); overflow-wrap: break-word; }
 }
+/* Multi-page tooltip pages */
+.tip-page { display: none; }
+.tip-page.tip-page-active { display: block; }
+.tip-page-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid rgba(27,58,107,0.15);
+}
+.tip-page-dots { display: flex; gap: 5px; align-items: center; }
+.tip-page-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(27,58,107,0.25); cursor: pointer;
+  transition: background 0.2s;
+}
+.tip-page-dot.active { background: var(--navy); }
+.tip-page-btn {
+  background: none; border: 1px solid rgba(27,58,107,0.3);
+  border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700;
+  color: var(--navy); cursor: pointer; line-height: 1.6;
+}
+.tip-page-btn:hover { background: rgba(27,58,107,0.08); }
+.tip-page-btn:disabled { opacity: 0.3; cursor: default; }
 
 /* ============================================================
    SECTION: SLIDER BLOCKS
@@ -1032,7 +1055,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.21.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.22.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1070,6 +1093,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div class="lbr-total"><span>Total Housing Payment</span><span id="lbr-housing">&mdash;</span></div>
     </div>
   </div><!-- /lender-thermo-wrap -->
+  <div id="lender-thermo-spacer"></div>
 
   <div class="two-col">
     <div class="left-col">
@@ -1166,9 +1190,43 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             <span class="field-label" id="tax-label">Est. Property Tax (w/ Homestead)</span>
             <span class="tip-anchor">
               <button class="info-btn" data-tip="tip-tax">i</button>
-              <div class="tooltip-popup" id="tip-tax">
+              <div class="tooltip-popup" id="tip-tax" style="width:min(310px,calc(100vw - 32px));">
                 <button class="tooltip-close" data-close="tip-tax">&times;</button>
-                Calculated using your county's mill rate: Purchase Price &times; Mill Rate &divide; 1,000 &divide; 12. Florida's Homestead Exemption reduces the taxable value by $50,000 for primary residences. First year taxes may differ until county reassesses. Tap the pencil to enter an actual figure.
+                <!-- Page 1: How the estimate works -->
+                <div class="tip-page tip-page-active" id="tip-tax-p1">
+                  <strong>How the estimate works</strong><br>
+                  Your county has a <em>mill rate</em> — a tax per $1,000 of taxable value. We use your county&rsquo;s actual mill rate to estimate your annual tax, then divide by 12 for the monthly figure.
+                  <div class="tooltip-example">Mill Rate Formula: Purchase Price &times; Mill Rate &divide; 1,000 &divide; 12 = monthly tax</div>
+                </div>
+                <!-- Page 2: Homestead Exemption -->
+                <div class="tip-page" id="tip-tax-p2">
+                  <strong>Florida Homestead Exemption</strong><br>
+                  If this will be your primary residence, the first $50,000 of your home&rsquo;s assessed value is exempt from taxation — that&rsquo;s automatically factored in when you check the Homestead box.
+                  <div class="tooltip-example">A $400k home assessed at value → taxable value drops to $350k. At 20 mills, that saves ~$1,000/yr.</div>
+                </div>
+                <!-- Page 3: Save Our Homes cap -->
+                <div class="tip-page" id="tip-tax-p3">
+                  <strong>Save Our Homes cap</strong><br>
+                  Once you homestead, Florida caps how much your assessed value can increase each year — currently 3% or CPI, whichever is less. This protects long-term owners from runaway tax bills.<br><br>
+                  <strong>New buyers don&rsquo;t inherit this.</strong> The cap resets to full market value when the home sells.
+                </div>
+                <!-- Page 4: Year 1 surprise -->
+                <div class="tip-page" id="tip-tax-p4">
+                  <strong>Year 1 &amp; the reassessment gap</strong><br>
+                  You&rsquo;ll likely pay the prior owner&rsquo;s tax bill at closing — which could be much lower than yours will be once the county reassesses at your purchase price.<br><br>
+                  <strong>Year 2 can be a shock.</strong> Tap the pencil icon to enter an actual tax figure once you have it, or ask Chris to run a Year 2 estimate.
+                </div>
+                <!-- Page nav -->
+                <div class="tip-page-nav" id="tip-tax-nav">
+                  <button class="tip-page-btn" id="tip-tax-prev" disabled>&larr;</button>
+                  <div class="tip-page-dots">
+                    <div class="tip-page-dot active" data-tip="tip-tax" data-pg="0"></div>
+                    <div class="tip-page-dot" data-tip="tip-tax" data-pg="1"></div>
+                    <div class="tip-page-dot" data-tip="tip-tax" data-pg="2"></div>
+                    <div class="tip-page-dot" data-tip="tip-tax" data-pg="3"></div>
+                  </div>
+                  <button class="tip-page-btn" id="tip-tax-next">&rarr;</button>
+                </div>
               </div>
             </span>
           </div>
@@ -1674,7 +1732,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div class="ob-step" data-step="1" style="display:none;">
         <div style="font-size:42px;margin-bottom:12px;">📊</div>
         <h2 style="font-size:19px;font-weight:800;color:#fff;margin-bottom:12px;line-height:1.3;">Watch the bar at the top</h2>
-        <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.75;margin-bottom:0;">It updates <strong style="color:#fff;">LIVE</strong> as you explore. <strong style="color:#27ae60;">Green</strong> = comfortable &nbsp;&bull;&nbsp; <strong style="color:#f39c12;">Yellow</strong> = getting tight &nbsp;&bull;&nbsp; <strong style="color:#e74c3c;">Red</strong> = over the limit.<br><br>The goal isn&rsquo;t to find your maximum &mdash; it&rsquo;s to find your <em>comfortable</em>.</p>
+        <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.75;margin-bottom:0;">It updates <strong style="color:#fff;">LIVE</strong> as you explore.<br><br><strong style="color:#27ae60;">Green</strong> = comfortable<br><strong style="color:#f39c12;">Yellow</strong> = getting tight<br><strong style="color:#e74c3c;">Red</strong> = over the limit<br><br>The goal isn&rsquo;t to find your maximum &mdash; it&rsquo;s to find your <em>comfortable</em>.</p>
       </div>
       <!-- Step 3 -->
       <div class="ob-step" data-step="2" style="display:none;">
@@ -1700,7 +1758,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   </div>
 
   <!-- CLIENT FROZEN FT — full breakdown, matches lender style -->
-  <div id="client-mini-bar" style="display:none;position:sticky;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);transform:translateY(-100%);transition:transform 0.3s ease;">
+  <div id="client-mini-bar" style="display:block;position:sticky;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);margin-top:-200px;transition:margin-top 0.3s ease;overflow:hidden;">
     <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
       <!-- DTI row -->
       <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
@@ -2202,7 +2260,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.21.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.22.0
       </div>
     </div>
 
@@ -3092,6 +3150,52 @@ document.querySelectorAll('.tooltip-close').forEach(function(btn){
   btn.addEventListener('click',function(e){e.stopPropagation();closeAllTooltips();});
 });
 document.addEventListener('click',function(){closeAllTooltips();});
+
+/* ============================================================
+   SECTION: PAGED TOOLTIP SYSTEM (for multi-page tooltips like tip-tax)
+   ============================================================ */
+(function(){
+  /* Generic paged tooltip driver — works for any tooltip with .tip-page children and nav buttons */
+  function initPagedTooltip(tipId, pageIds, prevId, nextId) {
+    var pages = pageIds.map(function(id){ return document.getElementById(id); });
+    var prev = document.getElementById(prevId);
+    var next = document.getElementById(nextId);
+    var dots = document.querySelectorAll('.tip-page-dot[data-tip="' + tipId + '"]');
+    var current = 0;
+
+    function goTo(n) {
+      pages[current].classList.remove('tip-page-active');
+      dots[current].classList.remove('active');
+      current = n;
+      pages[current].classList.add('tip-page-active');
+      dots[current].classList.add('active');
+      if (prev) prev.disabled = (current === 0);
+      if (next) next.disabled = (current === pages.length - 1);
+    }
+
+    if (prev) prev.addEventListener('click', function(e){ e.stopPropagation(); if (current > 0) goTo(current - 1); });
+    if (next) next.addEventListener('click', function(e){ e.stopPropagation(); if (current < pages.length - 1) goTo(current + 1); });
+    dots.forEach(function(dot, i){
+      dot.addEventListener('click', function(e){ e.stopPropagation(); goTo(i); });
+    });
+
+    /* Reset to page 1 whenever tooltip opens */
+    var popup = document.getElementById(tipId);
+    if (popup) {
+      var tipBtn = document.querySelector('[data-tip="' + tipId + '"]');
+      if (tipBtn) {
+        tipBtn.addEventListener('click', function(){
+          setTimeout(function(){ goTo(0); }, 0);
+        });
+      }
+    }
+  }
+
+  initPagedTooltip('tip-tax',
+    ['tip-tax-p1','tip-tax-p2','tip-tax-p3','tip-tax-p4'],
+    'tip-tax-prev', 'tip-tax-next'
+  );
+})();
 
 /* ============================================================
    SECTION: LOAN TYPE BUTTONS
@@ -4480,30 +4584,68 @@ function initClientView(p) {
 
   /* ============================================================
      CLIENT: STICKY MINI BAR (IntersectionObserver — watches thermometer)
+     Uses margin-top instead of transform so bar PUSHES content down, never covers it.
      ============================================================ */
   var miniBar = document.getElementById('client-mini-bar');
   var thermoSection = document.getElementById('client-thermo-section');
   var observeTarget = thermoSection;
   if (miniBar && thermoSection && observeTarget && 'IntersectionObserver' in window) {
+    function getMiniBarHeight() {
+      /* Temporarily show at full height to measure */
+      var prev = miniBar.style.marginTop;
+      miniBar.style.marginTop = '0';
+      var h = miniBar.offsetHeight;
+      miniBar.style.marginTop = prev;
+      return h;
+    }
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if (!entry.isIntersecting) {
           thermoSection.classList.add('is-sticky');
-          miniBar.style.display = 'block';
+          var h = getMiniBarHeight();
+          miniBar.style.marginTop = '-' + h + 'px';
           requestAnimationFrame(function(){
             requestAnimationFrame(function(){
-              miniBar.style.transform = 'translateY(0)';
+              miniBar.style.marginTop = '0';
             });
           });
         } else {
           thermoSection.classList.remove('is-sticky');
-          miniBar.style.transform = 'translateY(-100%)';
-          setTimeout(function(){ miniBar.style.display = 'none'; }, 300);
+          var h = getMiniBarHeight();
+          miniBar.style.marginTop = '-' + h + 'px';
         }
       });
     }, {threshold: 0});
     observer.observe(observeTarget);
   }
+
+  /* ============================================================
+     LENDER THERMOMETER SPACER — keeps sticky bar from covering content
+     ResizeObserver watches the bar and keeps spacer height in sync.
+     ============================================================ */
+  (function(){
+    var lenderBar = document.getElementById('lender-thermo-wrap');
+    var lenderSpacer = document.getElementById('lender-thermo-spacer');
+    if (!lenderBar || !lenderSpacer) return;
+
+    function syncLenderSpacer() {
+      /* Only active when bar is sticky (i.e. scrolled into sticky position) */
+      var barH = lenderBar.offsetHeight;
+      lenderSpacer.style.height = barH + 'px';
+    }
+
+    /* Sync on load */
+    syncLenderSpacer();
+
+    /* Sync whenever the bar resizes (breakdown expands/collapses) */
+    if ('ResizeObserver' in window) {
+      var ro = new ResizeObserver(function(){ syncLenderSpacer(); });
+      ro.observe(lenderBar);
+    }
+
+    /* Sync on window resize */
+    window.addEventListener('resize', syncLenderSpacer);
+  })();
 
 
   /* ============================================================

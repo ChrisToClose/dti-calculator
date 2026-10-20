@@ -44,7 +44,7 @@ export default {
         const realieResponse = await fetch(realieUrl, {
           method: 'GET',
           headers: {
-            'Authorization': env.REALIE_API_KEY,
+            'Authorization': 'Bearer ' + env.REALIE_API_KEY,
             'Content-Type': 'application/json',
           },
         });
@@ -52,13 +52,21 @@ export default {
         if (!realieResponse.ok) {
           const errText = await realieResponse.text();
           console.error('Realie API error:', realieResponse.status, errText);
+          let errDetail;
+          try { errDetail = JSON.parse(errText); } catch(e) { errDetail = errText; }
+          if (realieResponse.status === 401 || realieResponse.status === 403) {
+            return new Response(JSON.stringify({ error: 'API authentication error. Contact Chris.', _detail: String(errDetail).slice(0, 200) }), {
+              status: 502,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
           if (realieResponse.status === 404) {
-            return new Response(JSON.stringify({ error: 'Property not found. Try including city and state in your search.' }), {
+            return new Response(JSON.stringify({ error: 'Property not found. Try including city and state in your search.', _detail: String(errDetail).slice(0, 200) }), {
               status: 404,
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
           }
-          return new Response(JSON.stringify({ error: 'Property lookup failed. Please try again.' }), {
+          return new Response(JSON.stringify({ error: 'Property lookup failed. Please try again.', _status: realieResponse.status, _detail: String(errDetail).slice(0, 200) }), {
             status: 502,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
