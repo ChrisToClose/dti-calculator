@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.15.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.16.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1844,6 +1844,20 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       </div>
     </div>
 
+    <!-- AI TAX BILL UPLOAD — Card 3 -->
+    <div style="padding:12px 16px 14px;background:var(--surface);border-bottom:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📄 Have the Tax Bill? Upload it</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Take a photo or screenshot of the tax bill — AI will read the amount and flag if the seller's taxes will reset at purchase.</div>
+      <label id="tax-upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box;">
+        <span id="tax-upload-icon">📤</span>
+        <span id="tax-upload-text">Upload Tax Bill</span>
+        <input type="file" id="tax-bill-input" accept="image/*,.pdf" style="display:none;" onchange="handleTaxBillUpload(this)">
+      </label>
+      <div id="tax-upload-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
+      <div id="tax-soh-warning" style="display:none;margin-top:10px;"></div>
+      <div id="tax-soh-mill-data" data-mill-rate="" data-purchase-price="" style="display:none;"></div>
+    </div>
+
     <!-- SLIDERS -->
     <div id="client-sliders-section" style="padding:0 0 8px;">
 
@@ -1974,18 +1988,6 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <button onclick="openCountyPA()" style="width:100%;height:40px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">
             Visit Property Appraiser →
           </button>
-
-          <!-- AI TAX BILL UPLOAD -->
-          <div style="margin-top:14px;padding:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-            <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📄 Have the Tax Bill? Upload it</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Take a photo or screenshot of the tax bill and AI will read the annual amount and fill it in automatically.</div>
-            <label id="tax-upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box;">
-              <span id="tax-upload-icon">📤</span>
-              <span id="tax-upload-text">Upload Tax Bill</span>
-              <input type="file" id="tax-bill-input" accept="image/*,.pdf" style="display:none;" onchange="handleTaxBillUpload(this)">
-            </label>
-            <div id="tax-upload-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
-          </div>
 
           <!-- NEW CONSTRUCTION FLAG -->
           <div style="margin-top:14px;padding:10px 12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
@@ -2148,7 +2150,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.15.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.16.0
       </div>
     </div>
 
@@ -2602,6 +2604,52 @@ async function handleTaxBillUpload(input) {
     iconEl.textContent = '✅';
     textEl.textContent = 'Tax Bill Read!';
     label.style.background = '#16a34a';
+
+    // SOH Warning + buyer estimate
+    var sohWarn = document.getElementById('tax-soh-warning');
+    if (sohWarn) {
+      var sohHtml = '';
+      if (data.homestead_detected) {
+        sohHtml += '<div style="padding:10px 12px;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);margin-bottom:8px;">';
+        sohHtml += '<div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:4px;">⚠️ SOH Reset — Seller Has Homestead</div>';
+        sohHtml += '<div style="font-size:11px;color:#78350f;line-height:1.5;">The seller has a <strong>Homestead Exemption</strong> with a Save Our Homes (SOH) cap. Their assessed value is frozen at a lower amount. When you purchase this home, the SOH cap <strong>resets</strong> — your taxes will be based on the full just value.</div>';
+        if (data.assessed_value && data.just_value && data.assessed_value < data.just_value) {
+          var sohSavingAnnual = Math.round((data.just_value - data.assessed_value) * 0.01); // rough estimate ~1% mill rate placeholder
+          sohHtml += '<div style="font-size:11px;color:#78350f;margin-top:6px;padding-top:6px;border-top:1px solid #f59e0b;">';
+          sohHtml += '📊 Seller\'s assessed: <strong>$' + Math.round(data.assessed_value).toLocaleString() + '</strong> vs just value: <strong>$' + Math.round(data.just_value).toLocaleString() + '</strong>';
+          sohHtml += '</div>';
+        }
+        sohHtml += '</div>';
+      }
+
+      // Buyer estimate — needs countyMillRate from scoped CS; read it via a data attribute set by the input event
+      // We fire a custom event to ask the closure to stamp current values onto a data element
+      var millRateEl = document.getElementById('tax-soh-mill-data');
+      var millRate = millRateEl ? parseFloat(millRateEl.dataset.millRate || '0') : 0;
+      var purchasePrice = millRateEl ? parseFloat(millRateEl.dataset.purchasePrice || '0') : 0;
+
+      if (millRate > 0 && purchasePrice > 0) {
+        // Buyer estimate: (purchasePrice - homesteadExemption) * millRate / 1000 / 12
+        var homesteadEx = 50000;
+        var taxableVal = Math.max(0, purchasePrice - homesteadEx);
+        var estAnnual = Math.round(taxableVal * millRate / 1000);
+        var estMonthly = Math.round(estAnnual / 12);
+        sohHtml += '<div style="padding:10px 12px;background:#e0f2fe;border:1.5px solid #0ea5e9;border-radius:var(--radius-sm);">';
+        sohHtml += '<div style="font-size:12px;font-weight:800;color:#0c4a6e;margin-bottom:3px;">🧮 Est. Your Tax at $' + Math.round(purchasePrice).toLocaleString() + '</div>';
+        sohHtml += '<div style="font-size:13px;font-weight:700;color:#0369a1;">~$' + estMonthly.toLocaleString() + '/mo &nbsp;<span style="font-size:11px;font-weight:400;color:#0c4a6e;">($' + estAnnual.toLocaleString() + '/yr)</span></div>';
+        sohHtml += '<div style="font-size:10px;color:#0c4a6e;margin-top:3px;">Based on county mill rate of ' + millRate.toFixed(2) + ' + $50K homestead exemption. Estimate only.</div>';
+        sohHtml += '</div>';
+      } else if (data.homestead_detected) {
+        sohHtml += '<div style="font-size:11px;color:var(--text-muted);font-style:italic;">Enter a ZIP/county above to see your estimated new tax at purchase price.</div>';
+      }
+
+      if (sohHtml) {
+        sohWarn.innerHTML = sohHtml;
+        sohWarn.style.display = 'block';
+      } else {
+        sohWarn.style.display = 'none';
+      }
+    }
 
     // Reset button after 4 seconds
     setTimeout(function() {
@@ -4244,6 +4292,12 @@ function initClientView(p) {
       taxBadge.textContent='EST'; taxBadge.className='tax-ins-badge badge-est';
     } else {
       taxEl.textContent='\u2014'; taxBadge.textContent='Select Location'; taxBadge.className='tax-ins-badge badge-locked';
+    }
+    // Stamp mill rate + purchase price for the global handleTaxBillUpload to read
+    var millDataEl = document.getElementById('tax-soh-mill-data');
+    if (millDataEl) {
+      millDataEl.dataset.millRate = CS.countyMillRate != null ? CS.countyMillRate : '';
+      millDataEl.dataset.purchasePrice = CS.purchasePrice != null ? CS.purchasePrice : '';
     }
     var insEl=document.getElementById('client-ins-val');
     var insBadge=document.getElementById('client-ins-badge');
