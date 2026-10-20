@@ -12,14 +12,6 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://christoclose.github.io/dti-calculator/og-image-1200x630-3.png">
-  <meta property="og:description" content="Your personalized DTI Calculator — built by Chris Greenidge, Senior Loan Officer at American Pacific Mortgage.">
-  <meta property="og:image" content="https://christoclose.github.io/dti-calculator/og-image-1200x630-3.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://christoclose.github.io/dti-calculator/">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://christoclose.github.io/dti-calculator/og-image-1200x630-3.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ChrisToClose Home Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -378,6 +370,11 @@ body.dark-mode #client-mini-bar {
 }
 body.dark-mode #client-mini-bar * { color: var(--navy) !important; }
 body.dark-mode #client-mini-bar #mini-thermo-fill { background: #27ae60 !important; }
+/* Dark mode: DTI bar tick marks — override white to dark so they're visible on the light mini-bar and dark client bar */
+body.dark-mode #mini-warn-tick { background: rgba(0,0,0,0.35) !important; }
+body.dark-mode #mini-max-tick  { background: rgba(0,0,0,0.25) !important; }
+body.dark-mode #client-warn-tick { background: rgba(0,0,0,0.4) !important; }
+body.dark-mode #client-max-tick  { background: rgba(0,0,0,0.3) !important; }
 body.dark-mode #lender-thermo-wrap .lender-thermo-dti-label { color: rgba(0,0,0,0.6); }
 body.dark-mode #lender-thermo-wrap .lender-thermo-front { color: var(--navy); }
 body.dark-mode #lender-thermo-wrap .lender-thermo-back { color: var(--navy); }
@@ -1412,7 +1409,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             <span class="field-hint">If entered, locks the PMI value in the client view</span>
           </div>
           <div id="jumbo-disclaimer" class="info-box" style="display:none;background:#fdf0f0;border-left-color:#e74c3c;color:#7a1010;margin-top:10px;">
-            &#9888; Loan exceeds $726,200 (Jumbo). PMI shown is an estimate — obtain an actual MI quote.
+            &#9888; Loan exceeds $806,500 (Jumbo). PMI shown is an estimate — obtain an actual MI quote.
           </div>
         </div>
 
@@ -1738,7 +1735,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div class="cbr-row" id="cbr-flood-row" style="display:none;"><span>Flood Insurance</span><span id="cbr-flood">&mdash;</span></div>
         <div class="cbr-row" id="cbr-hoa-row" style="display:none;"><span>HOA Fee</span><span id="cbr-hoa">&mdash;</span></div>
         <div class="cbr-row" id="cbr-cdd-row" style="display:none;"><span>Community Fee (CDD)</span><span id="cbr-cdd">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance <span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;"></span></span><span id="cbr-mi">&mdash;</span></div>
+        <div class="cbr-row" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance <span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;"></span></span><span id="cbr-mi" style="margin-left:auto;">&mdash;</span></div>
         <div class="cbr-row" id="cbr-no-pmi-row" style="display:none;"><span style="color:var(--green);font-weight:600;">&#10003; No Mortgage Insurance</span><span style="color:var(--green);font-size:11px;">20%+ down</span></div>
         <!-- Debts separator -->
         <div style="height:2px;background:var(--border);"></div>
@@ -4008,10 +4005,12 @@ function initClientView(p) {
         if (!entry.isIntersecting) {
           thermoSection.classList.add('is-sticky');
           miniBar.style.display = 'block';
-          setTimeout(function(){
-            miniBar.style.transform = 'translateY(0)';
-            if (miniBarSpacer) miniBarSpacer.style.height = miniBar.offsetHeight + 'px';
-          }, 10);
+          requestAnimationFrame(function(){
+            requestAnimationFrame(function(){
+              miniBar.style.transform = 'translateY(0)';
+              if (miniBarSpacer) miniBarSpacer.style.height = miniBar.offsetHeight + 'px';
+            });
+          });
         } else {
           thermoSection.classList.remove('is-sticky');
           miniBar.style.transform = 'translateY(-100%)';
