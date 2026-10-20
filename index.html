@@ -135,12 +135,13 @@ body.dark-mode #client-thermo-section.is-sticky {
 
 /* Compact breakdown rows */
 .cbr-row {
-  display:flex; justify-content:space-between; align-items:baseline;
+  display:flex; align-items:baseline;
   padding:6px 12px; font-size:12px; color:var(--text-muted);
   border-bottom:1px solid var(--border); background:var(--surface);
 }
-.cbr-row span:last-child { font-weight:700; color:var(--text); margin-left:auto; }
-.cbr-row #cbr-pmi-badge { margin-left:6px; margin-right:6px; flex-shrink:0; }
+.cbr-row span:first-child { flex:1; }
+.cbr-row span:last-child { font-weight:700; color:var(--text); white-space:nowrap; }
+.cbr-row #cbr-pmi-badge { margin:0 5px; flex-shrink:0; }
 body.dark-mode .cbr-row { background:#243d65; border-bottom:1px solid rgba(255,255,255,0.22) !important; }
 body.dark-mode .cbr-row:nth-child(even) { background:#1e3459; }
 body.dark-mode .cbr-row span:last-child { color:#fff; }
@@ -983,7 +984,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.30</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.31</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1750,7 +1751,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div class="cbr-row" id="cbr-flood-row" style="display:none;"><span>Flood Insurance</span><span id="cbr-flood">&mdash;</span></div>
         <div class="cbr-row" id="cbr-hoa-row" style="display:none;"><span>HOA Fee</span><span id="cbr-hoa">&mdash;</span></div>
         <div class="cbr-row" id="cbr-cdd-row" style="display:none;"><span>Community Fee (CDD)</span><span id="cbr-cdd">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance</span><span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;margin-left:4px;"></span><span id="cbr-mi" style="margin-left:auto;">&mdash;</span></div>
+        <div class="cbr-row" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance</span><span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;"></span><span id="cbr-mi">&mdash;</span></div>
         <div class="cbr-row" id="cbr-no-pmi-row" style="display:none;"><span style="color:var(--green);font-weight:600;">&#10003; No Mortgage Insurance</span><span style="color:var(--green);font-size:11px;">20%+ down</span></div>
         <!-- Debts separator -->
         <div style="height:2px;background:var(--border);"></div>
@@ -2036,7 +2037,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.30
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.31
       </div>
     </div>
 
