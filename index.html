@@ -1032,7 +1032,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.20.3</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.21.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1998,61 +1998,91 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
         <!-- TAX LOOKUP PANEL -->
         <div id="tax-lookup-panel" style="display:none;margin-top:10px;background:var(--surface2);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">🏡 County Property Appraiser Lookup</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Select the county where the property is located to visit that county's official Property Appraiser website. Search by address to get the real tax bill.</div>
+          <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">🏡 Property Tax Lookup</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Enter the property address to automatically pull the tax bill from county records.</div>
 
-          <select id="tax-county-select" style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:10px;">
-            <option value="">— Select a county —</option>
-            <option value="https://www.pcpao.gov">Pinellas County</option>
-            <option value="https://www.hcpafl.org">Hillsborough County</option>
-            <option value="https://www.sc-pa.com">Sarasota County</option>
-            <option value="https://www.manateepao.gov">Manatee County</option>
-            <option value="https://www.ocpafl.org">Orange County</option>
-            <option value="https://www.osceolapafl.gov">Osceola County</option>
-            <option value="https://www.polkpa.org">Polk County</option>
-            <option value="https://www.hernandopa.org">Hernando County</option>
-            <option value="https://www.pascopa.com">Pasco County</option>
-            <option value="https://www.lakepa.org">Lake County</option>
-            <option value="https://www.sumterpa.com">Sumter County</option>
-            <option value="https://www.charlottepao.com">Charlotte County</option>
-          </select>
+          <!-- ADDRESS INPUTS -->
+          <input type="text" id="realie-address" placeholder="Street address (e.g. 123 Main St)"
+            style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box;">
 
-          <button onclick="openCountyPA()" style="width:100%;height:40px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">
-            Visit Property Appraiser →
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <input type="text" id="realie-city" placeholder="City"
+              style="flex:1;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box;">
+            <select id="realie-state" style="width:80px;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 6px;background:var(--surface);color:var(--text);font-size:14px;">
+              <option value="FL" selected>FL</option>
+              <option value="GA">GA</option>
+              <option value="AL">AL</option>
+              <option value="SC">SC</option>
+              <option value="NC">NC</option>
+              <option value="TN">TN</option>
+              <option value="TX">TX</option>
+              <option value="CA">CA</option>
+              <option value="NY">NY</option>
+              <option value="NJ">NJ</option>
+              <option value="CO">CO</option>
+            </select>
+          </div>
+
+          <button onclick="lookupRealieAddress()" id="realie-lookup-btn"
+            style="width:100%;height:42px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span id="realie-btn-icon">🔍</span>
+            <span id="realie-btn-text">Pull Tax Record</span>
           </button>
 
-          <!-- AI TAX BILL UPLOAD -->
-          <div style="margin-top:14px;padding:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
-            <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📄 Have the Tax Bill? Upload it</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Take a photo or screenshot of the tax bill — AI will read the amount and flag if the seller's taxes will reset at purchase.</div>
-            <label id="tax-upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box;">
-              <span id="tax-upload-icon">📤</span>
-              <span id="tax-upload-text">Upload Tax Bill</span>
-              <input type="file" id="tax-bill-input" accept="image/*,.pdf" style="display:none;" onchange="handleTaxBillUpload(this)">
-            </label>
-            <div id="tax-upload-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
-            <div id="tax-soh-warning" style="display:none;margin-top:10px;"></div>
-            <div id="tax-soh-mill-data" data-mill-rate="" data-purchase-price="" style="display:none;"></div>
+          <!-- LOOKUP STATUS / RESULT -->
+          <div id="realie-status" style="display:none;margin-top:10px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
+
+          <!-- RESULT CARD (shown after successful lookup) -->
+          <div id="realie-result-card" style="display:none;margin-top:12px;padding:12px;background:var(--surface);border:1.5px solid #22c55e;border-radius:var(--radius-sm);">
+            <div style="font-size:12px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">✅ Tax Record Found</div>
+            <div id="realie-result-address" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <div style="flex:1;min-width:120px;">
+                <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Annual Tax</div>
+                <div id="realie-result-tax" style="font-size:16px;font-weight:800;color:var(--navy);"></div>
+              </div>
+              <div style="flex:1;min-width:120px;">
+                <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Tax Year</div>
+                <div id="realie-result-year" style="font-size:14px;font-weight:700;color:var(--text);"></div>
+              </div>
+              <div style="flex:1;min-width:120px;">
+                <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Assessed Value</div>
+                <div id="realie-result-assessed" style="font-size:14px;font-weight:700;color:var(--text);"></div>
+              </div>
+            </div>
           </div>
 
-          <!-- NEW CONSTRUCTION FLAG -->
-          <div style="margin-top:14px;padding:10px 12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              <span style="font-size:16px;">⚠️</span>
-              <span style="font-size:12px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.04em;">New Construction?</span>
-              <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-new-construction" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
-            </div>
-            <div style="font-size:11px;color:#92400e;line-height:1.5;">If this is a brand-new home, the current tax bill is based on <strong>land value only</strong>. Once the home receives its Certificate of Occupancy (CO), the county will reassess it at full value — taxes could <strong>increase significantly</strong> in Year 2. Don't use the seller's current tax bill as your estimate.</div>
+          <!-- NEW CONSTRUCTION WARNING (auto-shown by API flag) -->
+          <div id="realie-new-construction-warning" style="display:none;margin-top:12px;padding:12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
+            <div style="font-size:13px;font-weight:700;color:#92400e;">⚠️ This may be a new construction property.</div>
+            <div style="font-size:12px;color:#92400e;margin-top:6px;line-height:1.6;">Tax records may only reflect the land value — the full assessed tax after the home is built could be significantly higher. Contact Chris for a more accurate Year 2 estimate.</div>
           </div>
 
-          <!-- HOMESTEAD / SOH FLAG -->
-          <div style="margin-top:10px;padding:10px 12px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-              <span style="font-size:16px;">⚠️</span>
-              <span style="font-size:12px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.04em;">Current Owner Has Homestead?</span>
-              <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-homestead-soh" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
+          <!-- HOMESTEAD STATUS (auto-shown by API flag) -->
+          <div id="realie-homestead-info" style="display:none;margin-top:10px;padding:10px 12px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);">
+            <div style="font-size:12px;font-weight:800;color:#1e3a8a;">🏠 Current Owner Has Homestead Exemption</div>
+            <div style="font-size:11px;color:#1e3a8a;margin-top:4px;line-height:1.5;">Florida's Save Our Homes cap will <strong>reset at sale</strong>. The new buyer's taxes will be reassessed at full market value — likely higher than the current owner's bill.</div>
+          </div>
+
+          <!-- MANUAL OVERRIDE FLAGS (always visible below API result) -->
+          <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Manual Overrides</div>
+
+            <div style="padding:8px 10px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;">⚠️</span>
+                <span style="font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.03em;">New Construction?</span>
+                <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-new-construction" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
+              </div>
             </div>
-            <div style="font-size:11px;color:#1e3a8a;line-height:1.5;">Florida's <strong>Save Our Homes (SOH)</strong> cap limits how much a homesteaded owner's assessed value can increase each year (max 3%). When the home sells, that cap <strong>resets</strong> — the new buyer's first-year tax bill will be based on the full market value, which can be <strong>much higher</strong> than what the current owner pays. Always verify with the county PA.</div>
+
+            <div style="padding:8px 10px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;">⚠️</span>
+                <span style="font-size:11px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.03em;">Owner Has Homestead (SOH)?</span>
+                <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-homestead-soh" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
+              </div>
+            </div>
           </div>
 
           <!-- ACTIVE FLAG WARNINGS -->
@@ -2172,7 +2202,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.20.3
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.21.0
       </div>
     </div>
 
@@ -2560,147 +2590,132 @@ function toggleTaxLookup(){
   btn.innerHTML = open ? '🔍 Have an address? Look up its actual tax bill.' : '<span>✕</span> Close Tax Lookup';
 }
 
-/* ── AI Tax Bill Upload ── */
-async function handleTaxBillUpload(input) {
-  if (!input.files || !input.files[0]) return;
-  var file = input.files[0];
-  var label = document.getElementById('tax-upload-label');
-  var statusEl = document.getElementById('tax-upload-status');
-  var iconEl = document.getElementById('tax-upload-icon');
-  var textEl = document.getElementById('tax-upload-text');
+/* ── Realie Address Tax Lookup ── */
+async function lookupRealieAddress() {
+  var address = (document.getElementById('realie-address').value || '').trim();
+  var city    = (document.getElementById('realie-city').value || '').trim();
+  var state   = (document.getElementById('realie-state').value || 'FL').trim();
 
-  // Show loading state
-  label.style.opacity = '0.7';
-  label.style.pointerEvents = 'none';
-  iconEl.textContent = '⏳';
-  textEl.textContent = 'Reading tax bill…';
+  if (!address) {
+    var addrEl = document.getElementById('realie-address');
+    addrEl.style.borderColor = '#ef4444';
+    setTimeout(function(){ addrEl.style.borderColor = ''; }, 2000);
+    return;
+  }
+
+  var btn     = document.getElementById('realie-lookup-btn');
+  var btnIcon = document.getElementById('realie-btn-icon');
+  var btnText = document.getElementById('realie-btn-text');
+  var statusEl = document.getElementById('realie-status');
+  var resultCard = document.getElementById('realie-result-card');
+  var newConstrWarn = document.getElementById('realie-new-construction-warning');
+  var homesteadInfo = document.getElementById('realie-homestead-info');
+
+  // Loading state
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  btnIcon.textContent = '⏳';
+  btnText.textContent = 'Looking up…';
   statusEl.style.display = 'block';
   statusEl.style.color = 'var(--text-muted)';
-  statusEl.textContent = 'AI is reading your tax bill…';
+  statusEl.textContent = 'Pulling property tax record…';
+  resultCard.style.display = 'none';
+  newConstrWarn.style.display = 'none';
+  homesteadInfo.style.display = 'none';
 
   try {
-    var formData = new FormData();
-    formData.append('bill', file);
-
-    var response = await fetch('https://christoclose-tax.christoclose.workers.dev/tax-lookup', {
+    var response = await fetch('https://christoclose-tax.christoclose.workers.dev/realie-lookup', {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: address, city: city, state: state })
     });
 
     var rawText = await response.text();
     var data;
-    try { data = JSON.parse(rawText); } catch(e) { throw new Error('HTTP ' + response.status + ': ' + rawText.substring(0, 200)); }
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error('Unexpected response. Please try again.'); }
 
     if (!response.ok || data.error) {
-      throw new Error('HTTP ' + response.status + ': ' + (data.error || data.message || rawText.substring(0, 200)));
+      throw new Error(data.error || 'Lookup failed. Please try again.');
     }
 
     if (!data.annual_tax) {
       statusEl.style.color = '#ef4444';
-      statusEl.textContent = '⚠️ Could not find a tax amount. Try a clearer photo.';
-      iconEl.textContent = '📤';
-      textEl.textContent = 'Try Again';
-      label.style.opacity = '1';
-      label.style.pointerEvents = 'auto';
-      input.value = '';
+      statusEl.textContent = '⚠️ Tax data not found for this address. Try adding city.';
+      btnIcon.textContent = '🔍';
+      btnText.textContent = 'Pull Tax Record';
+      btn.disabled = false;
+      btn.style.opacity = '1';
       return;
     }
 
-    // Success — fill in the monthly tax override
+    // ── Auto-fill the monthly tax override ──────────────────────
     var monthlyTax = Math.round((data.annual_tax / 12) * 100) / 100;
-
     var overrideInput = document.getElementById('client-tax-override');
-    var overrideWrap = document.getElementById('client-tax-override-wrap');
-    var pencil = document.getElementById('client-tax-pencil');
+    var overrideWrap  = document.getElementById('client-tax-override-wrap');
+    var pencil        = document.getElementById('client-tax-pencil');
     if (overrideInput) {
       overrideInput.value = monthlyTax.toFixed(2);
-      // Fire input event so the scoped CS state + clientRefreshAll() run inside their closure
       overrideInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
     if (overrideWrap) overrideWrap.classList.add('visible');
     if (pencil) pencil.classList.add('active');
 
-    // Show success
-    var annualFormatted = '$' + Math.round(data.annual_tax).toLocaleString();
+    // ── Show result card ─────────────────────────────────────────
+    var annualFmt = '$' + Math.round(data.annual_tax).toLocaleString();
+    document.getElementById('realie-result-address').textContent =
+      (data.address_confirmed || address) + (data.county ? ' — ' + data.county + ' County' : '');
+    document.getElementById('realie-result-tax').textContent = annualFmt + '/yr';
+    document.getElementById('realie-result-year').textContent = data.tax_year || '—';
+    document.getElementById('realie-result-assessed').textContent =
+      data.assessed_value ? '$' + Math.round(data.assessed_value).toLocaleString() : '—';
+    resultCard.style.display = 'block';
+
     statusEl.style.color = '#16a34a';
-    statusEl.textContent = '✅ Found ' + annualFormatted + '/yr → $' + monthlyTax.toFixed(2) + '/mo filled in!';
-    iconEl.textContent = '✅';
-    textEl.textContent = 'Tax Bill Read!';
-    label.style.background = '#16a34a';
+    statusEl.textContent = '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo';
 
-    // SOH Warning + buyer estimate
-    var sohWarn = document.getElementById('tax-soh-warning');
-    if (sohWarn) {
-      var sohHtml = '';
-      if (data.homestead_detected) {
-        sohHtml += '<div style="padding:10px 12px;background:#fef3c7;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);margin-bottom:8px;">';
-        sohHtml += '<div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:4px;">⚠️ SOH Reset — Seller Has Homestead</div>';
-        sohHtml += '<div style="font-size:11px;color:#78350f;line-height:1.5;">The seller has a <strong>Homestead Exemption</strong> with a Save Our Homes (SOH) cap. Their assessed value is frozen at a lower amount. When you purchase this home, the SOH cap <strong>resets</strong> — your taxes will be based on the full just value.</div>';
-        if (data.assessed_value && data.just_value && data.assessed_value < data.just_value) {
-          var sohSavingAnnual = Math.round((data.just_value - data.assessed_value) * 0.01); // rough estimate ~1% mill rate placeholder
-          sohHtml += '<div style="font-size:11px;color:#78350f;margin-top:6px;padding-top:6px;border-top:1px solid #f59e0b;">';
-          sohHtml += '📊 Seller\'s assessed: <strong>$' + Math.round(data.assessed_value).toLocaleString() + '</strong> vs just value: <strong>$' + Math.round(data.just_value).toLocaleString() + '</strong>';
-          sohHtml += '</div>';
-        }
-        sohHtml += '</div>';
-      }
-
-      // Buyer estimate — needs countyMillRate from scoped CS; read it via a data attribute set by the input event
-      // We fire a custom event to ask the closure to stamp current values onto a data element
-      var millRateEl = document.getElementById('tax-soh-mill-data');
-      var millRate = millRateEl ? parseFloat(millRateEl.dataset.millRate || '0') : 0;
-      var purchasePrice = millRateEl ? parseFloat(millRateEl.dataset.purchasePrice || '0') : 0;
-
-      if (millRate > 0 && purchasePrice > 0) {
-        // Buyer estimate: (purchasePrice - homesteadExemption) * millRate / 1000 / 12
-        var homesteadEx = 50000;
-        var taxableVal = Math.max(0, purchasePrice - homesteadEx);
-        var estAnnual = Math.round(taxableVal * millRate / 1000);
-        var estMonthly = Math.round(estAnnual / 12);
-        sohHtml += '<div style="padding:10px 12px;background:#e0f2fe;border:1.5px solid #0ea5e9;border-radius:var(--radius-sm);">';
-        sohHtml += '<div style="font-size:12px;font-weight:800;color:#0c4a6e;margin-bottom:3px;">🧮 Est. Your Tax at $' + Math.round(purchasePrice).toLocaleString() + '</div>';
-        sohHtml += '<div style="font-size:13px;font-weight:700;color:#0369a1;">~$' + estMonthly.toLocaleString() + '/mo &nbsp;<span style="font-size:11px;font-weight:400;color:#0c4a6e;">($' + estAnnual.toLocaleString() + '/yr)</span></div>';
-        sohHtml += '<div style="font-size:10px;color:#0c4a6e;margin-top:3px;">Based on county mill rate of ' + millRate.toFixed(2) + ' + $50K homestead exemption. Estimate only.</div>';
-        sohHtml += '</div>';
-      } else if (data.homestead_detected) {
-        sohHtml += '<div style="font-size:11px;color:var(--text-muted);font-style:italic;">Enter a ZIP/county above to see your estimated new tax at purchase price.</div>';
-      }
-
-      if (sohHtml) {
-        sohWarn.innerHTML = sohHtml;
-        sohWarn.style.display = 'block';
-      } else {
-        sohWarn.style.display = 'none';
-      }
+    // ── New construction warning (auto-detected by API) ──────────
+    if (data.is_new_construction) {
+      newConstrWarn.style.display = 'block';
     }
 
-    // Reset button after 4 seconds
-    setTimeout(function() {
-      iconEl.textContent = '📤';
-      textEl.textContent = 'Upload Another';
-      label.style.background = 'var(--navy)';
-      label.style.opacity = '1';
-      label.style.pointerEvents = 'auto';
-      input.value = '';
+    // ── Homestead info (auto-detected by API) ───────────────────
+    if (data.is_homesteaded) {
+      homesteadInfo.style.display = 'block';
+      // Also auto-check the manual toggle so updateTaxFlags() shows the warning
+      var sohChk = document.getElementById('flag-homestead-soh');
+      if (sohChk && !sohChk.checked) { sohChk.checked = true; updateTaxFlags(); }
+    }
+
+    // Reset button
+    btnIcon.textContent = '✅';
+    btnText.textContent = 'Tax Record Pulled!';
+    btn.style.background = '#16a34a';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+
+    setTimeout(function(){
+      btnIcon.textContent = '🔍';
+      btnText.textContent = 'Look Up Again';
+      btn.style.background = 'var(--teal)';
     }, 4000);
 
   } catch (err) {
     statusEl.style.color = '#ef4444';
     statusEl.textContent = '⚠️ ' + (err.message || 'Something went wrong. Please try again.');
-    iconEl.textContent = '📤';
-    textEl.textContent = 'Try Again';
-    label.style.opacity = '1';
-    label.style.pointerEvents = 'auto';
-    label.style.background = 'var(--navy)';
-    input.value = '';
+    btnIcon.textContent = '🔍';
+    btnText.textContent = 'Pull Tax Record';
+    btn.disabled = false;
+    btn.style.opacity = '1';
   }
 }
-function openCountyPA(){
-  var sel = document.getElementById('tax-county-select');
-  var url = sel.value;
-  if(!url){ alert('Please select a county first.'); return; }
-  window.open(url, '_blank');
-}
+
+/* ── Allow Enter key to trigger lookup ── */
+document.addEventListener('DOMContentLoaded', function(){
+  ['realie-address','realie-city'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') lookupRealieAddress(); });
+  });
+});
 function updateTaxFlags(){
   var newConst = document.getElementById('flag-new-construction').checked;
   var soh = document.getElementById('flag-homestead-soh').checked;
