@@ -2583,15 +2583,17 @@ async function handleTaxBillUpload(input) {
 
     // Success — fill in the monthly tax override
     var monthlyTax = Math.round((data.annual_tax / 12) * 100) / 100;
-    CS.taxOverride = monthlyTax;
 
     var overrideInput = document.getElementById('client-tax-override');
     var overrideWrap = document.getElementById('client-tax-override-wrap');
     var pencil = document.getElementById('client-tax-pencil');
-    if (overrideInput) overrideInput.value = monthlyTax.toFixed(2);
+    if (overrideInput) {
+      overrideInput.value = monthlyTax.toFixed(2);
+      // Fire input event so the scoped CS state + clientRefreshAll() run inside their closure
+      overrideInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     if (overrideWrap) overrideWrap.classList.add('visible');
     if (pencil) pencil.classList.add('active');
-    clientRefreshAll();
 
     // Show success
     var annualFormatted = '$' + Math.round(data.annual_tax).toLocaleString();
