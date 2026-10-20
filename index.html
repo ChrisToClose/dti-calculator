@@ -765,31 +765,7 @@ body.dark-mode .tax-ins-val { color: #fff; }
 }
 .pencil-btn:hover { color: var(--teal); background: #e8f4fd; }
 .pencil-btn.active { color: var(--teal); }
-/* Section label strip — left edge of sliders section */
-.sliders-with-strip { display: flex; align-items: stretch; }
-.section-label-strip {
-  width: 28px; flex-shrink: 0;
-  background: var(--surface2); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  position: sticky; top: 0; align-self: flex-start; height: 100vh;
-}
-.section-strip-label {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  font-size: 8px; font-weight: 800; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--text-light);
-  writing-mode: vertical-rl; text-orientation: mixed;
-  transform: rotate(180deg);
-  transition: color 0.2s, background 0.15s;
-  cursor: default;
-}
-.section-strip-label.strip-active {
-  color: var(--navy);
-  background: rgba(15,45,78,0.05);
-}
-body.dark-mode .section-strip-label.strip-active {
-  background: rgba(56,189,248,0.08);
-}
-.sliders-content { flex: 1; min-width: 0; }
+
 .override-input-wrap { display: none; margin-top: 8px; }
 .override-input-wrap.visible { display: flex; gap: 8px; align-items: center; }
 .override-input-wrap input {
@@ -1056,7 +1032,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.18.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.19.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1699,11 +1675,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <span style="writing-mode:vertical-rl;text-orientation:mixed;">Chris&rsquo;s Quote</span>
   </div>
 
-  <!-- Push-down spacer — matches client-mini-bar height when visible -->
-  <div id="client-mini-bar-spacer" style="height:0;transition:height 0.3s ease;flex-shrink:0;"></div>
-
   <!-- CLIENT FROZEN FT — full breakdown, matches lender style -->
-  <div id="client-mini-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);transform:translateY(-100%);transition:transform 0.3s ease;">
+  <div id="client-mini-bar" style="display:none;position:sticky;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);transform:translateY(-100%);transition:transform 0.3s ease;">
     <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
       <!-- DTI row -->
       <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
@@ -1871,18 +1844,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
     <!-- SLIDERS -->
     <div id="client-sliders-section" style="padding:0 0 8px;">
-      <div class="sliders-with-strip">
-        <!-- Section label strip -->
-        <div class="section-label-strip" id="section-label-strip">
-          <div class="section-strip-label strip-active" data-strip="basics">Basics</div>
-          <div class="section-strip-label" data-strip="fees">Fees</div>
-          <div class="section-strip-label" data-strip="taxes">Taxes</div>
-          <div class="section-strip-label" data-strip="extras">Extras</div>
-        </div>
-        <!-- Slider rows -->
-        <div class="sliders-content">
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="basics">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Purchase Price</span>
@@ -1906,7 +1869,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>$100K</span><span>$1.5M</span></div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="basics">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Down Payment</span>
@@ -1920,7 +1883,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>3%</span><span>50%</span></div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="basics">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
           <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Loan Term</span>
           <span class="tip-anchor"><button class="info-btn" data-tip="ctip-term">i</button>
@@ -1935,7 +1898,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         </div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="fees">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Monthly HOA Fee</span>
@@ -1949,7 +1912,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>$0</span><span>$2,000/mo</span></div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="fees">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Homeowners Insurance</span>
@@ -1973,7 +1936,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         </div>
       </div>
 
-      <div style="padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="taxes">
+      <div style="padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:10px;">
           <label class="toggle"><input type="checkbox" id="client-homestead" checked><div class="toggle-track"></div></label>
           <label for="client-homestead" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Primary Residence (Homestead Exemption)</label>
@@ -1981,7 +1944,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-size:11px;color:var(--text-light);margin-top:4px;margin-left:54px;">Reduces your taxable value by $50,000 &mdash; lowers your tax estimate</div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="taxes">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;" id="client-tax-label">Est. Property Tax (w/ Homestead)</span>
@@ -2073,7 +2036,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         </div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="taxes">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:10px;">
           <label class="toggle"><input type="checkbox" id="client-flood"><div class="toggle-track"></div></label>
           <label for="client-flood" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Property is in a Flood Zone</label>
@@ -2091,7 +2054,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         </div>
       </div>
 
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);" data-slider-section="extras">
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;gap:10px;">
           <label class="toggle"><input type="checkbox" id="client-cdd"><div class="toggle-track"></div></label>
           <label for="client-cdd" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Property has a CDD Fee</label>
@@ -2110,9 +2073,6 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           </div>
         </div>
       </div>
-
-          </div><!-- /.sliders-content -->
-        </div><!-- /.sliders-with-strip -->
 
       <!-- DEPARTING PROPERTY SECTION — visually separated -->
       <div id="client-rental-section" style="display:none;">
@@ -2188,7 +2148,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.18.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.19.0
       </div>
     </div>
 
@@ -4414,7 +4374,6 @@ function initClientView(p) {
      CLIENT: STICKY MINI BAR (IntersectionObserver — watches thermometer)
      ============================================================ */
   var miniBar = document.getElementById('client-mini-bar');
-  var miniBarSpacer = document.getElementById('client-mini-bar-spacer');
   var thermoSection = document.getElementById('client-thermo-section');
   var observeTarget = thermoSection;
   if (miniBar && thermoSection && observeTarget && 'IntersectionObserver' in window) {
@@ -4426,13 +4385,11 @@ function initClientView(p) {
           requestAnimationFrame(function(){
             requestAnimationFrame(function(){
               miniBar.style.transform = 'translateY(0)';
-              if (miniBarSpacer) miniBarSpacer.style.height = miniBar.offsetHeight + 'px';
             });
           });
         } else {
           thermoSection.classList.remove('is-sticky');
           miniBar.style.transform = 'translateY(-100%)';
-          if (miniBarSpacer) miniBarSpacer.style.height = '0';
           setTimeout(function(){ miniBar.style.display = 'none'; }, 300);
         }
       });
@@ -4913,28 +4870,6 @@ function initClientView(p) {
       doc.save(filename);
     }
   }
-
-  /* ============================================================
-     SECTION LABEL STRIP — scroll tracker
-     ============================================================ */
-  (function(){
-    var sliderRows = document.querySelectorAll('[data-slider-section]');
-    var stripLabels = document.querySelectorAll('.section-strip-label[data-strip]');
-    if (!sliderRows.length || !stripLabels.length) return;
-    function updateStrip() {
-      var current = 'basics';
-      var mid = window.scrollY + window.innerHeight * 0.45;
-      sliderRows.forEach(function(row) {
-        var top = row.getBoundingClientRect().top + window.scrollY;
-        if (top <= mid) current = row.dataset.sliderSection;
-      });
-      stripLabels.forEach(function(lbl) {
-        lbl.classList.toggle('strip-active', lbl.dataset.strip === current);
-      });
-    }
-    window.addEventListener('scroll', updateStrip, { passive: true });
-    updateStrip();
-  })();
 
 } /* end initClientView */
 
