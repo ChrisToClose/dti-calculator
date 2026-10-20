@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.38</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.39</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1699,16 +1699,14 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div id="mini-warn-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.4);"></div>
         <div id="mini-max-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.3);"></div>
       </div>
-      <!-- Compact breakdown -->
-      <div id="mini-breakdown-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-pi">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
-        <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Debts</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-debts">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>&nbsp;</span></div>
-        <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
-        <div id="mini-lbr-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;padding-top:3px;"><span>Total Housing Payment</span><span id="mini-lbr-housing">&mdash;</span></div>
+      <!-- Compact breakdown — single column, centered -->
+      <div id="mini-breakdown-grid" style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;max-width:280px;margin:0 auto;width:100%;">
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-pi">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
+        <div id="mini-lbr-total-row" style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;padding-top:3px;"><span>Total Housing Payment</span><span id="mini-lbr-housing">&mdash;</span></div>
       </div>
       <!-- Status -->
       <div style="text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);padding-top:3px;" id="mini-status-dot"></div>
@@ -2084,7 +2082,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.38
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.39
       </div>
     </div>
 
@@ -3918,14 +3916,12 @@ function initClientView(p) {
     var mbMi = document.getElementById('mini-lbr-mi');
     var mbMiRow = document.getElementById('mini-lbr-mi-row');
     var mbMiLabel = document.getElementById('mini-lbr-mi-label');
-    var mbDebts = document.getElementById('mini-lbr-debts');
     var mbHousing = document.getElementById('mini-lbr-housing');
     var mbShortfall = document.getElementById('mini-lbr-shortfall');
     var mbShortfallRow = document.getElementById('mini-lbr-shortfall-row');
     if(mbPi) mbPi.textContent = fmt(result.pi);
     if(mbTax) mbTax.textContent = result.monthlyTax!=null ? fmt(result.monthlyTax) : '\u2014';
     if(mbIns) mbIns.textContent = fmt(result.monthlyIns);
-    if(mbDebts) mbDebts.textContent = fmt(result.otherDebts);
     if(mbHousing) mbHousing.textContent = fmt(result.housingPayment);
     var miLabels = {CONV:'PMI', FHA:'MIP', VA:'', USDA:'USDA Fee'};
     if(mbMiRow) {
