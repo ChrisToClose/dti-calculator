@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.14.1</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.15.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1975,6 +1975,18 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             Visit Property Appraiser →
           </button>
 
+          <!-- AI TAX BILL UPLOAD -->
+          <div style="margin-top:14px;padding:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📄 Have the Tax Bill? Upload it</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Take a photo or screenshot of the tax bill and AI will read the annual amount and fill it in automatically.</div>
+            <label id="tax-upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box;">
+              <span id="tax-upload-icon">📤</span>
+              <span id="tax-upload-text">Upload Tax Bill</span>
+              <input type="file" id="tax-bill-input" accept="image/*,.pdf" style="display:none;" onchange="handleTaxBillUpload(this)">
+            </label>
+            <div id="tax-upload-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
+          </div>
+
           <!-- NEW CONSTRUCTION FLAG -->
           <div style="margin-top:14px;padding:10px 12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -2136,7 +2148,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.14.1
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.15.0
       </div>
     </div>
 
@@ -2521,6 +2533,92 @@ function toggleTaxLookup(){
   btn.style.background = open ? 'none' : 'var(--teal)';
   btn.style.color = open ? 'var(--teal)' : '#fff';
   btn.innerHTML = open ? '<span>🔍</span> Look Up Real Property Taxes' : '<span>✕</span> Close Tax Lookup';
+}
+
+/* ── AI Tax Bill Upload ── */
+async function handleTaxBillUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var label = document.getElementById('tax-upload-label');
+  var statusEl = document.getElementById('tax-upload-status');
+  var iconEl = document.getElementById('tax-upload-icon');
+  var textEl = document.getElementById('tax-upload-text');
+
+  // Show loading state
+  label.style.opacity = '0.7';
+  label.style.pointerEvents = 'none';
+  iconEl.textContent = '⏳';
+  textEl.textContent = 'Reading tax bill…';
+  statusEl.style.display = 'block';
+  statusEl.style.color = 'var(--text-muted)';
+  statusEl.textContent = 'AI is reading your tax bill…';
+
+  try {
+    var formData = new FormData();
+    formData.append('bill', file);
+
+    var response = await fetch('https://christoclose-tax.christoclose.workers.dev/tax-lookup', {
+      method: 'POST',
+      body: formData
+    });
+
+    var data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'Upload failed');
+    }
+
+    if (!data.annual_tax) {
+      statusEl.style.color = '#ef4444';
+      statusEl.textContent = '⚠️ Could not find a tax amount. Try a clearer photo.';
+      iconEl.textContent = '📤';
+      textEl.textContent = 'Try Again';
+      label.style.opacity = '1';
+      label.style.pointerEvents = 'auto';
+      input.value = '';
+      return;
+    }
+
+    // Success — fill in the monthly tax override
+    var monthlyTax = Math.round((data.annual_tax / 12) * 100) / 100;
+    CS.taxOverride = monthlyTax;
+
+    var overrideInput = document.getElementById('client-tax-override');
+    var overrideWrap = document.getElementById('client-tax-override-wrap');
+    var pencil = document.getElementById('client-tax-pencil');
+    if (overrideInput) overrideInput.value = monthlyTax.toFixed(2);
+    if (overrideWrap) overrideWrap.classList.add('visible');
+    if (pencil) pencil.classList.add('active');
+    clientRefreshAll();
+
+    // Show success
+    var annualFormatted = '$' + Math.round(data.annual_tax).toLocaleString();
+    statusEl.style.color = '#16a34a';
+    statusEl.textContent = '✅ Found ' + annualFormatted + '/yr → $' + monthlyTax.toFixed(2) + '/mo filled in!';
+    iconEl.textContent = '✅';
+    textEl.textContent = 'Tax Bill Read!';
+    label.style.background = '#16a34a';
+
+    // Reset button after 4 seconds
+    setTimeout(function() {
+      iconEl.textContent = '📤';
+      textEl.textContent = 'Upload Another';
+      label.style.background = 'var(--navy)';
+      label.style.opacity = '1';
+      label.style.pointerEvents = 'auto';
+      input.value = '';
+    }, 4000);
+
+  } catch (err) {
+    statusEl.style.color = '#ef4444';
+    statusEl.textContent = '⚠️ ' + (err.message || 'Something went wrong. Please try again.');
+    iconEl.textContent = '📤';
+    textEl.textContent = 'Try Again';
+    label.style.opacity = '1';
+    label.style.pointerEvents = 'auto';
+    label.style.background = 'var(--navy)';
+    input.value = '';
+  }
 }
 function openCountyPA(){
   var sel = document.getElementById('tax-county-select');
