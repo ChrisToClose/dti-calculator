@@ -1691,7 +1691,6 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;">Back-End DTI</div>
           <div style="font-size:15px;font-weight:800;color:#fff;" id="mini-dti-val">&mdash;</div>
         </div>
-        <button id="mini-bar-btn" style="margin-left:auto;background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:11px;cursor:pointer;white-space:nowrap;padding:4px 8px;border-radius:var(--radius-sm);">&#8593; Back</button>
       </div>
       <!-- Bar -->
       <div id="mini-thermo-track" style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;position:relative;margin-bottom:5px;">
@@ -4139,9 +4138,6 @@ function initClientView(p) {
     observer.observe(observeTarget);
   }
 
-  document.getElementById('mini-bar-btn').addEventListener('click', function(){
-    thermoSection.scrollIntoView({behavior:'smooth', block:'start'});
-  });
 
   /* ============================================================
      CLIENT: HELP DRAWER
