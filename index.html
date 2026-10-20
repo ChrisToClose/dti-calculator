@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.14.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.14.1</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2136,7 +2136,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.14.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.14.1
       </div>
     </div>
 
@@ -2512,6 +2512,37 @@ var watermarkTimer=null, watermarkActive=false;
 /* ============================================================
    SECTION: LOCK / UNLOCK
    ============================================================ */
+/* ── Tax lookup panel (global) ── */
+function toggleTaxLookup(){
+  var panel = document.getElementById('tax-lookup-panel');
+  var btn = document.getElementById('tax-lookup-toggle');
+  var open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  btn.style.background = open ? 'none' : 'var(--teal)';
+  btn.style.color = open ? 'var(--teal)' : '#fff';
+  btn.innerHTML = open ? '<span>🔍</span> Look Up Real Property Taxes' : '<span>✕</span> Close Tax Lookup';
+}
+function openCountyPA(){
+  var sel = document.getElementById('tax-county-select');
+  var url = sel.value;
+  if(!url){ alert('Please select a county first.'); return; }
+  window.open(url, '_blank');
+}
+function updateTaxFlags(){
+  var newConst = document.getElementById('flag-new-construction').checked;
+  var soh = document.getElementById('flag-homestead-soh').checked;
+  var warn = document.getElementById('tax-flag-warnings');
+  var msgs = [];
+  if(newConst) msgs.push('<div style="padding:8px 10px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;font-size:11px;color:#78350f;margin-bottom:6px;"><strong>🚧 New Construction:</strong> Taxes shown on this listing are based on land value only. Expect a significant increase after CO is issued. Ask the builder for a projected tax estimate.</div>');
+  if(soh) msgs.push('<div style="padding:8px 10px;background:#dbeafe;border-left:4px solid #3b82f6;border-radius:4px;font-size:11px;color:#1e3a8a;margin-bottom:6px;"><strong>🏠 SOH Cap Reset:</strong> The current owner\'s taxes are capped by Save Our Homes. As the new buyer, your taxes will be assessed at full market value — likely higher than the current bill. Verify with the county Property Appraiser.</div>');
+  if(msgs.length){
+    warn.innerHTML = msgs.join('');
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
+}
+
 function setParamsLocked(locked) {
   var card=document.getElementById('card-loan-params');
   var msg=document.getElementById('params-lock-msg');
@@ -3787,37 +3818,6 @@ function initClientView(p) {
   document.getElementById('client-tax-override-clear').addEventListener('click', function(){
     clientClearTaxOverride(); clientRefreshAll();
   });
-
-  /* Tax lookup panel */
-  function toggleTaxLookup(){
-    var panel = document.getElementById('tax-lookup-panel');
-    var btn = document.getElementById('tax-lookup-toggle');
-    var open = panel.style.display !== 'none';
-    panel.style.display = open ? 'none' : 'block';
-    btn.style.background = open ? 'none' : 'var(--teal)';
-    btn.style.color = open ? 'var(--teal)' : '#fff';
-    btn.innerHTML = open ? '<span>🔍</span> Look Up Real Property Taxes' : '<span>✕</span> Close Tax Lookup';
-  }
-  function openCountyPA(){
-    var sel = document.getElementById('tax-county-select');
-    var url = sel.value;
-    if(!url){ alert('Please select a county first.'); return; }
-    window.open(url, '_blank');
-  }
-  function updateTaxFlags(){
-    var newConst = document.getElementById('flag-new-construction').checked;
-    var soh = document.getElementById('flag-homestead-soh').checked;
-    var warn = document.getElementById('tax-flag-warnings');
-    var msgs = [];
-    if(newConst) msgs.push('<div style="padding:8px 10px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;font-size:11px;color:#78350f;margin-bottom:6px;"><strong>🚧 New Construction:</strong> Taxes shown on this listing are based on land value only. Expect a significant increase after CO is issued. Ask the builder for a projected tax estimate.</div>');
-    if(soh) msgs.push('<div style="padding:8px 10px;background:#dbeafe;border-left:4px solid #3b82f6;border-radius:4px;font-size:11px;color:#1e3a8a;margin-bottom:6px;"><strong>🏠 SOH Cap Reset:</strong> The current owner\'s taxes are capped by Save Our Homes. As the new buyer, your taxes will be assessed at full market value — likely higher than the current bill. Verify with the county Property Appraiser.</div>');
-    if(msgs.length){
-      warn.innerHTML = msgs.join('');
-      warn.style.display = 'block';
-    } else {
-      warn.style.display = 'none';
-    }
-  }
 
   /* Insurance pencil */
   document.getElementById('client-ins-pencil').addEventListener('click', function(){
