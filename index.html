@@ -140,6 +140,9 @@ body.dark-mode #client-thermo-section.is-sticky {
   border-bottom:1px solid var(--border); background:var(--surface);
 }
 .cbr-row span:last-child { font-weight:700; color:var(--text); }
+body.dark-mode .cbr-row { background:#0f1e32; border-bottom-color:rgba(255,255,255,0.1); }
+body.dark-mode .cbr-row span:last-child { color:#fff; }
+body.dark-mode .compact-breakdown { border-color:rgba(255,255,255,0.15); }
 
 /* Client term button */
 .client-term-btn.active {
@@ -1716,7 +1719,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="width:1px;height:36px;background:var(--border);flex-shrink:0;"></div>
         <div style="text-align:center;">
           <div class="dti-label-text" style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Back-End DTI</div>
-          <div style="font-size:26px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;transition:color 0.3s;" class="client-val-text" id="client-back-dti">&mdash;</div>
+          <div style="font-size:26px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;transition:color 0.3s;" class="client-val-text" id="client-back-dti">&mdash;</div>
         </div>
       </div>
       <!-- Bar -->
@@ -1745,7 +1748,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div class="cbr-row" id="cbr-flood-row" style="display:none;"><span>Flood Insurance</span><span id="cbr-flood">&mdash;</span></div>
         <div class="cbr-row" id="cbr-hoa-row" style="display:none;"><span>HOA Fee</span><span id="cbr-hoa">&mdash;</span></div>
         <div class="cbr-row" id="cbr-cdd-row" style="display:none;"><span>Community Fee (CDD)</span><span id="cbr-cdd">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance <span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;"></span></span><span id="cbr-mi" style="margin-left:auto;">&mdash;</span></div>
+        <div class="cbr-row" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance <span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;"></span></span><span id="cbr-mi">&mdash;</span></div>
         <div class="cbr-row" id="cbr-no-pmi-row" style="display:none;"><span style="color:var(--green);font-weight:600;">&#10003; No Mortgage Insurance</span><span style="color:var(--green);font-size:11px;">20%+ down</span></div>
         <!-- Debts separator -->
         <div style="height:2px;background:var(--border);"></div>
@@ -1755,7 +1758,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <!-- Total obligations -->
         <div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 12px;background:var(--surface2);border-top:2px solid var(--border);">
           <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Total Monthly Obligations</span>
-          <span style="font-size:18px;font-weight:800;color:var(--navy);" class="client-val-text" id="cbr-total">&mdash;</span>
+          <span style="font-size:18px;font-weight:800;color:var(--text);" class="client-val-text" id="cbr-total">&mdash;</span>
         </div>
         <div id="cbr-ufmip-note" style="display:none;font-size:11px;color:var(--text-light);text-align:center;padding:4px 10px;border-top:1px solid var(--border);"></div>
       </div>
