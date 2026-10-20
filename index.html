@@ -978,7 +978,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.22</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.24</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1232,7 +1232,17 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
                 </div>
               </span>
             </div>
-            <span class="slider-block-val" id="price-val">$400,000</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="slider-block-val" id="price-val">$400,000</span>
+              <button class="pencil-btn" id="price-pencil" title="Enter exact price">&#9998;</button>
+            </div>
+          </div>
+          <div class="override-input-wrap" id="price-override-wrap">
+            <div class="prefix-wrap" style="flex:1;">
+              <span class="prefix">$</span>
+              <input type="number" id="price-override-input" min="50000" max="5000000" step="1000" placeholder="Enter exact purchase price">
+            </div>
+            <button class="override-clear" id="price-override-clear">&times; Clear</button>
           </div>
           <input type="range" id="price-slider" min="100000" max="1500000" step="5000" value="400000">
           <div class="slider-hint"><span>$100K</span><span>$1.5M</span></div>
@@ -1808,7 +1818,17 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
               <div class="tooltip-popup" id="ctip-price"><button class="tooltip-close" data-close="ctip-price">&times;</button>The price you would offer on the home. Drag it lower to see how much your monthly payment drops and how much breathing room you gain on the bar above.</div>
             </span>
           </div>
-          <span style="font-size:16px;font-weight:800;color:var(--navy);" id="client-price-val">$400,000</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:16px;font-weight:800;color:var(--navy);" id="client-price-val">$400,000</span>
+            <button class="pencil-btn" id="client-price-pencil" title="Enter exact price">&#9998;</button>
+          </div>
+        </div>
+        <div class="override-input-wrap" id="client-price-override-wrap">
+          <div class="prefix-wrap" style="flex:1;">
+            <span class="prefix">$</span>
+            <input type="number" id="client-price-override" min="50000" max="5000000" step="1000" placeholder="Enter exact purchase price">
+          </div>
+          <button class="override-clear" id="client-price-override-clear">&times; Clear</button>
         </div>
         <input type="range" id="client-price" min="100000" max="1500000" step="5000" value="400000" style="width:100%;accent-color:var(--teal);">
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>$100K</span><span>$1.5M</span></div>
@@ -1907,7 +1927,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;align-items:center;gap:10px;">
           <label class="toggle"><input type="checkbox" id="client-flood"><div class="toggle-track"></div></label>
           <label for="client-flood" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Property is in a Flood Zone</label>
-          <span class="tip-anchor" style="margin-left:auto;"><button class="info-btn" data-tip="ctip-flood">i</button>
+          <span class="tip-anchor"><button class="info-btn" data-tip="ctip-flood">i</button>
             <div class="tooltip-popup" id="ctip-flood"><button class="tooltip-close" data-close="ctip-flood">&times;</button>If this property is in a FEMA flood zone, your lender will require a separate flood insurance policy — this is not optional and not part of standard homeowners insurance. Your real estate agent can confirm whether a flood zone applies.</div>
           </span>
         </div>
@@ -1925,7 +1945,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;align-items:center;gap:10px;">
           <label class="toggle"><input type="checkbox" id="client-cdd"><div class="toggle-track"></div></label>
           <label for="client-cdd" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Property has a CDD Fee</label>
-          <span class="tip-anchor" style="margin-left:auto;"><button class="info-btn" data-tip="ctip-cdd">i</button>
+          <span class="tip-anchor"><button class="info-btn" data-tip="ctip-cdd">i</button>
             <div class="tooltip-popup" id="ctip-cdd"><button class="tooltip-close" data-close="ctip-cdd">&times;</button>A CDD (Community Development District) fee is an annual charge on some Florida properties — especially new construction — used to repay bonds for infrastructure. It appears on your tax bill separately from regular property tax. Enter the annual amount and we'll calculate the monthly cost.</div>
           </span>
         </div>
@@ -2015,7 +2035,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.22
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.24
       </div>
     </div>
 
@@ -2770,8 +2790,31 @@ document.querySelectorAll('.loan-btn').forEach(function(btn){
    ============================================================ */
 document.getElementById('price-slider').addEventListener('input',function(){
   S.purchasePrice=parseInt(this.value);
-  clearTaxOverride(); clearInsOverride(); refreshAll();
+  clearTaxOverride(); clearInsOverride(); clearPriceOverride(); refreshAll();
 });
+document.getElementById('price-pencil').addEventListener('click',function(){
+  var wrap=document.getElementById('price-override-wrap');
+  var open=wrap.classList.contains('visible');
+  wrap.classList.toggle('visible',!open); this.classList.toggle('active',!open);
+  if(!open)document.getElementById('price-override-input').focus();
+});
+document.getElementById('price-override-input').addEventListener('focus',function(){if(this.value==='0'||this.value===0)this.value='';});
+document.getElementById('price-override-input').addEventListener('input',function(){
+  var val=parseFloat(this.value);
+  if(!isNaN(val)&&val>0){
+    S.purchasePrice=val;
+    document.getElementById('price-val').textContent='$'+Math.round(val).toLocaleString();
+    var slider=document.getElementById('price-slider');
+    slider.value=Math.min(Math.max(Math.round(val/5000)*5000,100000),1500000);
+    clearTaxOverride(); clearInsOverride(); refreshAll();
+  }
+});
+document.getElementById('price-override-clear').addEventListener('click',function(){clearPriceOverride();refreshAll();});
+function clearPriceOverride(){
+  document.getElementById('price-override-input').value='';
+  document.getElementById('price-override-wrap').classList.remove('visible');
+  document.getElementById('price-pencil').classList.remove('active');
+}
 document.getElementById('down-slider').addEventListener('input',function(){
   S.downPct=parseFloat(this.value); refreshAll();
 });
@@ -3536,6 +3579,7 @@ function initClientView(p) {
     document.getElementById('client-price-val').textContent = '$'+CS.purchasePrice.toLocaleString();
     /* Reset overrides on price change */
     clientClearTaxOverride();
+    clientClearPriceOverride();
     if (CS.insOverride==null) {
       var newIns = Math.round(CS.purchasePrice*CONFIG.insuranceDefaultPct/12);
       insSlider.value = Math.min(Math.max(newIns,50),1500);
@@ -3544,6 +3588,38 @@ function initClientView(p) {
     updateResetBtn();
     maybeShowPmiDriftModal();
   });
+
+  /* Client purchase price pencil override */
+  document.getElementById('client-price-pencil').addEventListener('click',function(){
+    var wrap=document.getElementById('client-price-override-wrap');
+    var open=wrap.classList.contains('visible');
+    wrap.classList.toggle('visible',!open); this.classList.toggle('active',!open);
+    if(!open)document.getElementById('client-price-override').focus();
+  });
+  document.getElementById('client-price-override').addEventListener('focus',function(){if(this.value==='0'||this.value===0)this.value='';});
+  document.getElementById('client-price-override').addEventListener('input',function(){
+    var val=parseFloat(this.value);
+    if(!isNaN(val)&&val>0){
+      CS.purchasePrice=val;
+      document.getElementById('client-price-val').textContent='$'+Math.round(val).toLocaleString();
+      var slider=document.getElementById('client-price');
+      slider.value=Math.min(Math.max(Math.round(val/5000)*5000,100000),1500000);
+      clientClearTaxOverride();
+      if(CS.insOverride==null){
+        var newIns=Math.round(CS.purchasePrice*CONFIG.insuranceDefaultPct/12);
+        insSlider.value=Math.min(Math.max(newIns,50),1500);
+      }
+      clientRefreshAll();
+      updateResetBtn();
+      maybeShowPmiDriftModal();
+    }
+  });
+  document.getElementById('client-price-override-clear').addEventListener('click',function(){clientClearPriceOverride();clientRefreshAll();updateResetBtn();});
+  function clientClearPriceOverride(){
+    document.getElementById('client-price-override').value='';
+    document.getElementById('client-price-override-wrap').classList.remove('visible');
+    document.getElementById('client-price-pencil').classList.remove('active');
+  }
 
   /* Down payment */
   document.getElementById('client-down').addEventListener('input', function(){
