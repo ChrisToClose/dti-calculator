@@ -78,8 +78,7 @@ body.dark-mode .onboarding-dot.active { background:var(--yellow); }
 /* Frozen thermometer — navy background in light mode when sticky */
 #client-thermo-section.is-sticky {
   background: var(--navy) !important;
-  border-bottom: 4px solid hotpink !important;
-  border-top: 4px solid hotpink !important;
+  border-bottom: none;
   box-shadow: 0 4px 20px rgba(27,58,107,0.3);
 }
 #client-thermo-section.is-sticky #client-front-dti,
@@ -415,10 +414,16 @@ body.dark-mode #lender-thermo-wrap {
 }
 body.dark-mode #client-mini-bar {
   background: #ffffff !important;
-  border-top: 4px solid hotpink !important;
-  border-bottom: 4px solid hotpink !important;
+  border-top: 3px solid var(--yellow) !important;
+  border-bottom: 3px solid var(--yellow) !important;
 }
 body.dark-mode #client-mini-bar * { color: var(--navy) !important; }
+/* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
+body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
+/* Dark mode: divider above breakdown grid */
+body.dark-mode #mini-breakdown-grid { border-top-color: rgba(0,0,0,0.12) !important; }
+/* Dark mode: divider above Total Housing Payment row */
+body.dark-mode #mini-lbr-housing { border-top-color: rgba(0,0,0,0.15) !important; }
 /* Dark mode: DTI bar tick marks — override white to dark so they're visible on the light mini-bar and dark client bar */
 body.dark-mode #mini-warn-tick { background: rgba(0,0,0,0.35) !important; }
 body.dark-mode #mini-max-tick  { background: rgba(0,0,0,0.25) !important; }
@@ -1027,7 +1032,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.36</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.37</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1674,7 +1679,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   <div id="client-mini-bar-spacer" style="height:0;transition:height 0.3s ease;flex-shrink:0;"></div>
 
   <!-- CLIENT FROZEN FT — full breakdown, matches lender style -->
-  <div id="client-mini-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:4px solid hotpink;border-bottom:4px solid hotpink;box-shadow:0 4px 20px rgba(27,58,107,0.3);transform:translateY(-100%);transition:transform 0.3s ease;">
+  <div id="client-mini-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);transform:translateY(-100%);transition:transform 0.3s ease;">
     <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
       <!-- DTI row -->
       <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
@@ -1690,13 +1695,13 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <button id="mini-bar-btn" style="margin-left:auto;background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:11px;cursor:pointer;white-space:nowrap;padding:4px 8px;border-radius:var(--radius-sm);">&#8593; Back</button>
       </div>
       <!-- Bar -->
-      <div style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;position:relative;margin-bottom:5px;">
+      <div id="mini-thermo-track" style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;position:relative;margin-bottom:5px;">
         <div id="mini-thermo-fill" style="height:100%;width:0%;border-radius:4px;background:#27ae60;transition:width 0.5s cubic-bezier(.4,0,.2,1),background 0.4s;"></div>
         <div id="mini-warn-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.4);"></div>
         <div id="mini-max-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.3);"></div>
       </div>
       <!-- Compact breakdown -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
+      <div id="mini-breakdown-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-pi">&mdash;</span></div>
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
@@ -2080,7 +2085,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.36
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.37
       </div>
     </div>
 
