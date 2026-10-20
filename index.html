@@ -2730,7 +2730,7 @@ async function lookupRealieAddress() {
       newConstrWarn.style.display = 'block';
       var reasonsEl = document.getElementById('realie-new-const-reasons');
       if (reasonsEl && data.new_construction_reasons && data.new_construction_reasons.length) {
-        reasonsEl.innerHTML = 'Signals from this property's tax record:<br>' +
+        reasonsEl.innerHTML = "Signals from this property's tax record:<br>" +
           data.new_construction_reasons.map(function(r){ return '&bull; ' + r; }).join('<br>');
       }
     }
