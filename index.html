@@ -1704,6 +1704,9 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="mini-lbr-flood-row"><span>Flood</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-flood">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="mini-lbr-hoa-row"><span>HOA</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-hoa">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="mini-lbr-cdd-row"><span>CDD</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-cdd">&mdash;</span></div>
         <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
         <div id="mini-lbr-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.25);margin-top:4px;padding-top:4px;"><span style="letter-spacing:0.01em;">Total Housing Payment</span><span id="mini-lbr-housing" style="font-size:15px;">&mdash;</span></div>
       </div>
@@ -3914,6 +3917,12 @@ function initClientView(p) {
     var mbHousing = document.getElementById('mini-lbr-housing');
     var mbShortfall = document.getElementById('mini-lbr-shortfall');
     var mbShortfallRow = document.getElementById('mini-lbr-shortfall-row');
+    var mbFloodRow = document.getElementById('mini-lbr-flood-row');
+    var mbFlood = document.getElementById('mini-lbr-flood');
+    var mbHoaRow = document.getElementById('mini-lbr-hoa-row');
+    var mbHoa = document.getElementById('mini-lbr-hoa');
+    var mbCddRow = document.getElementById('mini-lbr-cdd-row');
+    var mbCdd = document.getElementById('mini-lbr-cdd');
     if(mbPi) mbPi.textContent = fmt(result.pi);
     if(mbTax) mbTax.textContent = result.monthlyTax!=null ? fmt(result.monthlyTax) : '\u2014';
     if(mbIns) mbIns.textContent = fmt(result.monthlyIns);
@@ -3927,6 +3936,18 @@ function initClientView(p) {
         if(mbMiLabel) mbMiLabel.textContent = miLabels[CS.loanType]||'Mortgage Insurance';
         if(mbMi) mbMi.textContent = fmt(result.monthlyMI);
       }
+    }
+    if(mbFloodRow) {
+      if(CS.floodActive && result.floodIns>0) { mbFloodRow.style.display='flex'; if(mbFlood) mbFlood.textContent=fmt(result.floodIns); }
+      else { mbFloodRow.style.display='none'; }
+    }
+    if(mbHoaRow) {
+      if(result.hoa>0) { mbHoaRow.style.display='flex'; if(mbHoa) mbHoa.textContent=fmt(result.hoa); }
+      else { mbHoaRow.style.display='none'; }
+    }
+    if(mbCddRow) {
+      if(CS.cddActive && result.cddMonthly>0) { mbCddRow.style.display='flex'; if(mbCdd) mbCdd.textContent=fmt(result.cddMonthly); }
+      else { mbCddRow.style.display='none'; }
     }
     if(mbShortfallRow) {
       if(result.rentalShortfall>0) {
