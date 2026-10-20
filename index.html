@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.16.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.17.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1844,30 +1844,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       </div>
     </div>
 
-    <!-- AI TAX BILL UPLOAD — Card 3 -->
-    <div style="padding:12px 16px 14px;background:var(--surface);border-bottom:1px solid var(--border);">
-      <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📄 Have the Tax Bill? Upload it</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Take a photo or screenshot of the tax bill — AI will read the amount and flag if the seller's taxes will reset at purchase.</div>
-      <label id="tax-upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box;">
-        <span id="tax-upload-icon">📤</span>
-        <span id="tax-upload-text">Upload Tax Bill</span>
-        <input type="file" id="tax-bill-input" accept="image/*,.pdf" style="display:none;" onchange="handleTaxBillUpload(this)">
-      </label>
-      <div id="tax-upload-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
-      <div id="tax-soh-warning" style="display:none;margin-top:10px;"></div>
-      <div id="tax-soh-mill-data" data-mill-rate="" data-purchase-price="" style="display:none;"></div>
-    </div>
-
     <!-- SLIDERS -->
     <div id="client-sliders-section" style="padding:0 0 8px;">
-
-      <div style="padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <label class="toggle"><input type="checkbox" id="client-homestead" checked><div class="toggle-track"></div></label>
-          <label for="client-homestead" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Primary Residence (Homestead Exemption)</label>
-        </div>
-        <div style="font-size:11px;color:var(--text-light);margin-top:4px;margin-left:54px;">Reduces your taxable value by $50,000 &mdash; lowers your tax estimate</div>
-      </div>
 
       <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -1939,6 +1917,38 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Homeowners Insurance</span>
+            <span class="tip-anchor"><button class="info-btn" data-tip="ctip-ins">i</button>
+              <div class="tooltip-popup" id="ctip-ins"><button class="tooltip-close" data-close="ctip-ins">&times;</button>The starting estimate is based on 0.5% of the purchase price per year. Florida insurance costs vary a lot by location, home age, and roof type. Use the slider to adjust or tap the pencil to enter a real quote from an insurance agent.</div>
+            </span>
+          </div>
+          <button class="pencil-btn" id="client-ins-pencil">&#9998;</button>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;">
+          <span style="font-size:16px;font-weight:800;color:var(--navy);" class="client-val-text" id="client-ins-val">$167/mo</span>
+          <span class="tax-ins-badge badge-est" id="client-ins-badge">EST</span>
+        </div>
+        <input type="range" id="client-ins-slider" min="50" max="1500" step="25" value="167" style="width:100%;accent-color:var(--teal);">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>$50/mo</span><span>$1,500/mo</span></div>
+        <div class="override-input-wrap" id="client-ins-override-wrap">
+          <div class="prefix-wrap" style="flex:1;"><span class="prefix">$</span>
+            <input type="number" id="client-ins-override" min="0" step="1" placeholder="Monthly insurance amount">
+          </div>
+          <button class="override-clear" id="client-ins-override-clear">&times; Clear</button>
+        </div>
+      </div>
+
+      <div style="padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <label class="toggle"><input type="checkbox" id="client-homestead" checked><div class="toggle-track"></div></label>
+          <label for="client-homestead" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Primary Residence (Homestead Exemption)</label>
+        </div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px;margin-left:54px;">Reduces your taxable value by $50,000 &mdash; lowers your tax estimate</div>
+      </div>
+
+      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:6px;">
             <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;" id="client-tax-label">Est. Property Tax (w/ Homestead)</span>
             <span class="tip-anchor"><button class="info-btn" data-tip="ctip-tax">i</button>
               <div class="tooltip-popup" id="ctip-tax"><button class="tooltip-close" data-close="ctip-tax">&times;</button>Estimated using your county's official tax rate. The Homestead Exemption (toggle above) reduces your taxable value by $50,000 when this is your primary home. Your first year's bill may differ slightly. Tap the pencil to enter an actual figure from a property listing.</div>
@@ -1989,6 +1999,20 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             Visit Property Appraiser →
           </button>
 
+          <!-- AI TAX BILL UPLOAD -->
+          <div style="margin-top:14px;padding:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);">
+            <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📄 Have the Tax Bill? Upload it</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;line-height:1.5;">Take a photo or screenshot of the tax bill — AI will read the amount and flag if the seller's taxes will reset at purchase.</div>
+            <label id="tax-upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:40px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;box-sizing:border-box;">
+              <span id="tax-upload-icon">📤</span>
+              <span id="tax-upload-text">Upload Tax Bill</span>
+              <input type="file" id="tax-bill-input" accept="image/*,.pdf" style="display:none;" onchange="handleTaxBillUpload(this)">
+            </label>
+            <div id="tax-upload-status" style="display:none;margin-top:8px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
+            <div id="tax-soh-warning" style="display:none;margin-top:10px;"></div>
+            <div id="tax-soh-mill-data" data-mill-rate="" data-purchase-price="" style="display:none;"></div>
+          </div>
+
           <!-- NEW CONSTRUCTION FLAG -->
           <div style="margin-top:14px;padding:10px 12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -2011,30 +2035,6 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
           <!-- ACTIVE FLAG WARNINGS -->
           <div id="tax-flag-warnings" style="display:none;margin-top:10px;"></div>
-        </div>
-      </div>
-
-      <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Homeowners Insurance</span>
-            <span class="tip-anchor"><button class="info-btn" data-tip="ctip-ins">i</button>
-              <div class="tooltip-popup" id="ctip-ins"><button class="tooltip-close" data-close="ctip-ins">&times;</button>The starting estimate is based on 0.5% of the purchase price per year. Florida insurance costs vary a lot by location, home age, and roof type. Use the slider to adjust or tap the pencil to enter a real quote from an insurance agent.</div>
-            </span>
-          </div>
-          <button class="pencil-btn" id="client-ins-pencil">&#9998;</button>
-        </div>
-        <div style="display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;">
-          <span style="font-size:16px;font-weight:800;color:var(--navy);" class="client-val-text" id="client-ins-val">$167/mo</span>
-          <span class="tax-ins-badge badge-est" id="client-ins-badge">EST</span>
-        </div>
-        <input type="range" id="client-ins-slider" min="50" max="1500" step="25" value="167" style="width:100%;accent-color:var(--teal);">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>$50/mo</span><span>$1,500/mo</span></div>
-        <div class="override-input-wrap" id="client-ins-override-wrap">
-          <div class="prefix-wrap" style="flex:1;"><span class="prefix">$</span>
-            <input type="number" id="client-ins-override" min="0" step="1" placeholder="Monthly insurance amount">
-          </div>
-          <button class="override-clear" id="client-ins-override-clear">&times; Clear</button>
         </div>
       </div>
 
@@ -2150,7 +2150,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.16.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.17.0
       </div>
     </div>
 
