@@ -1055,7 +1055,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.22.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.23.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2018,20 +2018,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     </div>
 
     <!-- SLIDERS -->
-      <div style="padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <label class="toggle"><input type="checkbox" id="client-homestead" checked><div class="toggle-track"></div></label>
-          <label for="client-homestead" style="font-size:14px;font-weight:500;color:var(--text);cursor:pointer;">Primary Residence (Homestead Exemption)</label>
-        </div>
-        <div style="font-size:11px;color:var(--text-light);margin-top:4px;margin-left:54px;">Reduces your taxable value by $50,000 &mdash; lowers your tax estimate</div>
-      </div>
-
       <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="display:flex;align-items:center;gap:6px;">
-            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;" id="client-tax-label">Est. Property Tax (w/ Homestead)</span>
+            <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;" id="client-tax-label">Est. Property Tax</span>
             <span class="tip-anchor"><button class="info-btn" data-tip="ctip-tax">i</button>
-              <div class="tooltip-popup" id="ctip-tax"><button class="tooltip-close" data-close="ctip-tax">&times;</button>Estimated using your county's official tax rate. The Homestead Exemption (toggle above) reduces your taxable value by $50,000 when this is your primary home. Your first year's bill may differ slightly. Tap the pencil to enter an actual figure from a property listing.</div>
+              <div class="tooltip-popup" id="ctip-tax"><button class="tooltip-close" data-close="ctip-tax">&times;</button>Estimated using your county's official mill rate applied to the purchase price. Your first year's bill may differ from this estimate. Tap the pencil to enter an actual figure from a property listing or tax record.</div>
             </span>
           </div>
           <button class="pencil-btn" id="client-tax-pencil">&#9998;</button>
@@ -2112,39 +2104,41 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
           <!-- NEW CONSTRUCTION WARNING (auto-shown by API flag) -->
           <div id="realie-new-construction-warning" style="display:none;margin-top:12px;padding:12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
-            <div style="font-size:13px;font-weight:700;color:#92400e;">⚠️ This may be a new construction property.</div>
-            <div style="font-size:12px;color:#92400e;margin-top:6px;line-height:1.6;">Tax records may only reflect the land value — the full assessed tax after the home is built could be significantly higher. Contact Chris for a more accurate Year 2 estimate.</div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+              <div style="font-size:13px;font-weight:700;color:#92400e;">⚠️ This may be new construction</div>
+              <span class="tip-anchor" style="flex-shrink:0;margin-top:1px;">
+                <button class="info-btn" data-tip="ctip-new-const" style="background:rgba(146,64,14,0.12);color:#92400e;border-color:rgba(146,64,14,0.3);">i</button>
+                <div class="tooltip-popup" id="ctip-new-const" style="width:min(300px,calc(100vw - 32px));">
+                  <button class="tooltip-close" data-close="ctip-new-const">&times;</button>
+                  <strong>Why this matters</strong><br><br>
+                  On a new construction property, the county often has only the <em>land</em> on the tax roll — the building hasn't been fully assessed yet. That means the tax figure you see today could be a fraction of what the new owner will actually owe.<br><br>
+                  <div class="tooltip-example">Example: A $450k new build might show $1,200/yr in taxes based on land only — but once reassessed with the home, the bill could jump to $6,000+/yr.</div>
+                  <br>Year 2 can be a significant shock. Ask your builder for a projected tax estimate before relying on the current figure.
+                </div>
+              </span>
+            </div>
+            <div id="realie-new-const-reasons" style="font-size:12px;color:#92400e;margin-top:6px;line-height:1.7;"></div>
           </div>
 
           <!-- HOMESTEAD STATUS (auto-shown by API flag) -->
-          <div id="realie-homestead-info" style="display:none;margin-top:10px;padding:10px 12px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);">
-            <div style="font-size:12px;font-weight:800;color:#1e3a8a;">🏠 Current Owner Has Homestead Exemption</div>
-            <div style="font-size:11px;color:#1e3a8a;margin-top:4px;line-height:1.5;">Florida's Save Our Homes cap will <strong>reset at sale</strong>. The new buyer's taxes will be reassessed at full market value — likely higher than the current owner's bill.</div>
+          <div id="realie-homestead-info" style="display:none;margin-top:10px;padding:10px 12px;background:#f0fdf4;border:1.5px solid #22c55e;border-radius:var(--radius-sm);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+              <div style="font-size:12px;font-weight:800;color:#15803d;">✅ Homestead exemption appears to be on record</div>
+              <span class="tip-anchor" style="flex-shrink:0;margin-top:1px;">
+                <button class="info-btn" data-tip="ctip-homestead-api" style="background:rgba(21,128,61,0.1);color:#15803d;border-color:rgba(21,128,61,0.3);">i</button>
+                <div class="tooltip-popup" id="ctip-homestead-api" style="width:min(300px,calc(100vw - 32px));">
+                  <button class="tooltip-close" data-close="ctip-homestead-api">&times;</button>
+                  <strong>What this means for the new buyer</strong><br><br>
+                  The <em>current</em> owner has a homestead exemption — meaning they get $50,000 knocked off their taxable value, and their assessed value is capped by Florida's Save Our Homes law (increases limited to 3%/yr or CPI).<br><br>
+                  <strong>That cap resets when the home sells.</strong> As the new buyer, your taxes will be reassessed at full market value the year after purchase — which is often significantly higher than what's showing on the listing today.<br><br>
+                  <div class="tooltip-example">Example: A seller paying $3,800/yr under SOH protection. New buyer at the same purchase price might owe $6,200+/yr once reassessed.</div>
+                </div>
+              </span>
+            </div>
+            <div style="font-size:11px;color:#15803d;margin-top:4px;line-height:1.5;">The Save Our Homes cap <strong>resets at sale</strong> — your taxes will reflect full market value, likely higher than the current bill.</div>
           </div>
 
-          <!-- MANUAL OVERRIDE FLAGS (always visible below API result) -->
-          <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
-            <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">Manual Overrides</div>
 
-            <div style="padding:8px 10px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);margin-bottom:8px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:13px;">⚠️</span>
-                <span style="font-size:11px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.03em;">New Construction?</span>
-                <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-new-construction" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
-              </div>
-            </div>
-
-            <div style="padding:8px 10px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:13px;">⚠️</span>
-                <span style="font-size:11px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.03em;">Owner Has Homestead (SOH)?</span>
-                <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-homestead-soh" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
-              </div>
-            </div>
-          </div>
-
-          <!-- ACTIVE FLAG WARNINGS -->
-          <div id="tax-flag-warnings" style="display:none;margin-top:10px;"></div>
         </div>
       </div>
 
@@ -2260,7 +2254,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.22.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.23.0
       </div>
     </div>
 
@@ -2734,14 +2728,16 @@ async function lookupRealieAddress() {
     // ── New construction warning (auto-detected by API) ──────────
     if (data.is_new_construction) {
       newConstrWarn.style.display = 'block';
+      var reasonsEl = document.getElementById('realie-new-const-reasons');
+      if (reasonsEl && data.new_construction_reasons && data.new_construction_reasons.length) {
+        reasonsEl.innerHTML = 'Signals from this property's tax record:<br>' +
+          data.new_construction_reasons.map(function(r){ return '&bull; ' + r; }).join('<br>');
+      }
     }
 
     // ── Homestead info (auto-detected by API) ───────────────────
     if (data.is_homesteaded) {
       homesteadInfo.style.display = 'block';
-      // Also auto-check the manual toggle so updateTaxFlags() shows the warning
-      var sohChk = document.getElementById('flag-homestead-soh');
-      if (sohChk && !sohChk.checked) { sohChk.checked = true; updateTaxFlags(); }
     }
 
     // Reset button
@@ -2775,18 +2771,8 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 function updateTaxFlags(){
-  var newConst = document.getElementById('flag-new-construction').checked;
-  var soh = document.getElementById('flag-homestead-soh').checked;
-  var warn = document.getElementById('tax-flag-warnings');
-  var msgs = [];
-  if(newConst) msgs.push('<div style="padding:8px 10px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;font-size:11px;color:#78350f;margin-bottom:6px;"><strong>🚧 New Construction:</strong> Taxes shown on this listing are based on land value only. Expect a significant increase after CO is issued. Ask the builder for a projected tax estimate.</div>');
-  if(soh) msgs.push('<div style="padding:8px 10px;background:#dbeafe;border-left:4px solid #3b82f6;border-radius:4px;font-size:11px;color:#1e3a8a;margin-bottom:6px;"><strong>🏠 SOH Cap Reset:</strong> The current owner\'s taxes are capped by Save Our Homes. As the new buyer, your taxes will be assessed at full market value — likely higher than the current bill. Verify with the county Property Appraiser.</div>');
-  if(msgs.length){
-    warn.innerHTML = msgs.join('');
-    warn.style.display = 'block';
-  } else {
-    warn.style.display = 'none';
-  }
+  // Manual override checkboxes removed — homestead and new construction
+  // are shown as informational callouts from the API response only
 }
 
 function setParamsLocked(locked) {
@@ -3811,7 +3797,7 @@ function initClientView(p) {
   document.getElementById('client-down-amt').textContent = '($'+Math.round(CS.purchasePrice*(CS.downPct/100)).toLocaleString()+')';
   document.getElementById('client-hoa').value = CS.hoa;
   document.getElementById('client-hoa-val').textContent = '$'+CS.hoa+'/mo';
-  document.getElementById('client-homestead').checked = CS.homestead;
+  // client-homestead element removed; CS.homestead stays true by default
 
   /* Term buttons */
   document.querySelectorAll('.client-term-btn').forEach(function(btn){
@@ -3877,10 +3863,7 @@ function initClientView(p) {
   }
 
   function updateClientTaxLabel() {
-    var lbl = document.getElementById('client-tax-label');
-    if (lbl) lbl.textContent = CS.homestead
-      ? 'Est. Property Tax (w/ Homestead)'
-      : 'Est. Property Tax (no Homestead)';
+    // Label is now static since client homestead toggle was removed
   }
 
   document.getElementById('client-location-change').addEventListener('click', function(){
@@ -4083,12 +4066,7 @@ function initClientView(p) {
   });
 
   /* Homestead */
-  document.getElementById('client-homestead').addEventListener('change', function(){
-    CS.homestead = this.checked;
-    clientClearTaxOverride();
-    updateClientTaxLabel();
-    clientRefreshAll();
-  });
+  // client-homestead toggle removed; CS.homestead defaults to true (standard primary residence)
 
   /* Insurance slider */
   insSlider.addEventListener('input', function(){
