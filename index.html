@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.47</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.14.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1942,6 +1942,62 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           </div>
           <button class="override-clear" id="client-tax-override-clear">&times; Clear</button>
         </div>
+
+        <!-- TAX LOOKUP BUTTON -->
+        <div style="margin-top:10px;">
+          <button id="tax-lookup-toggle" onclick="toggleTaxLookup()" style="display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:7px 12px;color:var(--teal);font-size:12px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
+            <span>🔍</span> Look Up Real Property Taxes
+          </button>
+        </div>
+
+        <!-- TAX LOOKUP PANEL -->
+        <div id="tax-lookup-panel" style="display:none;margin-top:10px;background:var(--surface2);border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">🏡 County Property Appraiser Lookup</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Select the county where the property is located to visit that county's official Property Appraiser website. Search by address to get the real tax bill.</div>
+
+          <select id="tax-county-select" style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:10px;">
+            <option value="">— Select a county —</option>
+            <option value="https://www.pcpao.gov">Pinellas County</option>
+            <option value="https://www.hcpafl.org">Hillsborough County</option>
+            <option value="https://www.sc-pa.com">Sarasota County</option>
+            <option value="https://www.manateepao.gov">Manatee County</option>
+            <option value="https://www.ocpafl.org">Orange County</option>
+            <option value="https://www.osceolapafl.gov">Osceola County</option>
+            <option value="https://www.polkpa.org">Polk County</option>
+            <option value="https://www.hernandopa.org">Hernando County</option>
+            <option value="https://www.pascopa.com">Pasco County</option>
+            <option value="https://www.lakepa.org">Lake County</option>
+            <option value="https://www.sumterpa.com">Sumter County</option>
+            <option value="https://www.charlottepao.com">Charlotte County</option>
+          </select>
+
+          <button onclick="openCountyPA()" style="width:100%;height:40px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">
+            Visit Property Appraiser →
+          </button>
+
+          <!-- NEW CONSTRUCTION FLAG -->
+          <div style="margin-top:14px;padding:10px 12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:16px;">⚠️</span>
+              <span style="font-size:12px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.04em;">New Construction?</span>
+              <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-new-construction" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
+            </div>
+            <div style="font-size:11px;color:#92400e;line-height:1.5;">If this is a brand-new home, the current tax bill is based on <strong>land value only</strong>. Once the home receives its Certificate of Occupancy (CO), the county will reassess it at full value — taxes could <strong>increase significantly</strong> in Year 2. Don't use the seller's current tax bill as your estimate.</div>
+          </div>
+
+          <!-- HOMESTEAD / SOH FLAG -->
+          <div style="margin-top:10px;padding:10px 12px;background:#eff6ff;border:1.5px solid #3b82f6;border-radius:var(--radius-sm);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:16px;">⚠️</span>
+              <span style="font-size:12px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.04em;">Current Owner Has Homestead?</span>
+              <label class="toggle" style="margin-left:auto;"><input type="checkbox" id="flag-homestead-soh" onchange="updateTaxFlags()"><div class="toggle-track"></div></label>
+            </div>
+            <div style="font-size:11px;color:#1e3a8a;line-height:1.5;">Florida's <strong>Save Our Homes (SOH)</strong> cap limits how much a homesteaded owner's assessed value can increase each year (max 3%). When the home sells, that cap <strong>resets</strong> — the new buyer's first-year tax bill will be based on the full market value, which can be <strong>much higher</strong> than what the current owner pays. Always verify with the county PA.</div>
+          </div>
+
+          <!-- ACTIVE FLAG WARNINGS -->
+          <div id="tax-flag-warnings" style="display:none;margin-top:10px;"></div>
+        </div>
       </div>
 
       <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
@@ -2080,7 +2136,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.47
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.14.0
       </div>
     </div>
 
@@ -3731,6 +3787,37 @@ function initClientView(p) {
   document.getElementById('client-tax-override-clear').addEventListener('click', function(){
     clientClearTaxOverride(); clientRefreshAll();
   });
+
+  /* Tax lookup panel */
+  function toggleTaxLookup(){
+    var panel = document.getElementById('tax-lookup-panel');
+    var btn = document.getElementById('tax-lookup-toggle');
+    var open = panel.style.display !== 'none';
+    panel.style.display = open ? 'none' : 'block';
+    btn.style.background = open ? 'none' : 'var(--teal)';
+    btn.style.color = open ? 'var(--teal)' : '#fff';
+    btn.innerHTML = open ? '<span>🔍</span> Look Up Real Property Taxes' : '<span>✕</span> Close Tax Lookup';
+  }
+  function openCountyPA(){
+    var sel = document.getElementById('tax-county-select');
+    var url = sel.value;
+    if(!url){ alert('Please select a county first.'); return; }
+    window.open(url, '_blank');
+  }
+  function updateTaxFlags(){
+    var newConst = document.getElementById('flag-new-construction').checked;
+    var soh = document.getElementById('flag-homestead-soh').checked;
+    var warn = document.getElementById('tax-flag-warnings');
+    var msgs = [];
+    if(newConst) msgs.push('<div style="padding:8px 10px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:4px;font-size:11px;color:#78350f;margin-bottom:6px;"><strong>🚧 New Construction:</strong> Taxes shown on this listing are based on land value only. Expect a significant increase after CO is issued. Ask the builder for a projected tax estimate.</div>');
+    if(soh) msgs.push('<div style="padding:8px 10px;background:#dbeafe;border-left:4px solid #3b82f6;border-radius:4px;font-size:11px;color:#1e3a8a;margin-bottom:6px;"><strong>🏠 SOH Cap Reset:</strong> The current owner\'s taxes are capped by Save Our Homes. As the new buyer, your taxes will be assessed at full market value — likely higher than the current bill. Verify with the county Property Appraiser.</div>');
+    if(msgs.length){
+      warn.innerHTML = msgs.join('');
+      warn.style.display = 'block';
+    } else {
+      warn.style.display = 'none';
+    }
+  }
 
   /* Insurance pencil */
   document.getElementById('client-ins-pencil').addEventListener('click', function(){
