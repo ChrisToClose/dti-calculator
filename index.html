@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.39</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.40</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1333,10 +1333,10 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             </span>
           </div>
           <div class="term-group">
-            <button class="term-btn" data-term="15">15 yr</button>
-            <button class="term-btn" data-term="20">20 yr</button>
-            <button class="term-btn" data-term="25">25 yr</button>
             <button class="term-btn active" data-term="30">30 yr</button>
+            <button class="term-btn" data-term="25">25 yr</button>
+            <button class="term-btn" data-term="20">20 yr</button>
+            <button class="term-btn" data-term="15">15 yr</button>
           </div>
         </div>
 
@@ -1699,14 +1699,14 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div id="mini-warn-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.4);"></div>
         <div id="mini-max-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.3);"></div>
       </div>
-      <!-- Compact breakdown — single column, centered -->
-      <div id="mini-breakdown-grid" style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;max-width:280px;margin:0 auto;width:100%;">
-        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-pi">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:10.5px;color:rgba(255,255,255,0.55);padding:2px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
-        <div id="mini-lbr-total-row" style="display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;padding-top:3px;"><span>Total Housing Payment</span><span id="mini-lbr-housing">&mdash;</span></div>
+      <!-- Compact breakdown — 2x2 grid -->
+      <div id="mini-breakdown-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-pi">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
+        <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
+        <div id="mini-lbr-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;padding-top:3px;"><span>Total Housing Payment</span><span id="mini-lbr-housing">&mdash;</span></div>
       </div>
       <!-- Status -->
       <div style="text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);padding-top:3px;" id="mini-status-dot"></div>
@@ -1903,10 +1903,10 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           </span>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="client-term-btn" data-cterm="15" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:14px;cursor:pointer;">15 yr</button>
-          <button class="client-term-btn" data-cterm="20" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:14px;cursor:pointer;">20 yr</button>
-          <button class="client-term-btn" data-cterm="25" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:14px;cursor:pointer;">25 yr</button>
           <button class="client-term-btn active" data-cterm="30" style="flex:1;height:44px;border:2px solid var(--navy);border-radius:var(--radius-sm);background:var(--navy);color:#fff;font-weight:700;font-size:14px;cursor:pointer;">30 yr</button>
+          <button class="client-term-btn" data-cterm="25" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:14px;cursor:pointer;">25 yr</button>
+          <button class="client-term-btn" data-cterm="20" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:14px;cursor:pointer;">20 yr</button>
+          <button class="client-term-btn" data-cterm="15" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;font-size:14px;cursor:pointer;">15 yr</button>
         </div>
       </div>
 
@@ -2064,7 +2064,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <label>Property Address</label>
           <input type="text" id="save-address" placeholder="e.g. 456 Oak Ave, St. Petersburg FL" style="height:46px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 14px;background:var(--surface2);color:var(--text);width:100%;font-size:15px;">
         </div>
-        <button id="btn-save-scenario" style="width:100%;height:54px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:background 0.15s;">Save Scenario &#128203;</button>
+        <button id="btn-save-scenario" style="width:100%;height:54px;background:var(--navy);color:#fff;border:2px solid transparent;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:background 0.15s;">Save Scenario &#128203;</button>
         <!-- Share button -->
         <button id="btn-share-scenario" style="width:100%;height:54px;background:var(--surface2);color:var(--navy);border:2px solid var(--border);border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:0;">&#128279; Share These Numbers</button>
         <div id="save-confirm" style="display:none;text-align:center;font-size:13px;color:var(--green);font-weight:700;padding:6px 0;">Check your email &mdash; your scenario summary is on its way &#10003;</div>
@@ -2082,7 +2082,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.39
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.40
       </div>
     </div>
 
