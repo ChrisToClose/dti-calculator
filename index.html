@@ -418,6 +418,16 @@ body.dark-mode #client-mini-bar {
   border-bottom: 3px solid var(--yellow) !important;
 }
 body.dark-mode #client-mini-bar * { color: var(--navy) !important; }
+
+/* Tax lookup toggle button — gentle pulse to draw attention */
+@keyframes tax-btn-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(26,188,156,0.0); border-color: var(--teal); }
+  50%     { box-shadow: 0 0 0 5px rgba(26,188,156,0.25); border-color: var(--teal); }
+}
+#tax-lookup-toggle:not(.open) {
+  animation: tax-btn-pulse 2.2s ease-in-out infinite;
+}
+
 /* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
 body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
 /* Dark mode: divider above breakdown grid */
@@ -2639,6 +2649,7 @@ function toggleTaxLookup(){
   panel.style.display = open ? 'none' : 'block';
   btn.style.background = open ? 'none' : 'var(--teal)';
   btn.style.color = open ? 'var(--teal)' : '#fff';
+  btn.classList.toggle('open', !open);
   btn.innerHTML = open ? '🔍 Have an address? Look up its actual tax bill.' : '<span>✕</span> Close Tax Lookup';
 }
 
@@ -4569,13 +4580,24 @@ function initClientView(p) {
   var observeTarget = thermoSection;
   if (miniBar && thermoSection && observeTarget && 'IntersectionObserver' in window) {
     function getMiniBarHeight() {
-      /* Temporarily show at full height to measure */
-      var prev = miniBar.style.marginTop;
+      /* Measure true height with transition disabled to avoid triggering animation */
+      var prevTransition = miniBar.style.transition;
+      var prevMargin = miniBar.style.marginTop;
+      miniBar.style.transition = 'none';
       miniBar.style.marginTop = '0';
       var h = miniBar.offsetHeight;
-      miniBar.style.marginTop = prev;
+      miniBar.style.marginTop = prevMargin;
+      miniBar.style.transition = prevTransition;
       return h;
     }
+    /* Snap to hidden instantly on init (no transition) */
+    var initH = getMiniBarHeight();
+    miniBar.style.transition = 'none';
+    miniBar.style.marginTop = '-' + initH + 'px';
+    /* Re-enable transition after next paint */
+    requestAnimationFrame(function(){
+      miniBar.style.transition = 'margin-top 0.3s ease';
+    });
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if (!entry.isIntersecting) {
