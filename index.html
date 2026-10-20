@@ -100,7 +100,7 @@ body.dark-mode .onboarding-dot.active { background:var(--yellow); }
 }
 body.dark-mode .client-val-text { color: #fff !important; }
 body.dark-mode .chip-val { color: #fff !important; }
-body.dark-mode #btn-save-scenario { background:#fff; color:var(--navy); border:2px solid var(--navy) !important; }
+body.dark-mode #btn-save-scenario { background:#fff !important; color:var(--navy) !important; border:2px solid #fff !important; outline:2px solid var(--navy) !important; }
 body.dark-mode #btn-share-scenario { background:var(--navy); color:#fff !important; border-color:rgba(255,255,255,0.4) !important; }
 /* Client content max-width for mobile margins */
 #client-location-section,
@@ -422,7 +422,7 @@ body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
 /* Dark mode: divider above breakdown grid */
 body.dark-mode #mini-breakdown-grid { border-top-color: rgba(0,0,0,0.12) !important; }
 /* Dark mode: divider above Total Housing Payment row */
-body.dark-mode #mini-lbr-total-row { border-top-color: rgba(0,0,0,0.15) !important; }
+body.dark-mode #mini-lbr-total-row { border-top-color: rgba(0,0,0,0.25) !important; }
 /* Dark mode: DTI bar tick marks — override white to dark so they're visible on the light mini-bar and dark client bar */
 body.dark-mode #mini-warn-tick { background: rgba(0,0,0,0.35) !important; }
 body.dark-mode #mini-max-tick  { background: rgba(0,0,0,0.25) !important; }
@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">DTI Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.40</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.13.41</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1706,7 +1706,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
         <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
         <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
-        <div id="mini-lbr-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.15);margin-top:3px;padding-top:3px;"><span>Total Housing Payment</span><span id="mini-lbr-housing">&mdash;</span></div>
+        <div id="mini-lbr-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.25);margin-top:4px;padding-top:4px;"><span style="letter-spacing:0.01em;">Total Housing Payment</span><span id="mini-lbr-housing" style="font-size:15px;">&mdash;</span></div>
       </div>
       <!-- Status -->
       <div style="text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);padding-top:3px;" id="mini-status-dot"></div>
@@ -2064,7 +2064,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <label>Property Address</label>
           <input type="text" id="save-address" placeholder="e.g. 456 Oak Ave, St. Petersburg FL" style="height:46px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 14px;background:var(--surface2);color:var(--text);width:100%;font-size:15px;">
         </div>
-        <button id="btn-save-scenario" style="width:100%;height:54px;background:var(--navy);color:#fff;border:2px solid transparent;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:background 0.15s;">Save Scenario &#128203;</button>
+        <button id="btn-save-scenario" style="width:100%;height:54px;background:var(--navy);color:#fff;border:2px solid var(--navy);border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:background 0.15s;">Save Scenario &#128203;</button>
         <!-- Share button -->
         <button id="btn-share-scenario" style="width:100%;height:54px;background:var(--surface2);color:var(--navy);border:2px solid var(--border);border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:0;">&#128279; Share These Numbers</button>
         <div id="save-confirm" style="display:none;text-align:center;font-size:13px;color:var(--green);font-weight:700;padding:6px 0;">Check your email &mdash; your scenario summary is on its way &#10003;</div>
@@ -2082,7 +2082,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.40
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.13.41
       </div>
     </div>
 
