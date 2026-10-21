@@ -1800,13 +1800,13 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         </div>
         <!-- Compact breakdown — 2x2 grid -->
         <div id="client-compact-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
-          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-pi">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-tax">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-ins">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="cbr-mi-row"><span id="cbr-mi-label">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);margin-left:auto;" id="cbr-mi">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-flood-row"><span>Flood</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-flood">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-hoa-row"><span>HOA</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-hoa">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-cdd-row"><span>CDD</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-cdd">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Principal &amp; Interest</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-pi">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Property Taxes</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-tax">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Homeowner's Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-ins">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="cbr-mi-row"><span id="cbr-mi-label">Mortgage Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-mi">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-flood-row"><span>Flood Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-flood">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-hoa-row"><span>HOA Payment</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-hoa">&mdash;</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0 4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-cdd-row"><span>CDD Fee</span><span style="font-weight:700;color:rgba(255,255,255,0.9);text-align:right;" id="cbr-cdd">&mdash;</span></div>
           <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="cbr-shortfall">&mdash;</span></div>
           <div id="cbr-no-pmi-row" style="display:none;grid-column:1/-1;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span style="color:#27ae60;font-weight:600;">&#10003; No MI</span></div>
           <div id="client-housing-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.25);margin-top:4px;padding-top:4px;"><span id="client-housing-label" style="letter-spacing:0.01em;">Total Housing Payment</span><span id="client-housing-total" style="font-size:15px;">&mdash;</span></div>
@@ -4284,7 +4284,7 @@ function initClientView(p) {
     sd('cbr-cdd-row', CS.cddActive&&result.cddMonthly>0);
     s('cbr-cdd', fmt(result.cddMonthly));
 
-    var miLabels={CONV:'Mortgage Insurance',FHA:'Mortgage Insurance',VA:'',USDA:'USDA Fee'};
+    var miLabels={CONV:'Mortgage Insurance',FHA:'Mortgage Insurance',VA:'',USDA:'USDA Fee'};  /* label already set in HTML; JS override kept for loan-type variants */
     var showMI = !(CS.loanType==='VA'||(CS.loanType==='CONV'&&CS.downPct>=20));
     var showNoPMI = CS.loanType==='CONV'&&CS.downPct>=20;
     sd('cbr-mi-row', showMI);
