@@ -420,6 +420,9 @@ body.dark-mode #client-mini-bar {
 }
 body.dark-mode #client-mini-bar * { color: var(--navy) !important; }
 
+/* Tax lookup toggle button — text color by theme */
+body.dark-mode #tax-lookup-toggle { color: #fff; }
+
 /* Tax lookup toggle button — gentle pulse to draw attention */
 @keyframes tax-btn-pulse {
   0%,100% { background: rgba(26,188,156,0.0); }
@@ -1769,7 +1772,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   </div>
 
   <!-- CLIENT FROZEN FT — full breakdown, matches lender style -->
-  <div id="client-mini-bar" style="display:block;position:sticky;top:0;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);margin-top:-200px;transition:margin-top 0.3s ease;overflow:hidden;">
+  <div id="client-mini-bar" style="display:block;position:fixed;top:-200px;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);transition:top 0.3s ease;overflow:hidden;">
     <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
       <!-- DTI row -->
       <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
@@ -2052,7 +2055,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
         <!-- TAX LOOKUP BUTTON -->
         <div style="margin-top:10px;">
-          <button id="tax-lookup-toggle" onclick="toggleTaxLookup()" style="display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:7px 12px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
+          <button id="tax-lookup-toggle" onclick="toggleTaxLookup()" style="display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--teal);border-radius:var(--radius-sm);padding:7px 12px;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
             🔍 Have an address? Look up its actual tax bill.
           </button>
         </div>
@@ -4592,25 +4595,25 @@ function initClientView(p) {
     var BAR_H = getMiniBarHeight();
     /* Snap to hidden instantly — no transition on init */
     miniBar.style.transition = 'none';
-    miniBar.style.marginTop = '-' + BAR_H + 'px';
+    miniBar.style.top = '-' + BAR_H + 'px';
     requestAnimationFrame(function(){
-      miniBar.style.transition = 'margin-top 0.3s ease';
+      miniBar.style.transition = 'top 0.3s ease';
     });
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if (!entry.isIntersecting) {
           /* Thermo scrolled off — slide bar in */
           thermoSection.classList.add('is-sticky');
-          miniBar.style.marginTop = '-' + BAR_H + 'px'; /* ensure starts hidden */
+          miniBar.style.top = '-' + BAR_H + 'px'; /* ensure starts hidden */
           requestAnimationFrame(function(){
             requestAnimationFrame(function(){
-              miniBar.style.marginTop = '0';
+              miniBar.style.top = '0';
             });
           });
         } else {
           /* Thermo visible — slide bar out */
           thermoSection.classList.remove('is-sticky');
-          miniBar.style.marginTop = '-' + BAR_H + 'px';
+          miniBar.style.top = '-' + BAR_H + 'px';
         }
       });
     }, {threshold: 0});
