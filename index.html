@@ -4284,7 +4284,7 @@ function initClientView(p) {
     sd('cbr-cdd-row', CS.cddActive&&result.cddMonthly>0);
     s('cbr-cdd', fmt(result.cddMonthly));
 
-    var miLabels={CONV:'PMI',FHA:'MIP',VA:'',USDA:'USDA Fee'};
+    var miLabels={CONV:'MI',FHA:'MIP',VA:'',USDA:'USDA'};
     var showMI = !(CS.loanType==='VA'||(CS.loanType==='CONV'&&CS.downPct>=20));
     var showNoPMI = CS.loanType==='CONV'&&CS.downPct>=20;
     sd('cbr-mi-row', showMI);
