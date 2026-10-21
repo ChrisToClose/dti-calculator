@@ -50,7 +50,7 @@ export default {
         const realieResponse = await fetch(realieUrl, {
           method: 'GET',
           headers: {
-            'Authorization': 'Bearer ' + env.REALIE_API_KEY,
+            'Authorization': env.REALIE_API_KEY,
             'Content-Type': 'application/json',
           },
         });
