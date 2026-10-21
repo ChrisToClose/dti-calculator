@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.25.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.26.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2191,7 +2191,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.25.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.26.0
       </div>
     </div>
 
@@ -4269,7 +4269,7 @@ function initClientView(p) {
      ============================================================ */
   function renderClientBreakdown(result) {
     var s=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
-    var sd=function(id,show){var e=document.getElementById(id);if(e)e.style.display=show?'':'none';};
+    var sd=function(id,show){var e=document.getElementById(id);if(e)e.style.display=show?'flex':'none';};
 
     s('cbr-pi',  fmt(result.pi));
     s('cbr-tax', result.monthlyTax!=null?fmt(result.monthlyTax):'\u2014');
