@@ -82,7 +82,7 @@ body.dark-mode .onboarding-dot.active { background:var(--yellow); }
   left: 0 !important;
   right: 0 !important;
   z-index: 800;
-  background: var(--navy) !important;
+  background: #1B3A6B !important;
   border-top: 3px solid var(--yellow) !important;
   border-bottom: 3px solid var(--yellow) !important;
   box-shadow: 0 4px 20px rgba(27,58,107,0.3);
@@ -1777,7 +1777,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <!-- PROFILE CHIPS — moved to spacer section -->
 
     <!-- THERMOMETER — compact bar (freezes sticky on scroll) -->
-    <div id="client-thermo-section" style="background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);transition:box-shadow 0.3s;">
+    <div id="client-thermo-section" style="background:#1B3A6B;border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);transition:box-shadow 0.3s;">
       <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
         <!-- DTI row -->
         <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
@@ -4505,30 +4505,29 @@ function initClientView(p) {
   (function(){
     var thermoSection = document.getElementById('client-thermo-section');
     var thermoSpacer  = document.getElementById('client-thermo-spacer');
-    if (!thermoSection || !thermoSpacer || !('IntersectionObserver' in window)) return;
+    if (!thermoSection || !thermoSpacer) return;
 
-    function getBarHeight() {
-      return thermoSection.offsetHeight;
+    var isSticky = false;
+
+    function update() {
+      /* offsetTop gives position relative to offsetParent; use getBoundingClientRect for viewport position */
+      var rect = thermoSection.getBoundingClientRect();
+      if (!isSticky && rect.top <= 0) {
+        /* Bar's top edge has reached (or passed) the top of the viewport — freeze it */
+        var h = thermoSection.offsetHeight;
+        thermoSpacer.style.height = h + 'px';
+        thermoSection.classList.add('is-sticky');
+        isSticky = true;
+      } else if (isSticky && rect.top > 0) {
+        /* Spacer's top is back below the viewport top — unfreeze */
+        thermoSection.classList.remove('is-sticky');
+        thermoSpacer.style.height = '0';
+        isSticky = false;
+      }
     }
 
-    var observer = new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if (!entry.isIntersecting) {
-          /* Only freeze if thermo scrolled ABOVE viewport (not below on page load) */
-          if (entry.boundingClientRect.top < 0) {
-            var h = getBarHeight();
-            thermoSpacer.style.height = h + 'px';
-            thermoSection.classList.add('is-sticky');
-          }
-        } else {
-          /* Thermo back in view — unfreeze */
-          thermoSection.classList.remove('is-sticky');
-          thermoSpacer.style.height = '0';
-        }
-      });
-    }, {threshold: 0});
-
-    observer.observe(thermoSection);
+    window.addEventListener('scroll', update, {passive: true});
+    update(); /* run once on load */
   })();
 
   /* ============================================================
