@@ -4602,14 +4602,18 @@ function initClientView(p) {
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if (!entry.isIntersecting) {
-          /* Thermo scrolled off — slide bar in */
-          thermoSection.classList.add('is-sticky');
-          miniBar.style.top = '-' + BAR_H + 'px'; /* ensure starts hidden */
-          requestAnimationFrame(function(){
+          /* Only show bar if thermo is ABOVE viewport (user scrolled past it).
+             If thermo is BELOW viewport (page just loaded, not there yet), do nothing. */
+          if (entry.boundingClientRect.top < 0) {
+            thermoSection.classList.add('is-sticky');
+            miniBar.style.top = '-' + BAR_H + 'px'; /* ensure starts hidden */
             requestAnimationFrame(function(){
-              miniBar.style.top = '0';
+              requestAnimationFrame(function(){
+                miniBar.style.top = '0';
+              });
             });
-          });
+          }
+          /* thermo below viewport = page load state, bar stays hidden */
         } else {
           /* Thermo visible — slide bar out */
           thermoSection.classList.remove('is-sticky');
