@@ -387,11 +387,12 @@ body.dark-mode #tax-lookup-toggle { color: #fff; }
 /* Tax lookup toggle button — gentle pulse to draw attention */
 @keyframes tax-btn-pulse {
   0%,100% { background: rgba(26,188,156,0.0); }
-  50%     { background: rgba(26,188,156,0.18); }
+  50%     { background: rgba(26,188,156,0.35); }
 }
 #tax-lookup-toggle:not(.open) {
   animation: tax-btn-pulse 2.2s ease-in-out infinite;
 }
+body.dark-mode #tax-lookup-toggle { color: #ffffff; }
 
 /* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
 body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
