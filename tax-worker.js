@@ -33,11 +33,17 @@ export default {
         }
 
         // Build Realie API query params
+        // NOTE: Realie requires county whenever city is provided (400 otherwise)
         const params = new URLSearchParams();
         params.set('address', address);
         params.set('state', state);
-        if (city) params.set('city', city);
-        if (county) params.set('county', county);
+        if (city && county) {
+          params.set('city', city);
+          params.set('county', county);
+        } else if (county) {
+          params.set('county', county);
+        }
+        // city alone (no county) is intentionally omitted — Realie returns 400
 
         const realieUrl = `https://app.realie.ai/api/public/property/address/?${params.toString()}`;
 
@@ -54,6 +60,12 @@ export default {
           console.error('Realie API error:', realieResponse.status, errText);
           let errDetail;
           try { errDetail = JSON.parse(errText); } catch(e) { errDetail = errText; }
+          if (realieResponse.status === 400) {
+            return new Response(JSON.stringify({ error: 'Invalid address format. Please check the address and try again.', _detail: String(errDetail).slice(0, 200) }), {
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
           if (realieResponse.status === 401 || realieResponse.status === 403) {
             return new Response(JSON.stringify({ error: 'API authentication error. Contact Chris.', _detail: String(errDetail).slice(0, 200) }), {
               status: 502,
