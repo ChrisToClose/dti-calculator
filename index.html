@@ -4510,19 +4510,24 @@ function initClientView(p) {
     var isSticky = false;
 
     function update() {
-      /* offsetTop gives position relative to offsetParent; use getBoundingClientRect for viewport position */
-      var rect = thermoSection.getBoundingClientRect();
-      if (!isSticky && rect.top <= 0) {
-        /* Bar's top edge has reached (or passed) the top of the viewport — freeze it */
-        var h = thermoSection.offsetHeight;
-        thermoSpacer.style.height = h + 'px';
-        thermoSection.classList.add('is-sticky');
-        isSticky = true;
-      } else if (isSticky && rect.top > 0) {
-        /* Spacer's top is back below the viewport top — unfreeze */
-        thermoSection.classList.remove('is-sticky');
-        thermoSpacer.style.height = '0';
-        isSticky = false;
+      if (!isSticky) {
+        /* Read the live element (not yet fixed) */
+        var rect = thermoSection.getBoundingClientRect();
+        if (rect.top <= 0) {
+          var h = thermoSection.offsetHeight;
+          thermoSection.classList.add('is-sticky');
+          thermoSpacer.style.height = h + 'px';
+          isSticky = true;
+        }
+      } else {
+        /* When sticky, read the SPACER's position — the spacer is still in flow
+           and its top tells us when to unfreeze without a feedback loop */
+        var spacerRect = thermoSpacer.getBoundingClientRect();
+        if (spacerRect.top > 0) {
+          thermoSection.classList.remove('is-sticky');
+          thermoSpacer.style.height = '0';
+          isSticky = false;
+        }
       }
     }
 
