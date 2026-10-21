@@ -77,8 +77,14 @@ body.dark-mode .onboarding-dot.active { background:var(--yellow); }
 
 /* Frozen thermometer — navy background in light mode when sticky */
 #client-thermo-section.is-sticky {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 800;
   background: var(--navy) !important;
-  border-bottom: none;
+  border-top: 3px solid var(--yellow) !important;
+  border-bottom: 3px solid var(--yellow) !important;
   box-shadow: 0 4px 20px rgba(27,58,107,0.3);
 }
 #client-thermo-section.is-sticky #client-front-dti,
@@ -118,52 +124,7 @@ body.dark-mode #client-onboard-card h2 { color: var(--navy); }
 body.dark-mode #client-onboard-card p { color: #5a6a80; }
 body.dark-mode #client-onboard-card strong { color: var(--navy); }
 body.dark-mode #client-onboard-next { background: var(--navy); color: #fff; }
-body.dark-mode #client-thermo-section.is-sticky {
-  background: #ffffff !important;
-  border-bottom: 3px solid var(--yellow) !important;
-  border-top: 3px solid var(--yellow) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .cbr-row {
-  background: #ffffff !important;
-  border-bottom: 1px solid rgba(0,0,0,0.1) !important;
-  color: #5a6a80 !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .cbr-row:nth-child(even) {
-  background: #f5f7fa !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .cbr-row span:first-child {
-  color: #5a6a80 !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .cbr-row span:last-child {
-  color: var(--navy) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .compact-breakdown {
-  border-color: rgba(0,0,0,0.15) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .cbr-total-row {
-  background: rgba(27,58,107,0.07) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .cbr-total-row span {
-  color: var(--navy) !important;
-}
-/* DTI % values, labels, total, badge — flip to navy on white sticky bar */
-body.dark-mode #client-thermo-section.is-sticky #client-front-dti,
-body.dark-mode #client-thermo-section.is-sticky #client-back-dti {
-  color: var(--navy) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky .dti-label-text {
-  color: rgba(27,58,107,0.65) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky #client-housing-total {
-  color: var(--navy) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky #client-housing-label {
-  color: rgba(27,58,107,0.65) !important;
-}
-body.dark-mode #client-thermo-section.is-sticky #client-status-badge {
-  background: rgba(27,58,107,0.08) !important;
-  color: var(--navy) !important;
-}
+/* Dark mode: compact thermo bar always uses navy bg — no overrides needed */
 
 /* Location pulse animation when no county set */
 @keyframes location-pulse {
@@ -1771,43 +1732,6 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <span style="writing-mode:vertical-rl;text-orientation:mixed;">Reset to Quote</span>
   </div>
 
-  <!-- CLIENT FROZEN FT — full breakdown, matches lender style -->
-  <div id="client-mini-bar" style="display:block;position:fixed;top:-200px;left:0;right:0;z-index:800;background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);box-shadow:0 4px 20px rgba(27,58,107,0.3);transition:top 0.3s ease;overflow:hidden;">
-    <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
-      <!-- DTI row -->
-      <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
-        <div style="display:flex;align-items:baseline;gap:4px;">
-          <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;">Front</div>
-          <div style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.85);" id="mini-dti-front">&mdash;</div>
-        </div>
-        <div style="width:1px;height:20px;background:rgba(255,255,255,0.2);"></div>
-        <div style="display:flex;align-items:baseline;gap:4px;">
-          <div style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;">Back-End DTI</div>
-          <div style="font-size:15px;font-weight:800;color:#fff;" id="mini-dti-val">&mdash;</div>
-        </div>
-      </div>
-      <!-- Bar -->
-      <div id="mini-thermo-track" style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;position:relative;margin-bottom:5px;">
-        <div id="mini-thermo-fill" style="height:100%;width:0%;border-radius:4px;background:#27ae60;transition:width 0.5s cubic-bezier(.4,0,.2,1),background 0.4s;"></div>
-        <div id="mini-warn-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.4);"></div>
-        <div id="mini-max-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.3);"></div>
-      </div>
-      <!-- Compact breakdown — 2x2 grid -->
-      <div id="mini-breakdown-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-pi">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-tax">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-ins">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-mi-row"><span id="mini-lbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-mi">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="mini-lbr-flood-row"><span>Flood</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-flood">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="mini-lbr-hoa-row"><span>HOA</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-hoa">&mdash;</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="mini-lbr-cdd-row"><span>CDD</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="mini-lbr-cdd">&mdash;</span></div>
-        <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="mini-lbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="mini-lbr-shortfall">&mdash;</span></div>
-        <div id="mini-lbr-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.25);margin-top:4px;padding-top:4px;"><span style="letter-spacing:0.01em;">Total Housing Payment</span><span id="mini-lbr-housing" style="font-size:15px;">&mdash;</span></div>
-      </div>
-      <!-- Status -->
-      <div style="text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);padding-top:3px;" id="mini-status-dot"></div>
-    </div>
-  </div>
 
   <!-- HELP DRAWER -->
   <div id="help-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:850;"></div>
@@ -1852,54 +1776,52 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
     <!-- PROFILE CHIPS — moved to spacer section -->
 
-    <!-- THERMOMETER + COMBINED BREAKDOWN — full bleed -->
-    <div id="client-thermo-section" style="padding:18px 16px 14px;background:var(--surface);border-bottom:2px solid var(--border);transition:background 0.3s;">
-      <!-- DTI Numbers -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin-bottom:12px;">
-        <div style="text-align:center;">
-          <div class="dti-label-text" style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Front-End DTI</div>
-          <div style="font-size:26px;font-weight:800;color:var(--text-muted);font-variant-numeric:tabular-nums;transition:color 0.3s;" class="client-val-text" id="client-front-dti">&mdash;</div>
+    <!-- THERMOMETER — compact bar (freezes sticky on scroll) -->
+    <div id="client-thermo-section" style="background:var(--navy);border-top:3px solid var(--yellow);border-bottom:3px solid var(--yellow);transition:box-shadow 0.3s;">
+      <div style="max-width:600px;margin:0 auto;padding:6px 16px;">
+        <!-- DTI row -->
+        <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:5px;">
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <div class="dti-label-text" style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;">Front</div>
+            <div style="font-size:15px;font-weight:800;color:rgba(255,255,255,0.85);" class="client-val-text" id="client-front-dti">&mdash;</div>
+          </div>
+          <div style="width:1px;height:20px;background:rgba(255,255,255,0.2);"></div>
+          <div style="display:flex;align-items:baseline;gap:4px;">
+            <div class="dti-label-text" style="font-size:8px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;">Back-End DTI</div>
+            <div style="font-size:15px;font-weight:800;color:#fff;" class="client-val-text" id="client-back-dti">&mdash;</div>
+          </div>
         </div>
-        <div style="width:1px;height:36px;background:var(--border);flex-shrink:0;"></div>
-        <div style="text-align:center;">
-          <div class="dti-label-text" style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Back-End DTI</div>
-          <div style="font-size:26px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;transition:color 0.3s;" class="client-val-text" id="client-back-dti">&mdash;</div>
+        <!-- Bar -->
+        <div id="client-thermo-track" style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;overflow:hidden;position:relative;margin-bottom:5px;">
+          <div id="client-thermo-fill" style="height:100%;width:0%;border-radius:4px;background:#27ae60;transition:width 0.5s cubic-bezier(.4,0,.2,1),background 0.4s;"></div>
+          <div id="client-warn-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.4);"></div>
+          <div id="client-max-tick" style="position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.3);"></div>
         </div>
-      </div>
-      <!-- Bar -->
-      <div style="position:relative;margin-bottom:10px;">
-        <div style="height:28px;border-radius:14px;background:var(--gauge-track);position:relative;overflow:hidden;">
-          <div id="client-warn-zone" style="position:absolute;top:0;bottom:0;background:rgba(243,156,18,0.15);"></div>
-          <div id="client-thermo-fill" style="position:absolute;top:0;left:0;bottom:0;width:0%;border-radius:14px;background:var(--green);transition:width 0.5s cubic-bezier(.4,0,.2,1),background 0.4s ease;"></div>
-          <div id="client-warn-tick" style="position:absolute;top:0;bottom:0;width:2.5px;background:rgba(255,255,255,0.8);border-radius:1px;"></div>
-          <div id="client-max-tick" style="position:absolute;top:0;bottom:0;width:2.5px;background:rgba(255,255,255,0.5);border-radius:1px;"></div>
+        <!-- Compact breakdown — 2x2 grid -->
+        <div id="client-compact-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>P&amp;I</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-pi">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Tax</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-tax">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span>Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-ins">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;" id="cbr-mi-row"><span id="cbr-mi-label" style="flex:1;">MI</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-mi">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-flood-row"><span>Flood</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-flood">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-hoa-row"><span>HOA</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-hoa">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-cdd-row"><span>CDD</span><span style="font-weight:700;color:rgba(255,255,255,0.9);" id="cbr-cdd">&mdash;</span></div>
+          <div style="grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;display:none;" id="cbr-shortfall-row"><span style="color:#e74c3c;">Rental Shortfall</span><span style="font-weight:700;color:#e74c3c;" id="cbr-shortfall">&mdash;</span></div>
+          <div id="cbr-no-pmi-row" style="display:none;grid-column:1/-1;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;"><span style="color:#27ae60;font-weight:600;">&#10003; No MI</span></div>
+          <div id="client-housing-total-row" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,0.25);margin-top:4px;padding-top:4px;"><span id="client-housing-label" style="letter-spacing:0.01em;">Total Housing Payment</span><span id="client-housing-total" style="font-size:15px;">&mdash;</span></div>
         </div>
-      </div>
-      <!-- Status Badge -->
-      <div id="client-status-badge" style="text-align:center;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:700;background:var(--surface2);color:var(--text-muted);margin-bottom:12px;transition:background 0.3s,color 0.3s;">Enter your location to get started</div>
-
-      <!-- Combined Total + Breakdown (always visible) -->
-      <div class="compact-breakdown" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
-        <!-- Total housing payment header -->
-        <div class="cbr-total-row" style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;background:var(--navy);">
-          <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.06em;" id="client-housing-label">Total Housing Payment</span>
-          <span style="font-size:24px;font-weight:800;color:#fff;transition:color 0.3s;" id="client-housing-total">&mdash;</span>
-        </div>
-        <!-- Line items compact -->
-        <div class="cbr-row"><span>Principal &amp; Interest</span><span id="cbr-pi">&mdash;</span></div>
-        <div class="cbr-row"><span>Property Tax</span><span id="cbr-tax">&mdash;</span></div>
-        <div class="cbr-row"><span>Home Insurance</span><span id="cbr-ins">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-flood-row" style="display:none;"><span>Flood Insurance</span><span id="cbr-flood">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-hoa-row" style="display:none;"><span>HOA Fee</span><span id="cbr-hoa">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-cdd-row" style="display:none;"><span>Community Fee (CDD)</span><span id="cbr-cdd">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-mi-row"><span style="flex:1;display:flex;align-items:center;gap:5px;"><span id="cbr-mi-label">Mortgage Insurance</span><span id="cbr-pmi-badge" style="display:none;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;"></span></span><span id="cbr-mi">&mdash;</span></div>
-        <div class="cbr-row" id="cbr-no-pmi-row" style="display:none;"><span style="color:var(--green);font-weight:600;">&#10003; No Mortgage Insurance</span><span style="color:var(--green);font-size:11px;">20%+ down</span></div>
-        <div class="cbr-row" id="cbr-shortfall-row" style="display:none;"><span style="color:var(--red);">Rental Property Shortfall</span><span id="cbr-shortfall" style="color:var(--red);">&mdash;</span></div>
-        <div id="cbr-rental-detail-row" style="display:none;padding:5px 10px;font-size:11px;color:var(--text-muted);background:var(--surface2);border-top:1px solid var(--border);">How your rental affects your numbers</div>
+        <!-- Status -->
+        <div style="text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);padding-top:3px;" id="client-status-badge"></div>
+        <!-- Hidden IDs needed by JS for warn zone (not visible in compact bar) -->
+        <span id="client-warn-zone" style="display:none;"></span>
+        <span id="cbr-pmi-badge" style="display:none;"></span>
         <span id="cbr-total" style="display:none;"></span>
-        <div id="cbr-ufmip-note" style="display:none;font-size:11px;color:var(--text-light);text-align:center;padding:4px 10px;border-top:1px solid var(--border);"></div>
+        <span id="cbr-ufmip-note" style="display:none;"></span>
+        <span id="cbr-rental-detail-row" style="display:none;"></span>
       </div>
     </div>
+    <!-- SPACER — holds space when thermo section goes position:fixed -->
+    <div id="client-thermo-spacer" style="height:0;transition:height 0.1s;"></div>
 
     <!-- SCENARIO BASIS + CHIPS -->
     <div style="padding:20px 16px 16px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
@@ -4576,53 +4498,38 @@ function initClientView(p) {
   }
 
   /* ============================================================
-     CLIENT: STICKY MINI BAR (IntersectionObserver — watches thermometer)
-     Uses margin-top instead of transform so bar PUSHES content down, never covers it.
+     CLIENT: STICKY THERMO BAR — single element freeze
+     When user scrolls past #client-thermo-section, it goes position:fixed
+     at top:0. A spacer div holds the space it vacates so content doesn't jump.
      ============================================================ */
-  var miniBar = document.getElementById('client-mini-bar');
-  var thermoSection = document.getElementById('client-thermo-section');
-  var observeTarget = thermoSection;
-  if (miniBar && thermoSection && observeTarget && 'IntersectionObserver' in window) {
-    /* Measure height via a hidden clone — never touch the real bar's marginTop */
-    function getMiniBarHeight() {
-      var clone = miniBar.cloneNode(true);
-      clone.style.cssText = 'position:fixed;top:-9999px;left:0;visibility:hidden;transition:none;margin-top:0;pointer-events:none;';
-      document.body.appendChild(clone);
-      var h = clone.offsetHeight;
-      document.body.removeChild(clone);
-      return h;
+  (function(){
+    var thermoSection = document.getElementById('client-thermo-section');
+    var thermoSpacer  = document.getElementById('client-thermo-spacer');
+    if (!thermoSection || !thermoSpacer || !('IntersectionObserver' in window)) return;
+
+    function getBarHeight() {
+      return thermoSection.offsetHeight;
     }
-    var BAR_H = getMiniBarHeight();
-    /* Snap to hidden instantly — no transition on init */
-    miniBar.style.transition = 'none';
-    miniBar.style.top = '-' + BAR_H + 'px';
-    requestAnimationFrame(function(){
-      miniBar.style.transition = 'top 0.3s ease';
-    });
+
     var observer = new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
         if (!entry.isIntersecting) {
-          /* Only show bar if thermo is ABOVE viewport (user scrolled past it).
-             If thermo is BELOW viewport (page just loaded, not there yet), do nothing. */
+          /* Only freeze if thermo scrolled ABOVE viewport (not below on page load) */
           if (entry.boundingClientRect.top < 0) {
+            var h = getBarHeight();
+            thermoSpacer.style.height = h + 'px';
             thermoSection.classList.add('is-sticky');
-            miniBar.style.top = '-' + BAR_H + 'px'; /* ensure starts hidden */
-            requestAnimationFrame(function(){
-              requestAnimationFrame(function(){
-                miniBar.style.top = '0';
-              });
-            });
           }
-          /* thermo below viewport = page load state, bar stays hidden */
         } else {
-          /* Thermo visible — slide bar out */
+          /* Thermo back in view — unfreeze */
           thermoSection.classList.remove('is-sticky');
-          miniBar.style.top = '-' + BAR_H + 'px';
+          thermoSpacer.style.height = '0';
         }
       });
     }, {threshold: 0});
-    observer.observe(observeTarget);
-  }
+
+    observer.observe(thermoSection);
+  })();
 
   /* ============================================================
      LENDER THERMOMETER SPACER — keeps sticky bar from covering content
