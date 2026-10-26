@@ -1990,7 +1990,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
           <!-- ADDRESS INPUTS -->
           <input type="text" id="realie-address" placeholder="Street address (e.g. 123 Main St)"
-            style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:8px;box-sizing:border-box;">
+            style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:4px;box-sizing:border-box;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Enter street address only — no unit/apt number needed</div>
 
           <div style="display:flex;gap:8px;margin-bottom:8px;">
             <input type="text" id="realie-city" placeholder="City"
@@ -2010,8 +2011,17 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             </select>
           </div>
 
-          <input type="text" id="realie-county" placeholder="County (e.g. Hillsborough, Pinellas, Miami-Dade)"
-            style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:10px;box-sizing:border-box;">
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <select id="realie-county" style="flex:1;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;">
+              <option value="">Select County…</option>
+              <option value="Pinellas">Pinellas</option>
+              <option value="Hillsborough">Hillsborough</option>
+              <option value="Pasco">Pasco</option>
+              <option value="Manatee">Manatee</option>
+            </select>
+            <input type="text" id="realie-unit" placeholder="Unit / Apt # (optional)"
+              style="width:160px;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box;">
+          </div>
 
           <button onclick="lookupRealieAddress()" id="realie-lookup-btn"
             style="width:100%;height:42px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -2589,6 +2599,7 @@ async function lookupRealieAddress() {
   var city    = (document.getElementById('realie-city').value || '').trim();
   var state   = (document.getElementById('realie-state').value || 'FL').trim();
   var county  = (document.getElementById('realie-county').value || '').trim();
+  var unit    = (document.getElementById('realie-unit').value || '').trim(); // cosmetic — sent but ignored by worker
 
   if (!address) {
     var addrEl = document.getElementById('realie-address');
@@ -2621,7 +2632,7 @@ async function lookupRealieAddress() {
     var response = await fetch('https://christoclose-tax.christoclose.workers.dev/realie-lookup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address: address, city: city, state: state, county: county })
+      body: JSON.stringify({ address: address, city: city, state: state, county: county, unit: unit })
     });
 
     var rawText = await response.text();
@@ -2632,9 +2643,9 @@ async function lookupRealieAddress() {
       throw new Error(data.error || 'Lookup failed. Please try again.');
     }
 
-    if (!data.annual_tax) {
+    if (!data.annual_tax || data.found === false) {
       statusEl.style.color = '#ef4444';
-      statusEl.textContent = '⚠️ Tax data not found for this address. Try adding city.';
+      statusEl.textContent = '⚠️ Tax data not found for this address. Try checking the county selection.';
       btnIcon.textContent = '🔍';
       btnText.textContent = 'Pull Tax Record';
       btn.disabled = false;
@@ -2665,7 +2676,7 @@ async function lookupRealieAddress() {
     resultCard.style.display = 'block';
 
     statusEl.style.color = '#16a34a';
-    statusEl.textContent = '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo';
+    statusEl.textContent = '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo' + (data._note ? ' — ' + data._note : '');
 
     // ── New construction warning (auto-detected by API) ──────────
     if (data.is_new_construction) {
@@ -2707,7 +2718,7 @@ async function lookupRealieAddress() {
 
 /* ── Allow Enter key to trigger lookup ── */
 document.addEventListener('DOMContentLoaded', function(){
-  ['realie-address','realie-city','realie-county'].forEach(function(id){
+  ['realie-address','realie-city','realie-unit'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') lookupRealieAddress(); });
   });
