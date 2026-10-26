@@ -32,13 +32,23 @@ export default {
           });
         }
 
+        // Normalize city names to match Realie's database spellings
+        const cityNormalized = city ? city
+          .replace(/^St\.?\s+Pete(rsburg)?$/i, 'Saint Petersburg')
+          .replace(/^St\.?\s+Petersburg$/i, 'Saint Petersburg')
+          .replace(/^Ft\.?\s+Lauderdale$/i, 'Fort Lauderdale')
+          .replace(/^Ft\.?\s+Myers$/i, 'Fort Myers')
+          .replace(/^Ft\.?\s+Pierce$/i, 'Fort Pierce')
+          .replace(/^Ft\.?\s+Walton\s+Beach$/i, 'Fort Walton Beach')
+          .trim() : city;
+
         // Build Realie API query params
         // NOTE: Realie requires county whenever city is provided (400 otherwise)
         const params = new URLSearchParams();
         params.set('address', address);
         params.set('state', state);
-        if (city && county) {
-          params.set('city', city);
+        if (cityNormalized && county) {
+          params.set('city', cityNormalized);
           params.set('county', county);
         } else if (county) {
           params.set('county', county);
