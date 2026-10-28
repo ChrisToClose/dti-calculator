@@ -1037,7 +1037,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.30.2</div>
+      <div class="app-version" style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;"></div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2210,7 +2210,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.30.2
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; <span class="app-version"></span>
       </div>
     </div>
 
@@ -2223,6 +2223,10 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
    SECTION: CONFIG
    ============================================================ */
 var CONFIG = {
+  /* ── VERSION — the ONLY place the version number is set. Bump it for every
+     change; the header and footer read it from here, and "Publish preview to
+     live" refuses to publish a change that still has the live version number. */
+  version: '8.30.3',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2269,6 +2273,8 @@ var CONFIG = {
   lightModeStart:      7,       /* hour — light mode starts */
   lightModeEnd:        19,      /* hour — dark mode starts */
 };
+
+document.querySelectorAll('.app-version').forEach(function(el){ el.textContent = 'v' + CONFIG.version; });
 
 document.getElementById('footer-email').textContent =
   CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1];

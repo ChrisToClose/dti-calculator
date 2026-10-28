@@ -26,12 +26,24 @@ jobs:
       - name: Anything to publish?
         id: diff
         run: |
+          # The version lives in one line of CONFIG:  version: '8.30.3',
+          ver() { grep -o "version: *'[0-9]\+\.[0-9]\+\.[0-9]\+'" "$1" | head -1 | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\+" \
+                  || grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' "$1" | head -1 | tr -d v; }
+          PREVIEW_VER=$(ver preview/index.html)
+          LIVE_VER=$(ver index.html)
+          echo "Preview version: v$PREVIEW_VER   Live version: v$LIVE_VER"
           if cmp -s preview/index.html index.html; then
             echo "Live already matches the preview copy — nothing to publish."
             echo "changed=no" >> "$GITHUB_OUTPUT"
+          elif [ -z "$PREVIEW_VER" ]; then
+            echo "::error::Could not find the version number in preview/index.html (CONFIG version line)."
+            exit 1
+          elif [ "$PREVIEW_VER" = "$LIVE_VER" ]; then
+            echo "::error::The preview copy changed but still says v$PREVIEW_VER, same as live. Bump CONFIG version first."
+            exit 1
           else
             echo "changed=yes" >> "$GITHUB_OUTPUT"
-            echo "version=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' preview/index.html | head -1)" >> "$GITHUB_OUTPUT"
+            echo "version=v$PREVIEW_VER" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/setup-node@v4

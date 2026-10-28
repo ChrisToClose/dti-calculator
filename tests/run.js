@@ -16,6 +16,8 @@
      F. the lender can only make a client link when a county (or an
         actual tax bill) is set; without one, the client screen waits
         for a location and Save Scenario is refused (B9)
+     G. the version number shown on both screens comes from the single
+        CONFIG.version setting, with no hand-typed copies left (P1.4)
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -104,9 +106,26 @@ async function readScreen(page, pattern) {
   const client = await context.newPage();
   client.on('pageerror', (e) => pageErrors.push('client: ' + e.message));
 
+  /* G. version: one setting, shown everywhere it appears */
+  async function checkVersion(page, where) {
+    const v = await page.evaluate(() => {
+      const shown = [...document.querySelectorAll('.app-version')].map((e) => e.textContent.trim());
+      const all = (document.documentElement.outerHTML.match(/v\d+\.\d+\.\d+/g) || []);
+      return { cfg: CONFIG.version, shown, all };
+    });
+    const want = 'v' + v.cfg;
+    if (!/^\d+\.\d+\.\d+$/.test(v.cfg || '')) failures.push(`${where}: CONFIG.version is missing or malformed (${v.cfg})`);
+    if (!v.shown.length) failures.push(`${where}: no version label on the page`);
+    v.shown.filter((t) => t !== want).forEach((t) => failures.push(`${where}: version label shows "${t}" but CONFIG.version is ${want}`));
+    v.all.filter((t) => t !== want).forEach((t) => failures.push(`${where}: hand-typed version "${t}" found in the page — set it only in CONFIG.version`));
+    return want;
+  }
+  const failures = [];
+  const lenderVersion = await checkVersion(lender, 'lender page');
+  let clientVersionChecked = false;
+
   const expected = fs.existsSync(EXPECTED_FILE) ? JSON.parse(fs.readFileSync(EXPECTED_FILE, 'utf8')) : {};
   const actual = {};
-  const failures = [];
   const notes = [];
 
   for (const sc of scenarios) {
@@ -147,6 +166,7 @@ async function readScreen(page, pattern) {
       await client.goto(run.url);
       await client.waitForFunction(() => document.getElementById('client-back-dti'));
       rec.clientScreen = await readScreen(client, CLIENT_IDS);
+      if (!clientVersionChecked) { await checkVersion(client, 'client page'); clientVersionChecked = true; }
 
       // F. location rule
       const hasLocation = run.state.countyMillRate != null || run.state.taxOverride != null;
@@ -226,5 +246,5 @@ async function readScreen(page, pattern) {
     failures.forEach((f) => console.log('  ✗ ' + f));
     process.exit(1);
   }
-  console.log(`\nPASSED (${PAGE_FILE}) — ${scenarios.length} scenarios: math engine, reference math, lender screen, client link, client screen.`);
+  console.log(`\nPASSED (${PAGE_FILE}, ${lenderVersion}) — ${scenarios.length} scenarios: math engine, reference math, lender screen, client link, client screen.`);
 })().catch((e) => { console.error(e); process.exit(1); });
