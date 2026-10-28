@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.28.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.29.1</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -1991,7 +1991,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <!-- ADDRESS INPUTS -->
           <input type="text" id="realie-address" placeholder="Street address (e.g. 123 Main St)"
             style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:4px;box-sizing:border-box;">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Enter street address only — no unit/apt number needed</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Street address only — for condos, put the unit # in the Unit / Apt box</div>
 
           <div style="display:flex;gap:8px;margin-bottom:8px;">
             <input type="text" id="realie-city" placeholder="City"
@@ -2204,7 +2204,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.28.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.29.1
       </div>
     </div>
 
@@ -2599,7 +2599,7 @@ async function lookupRealieAddress() {
   var city    = (document.getElementById('realie-city').value || '').trim();
   var state   = (document.getElementById('realie-state').value || 'FL').trim();
   var county  = (document.getElementById('realie-county').value || '').trim();
-  var unit    = (document.getElementById('realie-unit').value || '').trim(); // cosmetic — sent but ignored by worker
+  var unit    = (document.getElementById('realie-unit').value || '').trim(); // used by worker to pick the right unit in condo buildings
 
   if (!address) {
     var addrEl = document.getElementById('realie-address');
