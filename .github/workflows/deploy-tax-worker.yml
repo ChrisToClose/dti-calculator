@@ -1,0 +1,32 @@
+# Automatically deploys the tax Worker (christoclose-tax) to Cloudflare
+# whenever the Worker's code or settings change on the main branch.
+# Uses the CLOUDFLARE_API_TOKEN repository secret (never stored in code).
+name: Deploy tax Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tax-worker.js'
+      - 'wrangler.jsonc'
+      - '.github/workflows/deploy-tax-worker.yml'
+  workflow_dispatch:   # lets us re-run a deploy by hand from the Actions tab
+
+concurrency:
+  group: deploy-tax-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare (christoclose-tax only)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: "4.154.0"
+          # --name is pinned so this can never deploy over christoclose-api (Tick by Tick backend)
+          command: deploy tax-worker.js --name christoclose-tax

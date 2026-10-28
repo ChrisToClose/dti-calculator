@@ -1,0 +1,14 @@
+{
+  "name": "christoclose-tax",
+  "compatibility_date": "2026-10-19",
+  "main": "tax-worker.js",
+  // Per-visitor rate limit for the tax Worker (used as env.LOOKUP_LIMITER).
+  // 20 requests per 60 seconds per visitor IP. Period must be 10 or 60.
+  "ratelimits": [
+    {
+      "name": "LOOKUP_LIMITER",
+      "namespace_id": "28001",
+      "simple": { "limit": 20, "period": 60 }
+    }
+  ]
+}
