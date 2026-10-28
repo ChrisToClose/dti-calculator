@@ -415,10 +415,10 @@ async function lookupHillsborough(address, city) {
 // PINELLAS COUNTY — egis.pinellas.gov PublicWebGIS Parcels layer (JSON)
 // One query returns taxes, taxable value, exemptions, sales, site address.
 // No pcpao.gov calls (that site 403s requests coming from the Worker).
-// Tested 2026-10-28 in browser:
-//   6306 Pelican Creek Xing → TAXES 5772, TAXABLE 320013, HOMESTEAD Yes
+// Tested 2026-10-28 in browser on two real parcels (a condo unit and a high-rise
+// condo unit): annual tax, taxable value and homestead all matched the county site.
 // Condo buildings share one SITE_ADDRESS; the unit lives in LEGAL
-// ("UNIT 6306", "APT 1808"), so the unit # is used to pick the parcel.
+// ("UNIT 100", "APT 1205"), so the unit # is used to pick the parcel.
 // ─────────────────────────────────────────────────────────────────
 const PINELLAS_PARCELS_URL = 'https://egis.pinellas.gov/gis/rest/services/PublicWebGIS/Parcels/MapServer/1/query';
 
@@ -468,7 +468,7 @@ async function lookupPinellas(address, city, unit) {
 
   const tokens = pinNormalizeTokens(rawAddr);
   if (tokens.length < 2 || !/^\d+[A-Z]?$/.test(tokens[0])) {
-    throw new Error('Could not read that Pinellas address — please enter it like "6306 Pelican Creek Xing".');
+    throw new Error('Could not read that Pinellas address — please enter it like "123 Main St".');
   }
   const streetNum = tokens[0];
   const streetTokens = tokens.slice(1);
