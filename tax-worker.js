@@ -1,6 +1,7 @@
-// ChrisToClose DTI Calculator — Tax & Property Lookup Worker
-// Secrets:  ANTHROPIC_API_KEY (used only by the photo reader, currently switched off)
-// Bindings: LOOKUP_LIMITER — Cloudflare rate limiter, configured in wrangler.jsonc
+// ChrisToClose DTI Calculator — Tax Lookup + Scenario Email Worker
+// Secrets:  ANTHROPIC_API_KEY  (used only by the photo reader, currently switched off)
+//           EMAILJS_PRIVATE_KEY (EmailJS private key — lets this Worker send "Save Scenario" emails)
+// Bindings: LOOKUP_LIMITER, EMAIL_LIMITER — Cloudflare rate limiters, configured in wrangler.jsonc
 // County lookups: Hillsborough (JSON), Pinellas (county GIS JSON), Pasco (HTML), Manatee (JSON)
 
 // ── Security settings ──────────────────────────────────────────────
@@ -15,6 +16,24 @@ const PHOTO_READER_ENABLED = false;
 
 // Give up on a slow county website after this many milliseconds.
 const COUNTY_TIMEOUT_MS = 8000;
+
+// "Save Scenario" email — sent from here via the EmailJS REST API so the
+// browser never talks to EmailJS directly. IDs below are not secret; the
+// private key is the EMAILJS_PRIVATE_KEY Worker secret. (White-label: per-LO values.)
+const EMAILJS_SETTINGS = {
+  serviceId: 'service_jmgkuj5',
+  templateId: 'template_9m8q81g',
+  publicKey: 'NyULYxc1h8OKkvdOA',
+  lenderEmail: 'cgreenidge@apmortgage.com', // always CC'd; cannot be changed by the browser
+};
+// Only these template fields are accepted from the browser (anything else is dropped).
+const SCENARIO_FIELDS = [
+  'to_email', 'scenario_label', 'property_address', 'loan_type', 'purchase_price', 'down_payment',
+  'rate', 'term', 'county', 'mill_rate', 'homestead', 'monthly_pi', 'monthly_tax', 'monthly_ins',
+  'flood', 'hoa', 'cdd', 'pmi', 'rental_active', 'gross_rent', 'rental_shortfall', 'housing_payment',
+  'other_debts', 'total_obligations', 'front_dti', 'back_dti', 'dti_status', 'pdf_note',
+  'prepared_date', 'disclaimer',
+];
 
 export default {
   async fetch(request, env, ctx) {
@@ -52,6 +71,11 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // ── /send-scenario route — "Save Scenario" email ───────────────
+    if (url.pathname === '/send-scenario' && request.method === 'POST') {
+      return handleSendScenario(request, env, json);
+    }
 
     // ── /realie-lookup route ───────────────────────────────────────
     // Accepts JSON: { address, city, state, county }
@@ -206,6 +230,83 @@ If you cannot find a clear annual tax amount, return:
     return new Response('Not found', { status: 404, headers: corsHeaders });
   },
 };
+
+// ─────────────────────────────────────────────────────────────────
+// "Save Scenario" email. The browser sends only the scenario fields;
+// this Worker adds the EmailJS service/template/keys and the lender CC.
+// ─────────────────────────────────────────────────────────────────
+async function handleSendScenario(request, env, json) {
+  // Stricter per-visitor limit for email (see EMAIL_LIMITER in wrangler.jsonc)
+  if (env.EMAIL_LIMITER) {
+    const visitor = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const { success } = await env.EMAIL_LIMITER.limit({ key: 'email:' + visitor });
+    if (!success) {
+      return json({ error: 'Too many emails in a short time. Please wait a minute and try again.' }, 429);
+    }
+  } else {
+    console.warn('EMAIL_LIMITER binding missing — email rate limiting is OFF. Check wrangler.jsonc.');
+  }
+
+  if (!env.EMAILJS_PRIVATE_KEY) {
+    console.error('EMAILJS_PRIVATE_KEY secret is not set.');
+    return json({ error: 'Email is not available right now. Please contact Chris directly.' }, 503);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return json({ error: 'Invalid request.' }, 400);
+  }
+  const incoming = (body && typeof body.params === 'object' && body.params) || {};
+
+  // Keep only known fields, as plain text, with a length cap
+  const params = {};
+  for (const key of SCENARIO_FIELDS) {
+    if (incoming[key] !== undefined && incoming[key] !== null) {
+      params[key] = String(incoming[key]).slice(0, key === 'disclaimer' ? 600 : 200);
+    }
+  }
+
+  params.to_email = (params.to_email || '').trim();
+  if (params.to_email.length > 254 || !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(params.to_email)) {
+    return json({ error: 'Please enter a valid email address.' }, 400);
+  }
+  if (!params.scenario_label || !params.property_address) {
+    return json({ error: 'Please fill in all three fields before sending.' }, 400);
+  }
+
+  // Set by the Worker only — the browser can't change who gets copied
+  params.cc_email = EMAILJS_SETTINGS.lenderEmail;
+  params.lender_email = EMAILJS_SETTINGS.lenderEmail;
+
+  let resp;
+  try {
+    resp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: EMAILJS_SETTINGS.serviceId,
+        template_id: EMAILJS_SETTINGS.templateId,
+        user_id: EMAILJS_SETTINGS.publicKey,
+        accessToken: env.EMAILJS_PRIVATE_KEY,
+        template_params: params,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch (err) {
+    console.error('EmailJS request failed:', err && err.name, err && err.message);
+    return json({ error: 'The email service is not responding. Please try again in a minute.' }, 504);
+  }
+
+  if (!resp.ok) {
+    const detail = await resp.text().catch(() => '');
+    console.error('EmailJS refused the send:', resp.status, detail.slice(0, 300));
+    return json({ error: 'Send failed. Please try again or contact Chris directly.' }, 502);
+  }
+
+  return json({ ok: true }, 200);
+}
 
 // ─────────────────────────────────────────────────────────────────
 // fetch() for county websites, with a time limit so a slow or hung county
