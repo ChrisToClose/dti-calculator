@@ -1031,7 +1031,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.29.1</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.29.2</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2204,7 +2204,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.29.1
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.29.2
       </div>
     </div>
 
@@ -2802,6 +2802,8 @@ function renderGauge(result) {
    ============================================================ */
 function fmt(n){return'$'+Math.round(n).toLocaleString();}
 function fmtDTI(n){return n.toFixed(3)+'%';}
+/* Escape text from the URL (or any outside source) before putting it inside innerHTML */
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
 function renderBreakdown(result) {
   var frontEl=document.getElementById('front-dti-val');
@@ -3710,7 +3712,7 @@ function initClientView(p) {
   /* -- Disclaimer -- */
   var discEl = document.getElementById('client-disclaimer-bottom');
   if (discEl) {
-    discEl.innerHTML = ('Chris put these numbers together'+(CP.ts?' on '+CP.ts:'')+'.') +
+    discEl.innerHTML = ('Chris put these numbers together'+(CP.ts?' on '+escapeHtml(CP.ts):'')+'.') +
       '<br>Rate, payment estimates, and qualification figures are subject to change and do not constitute a loan commitment. Contact Chris for current pricing and a formal pre-approval.';
   }
 
@@ -4437,7 +4439,7 @@ function initClientView(p) {
     /* Inject client name into step-1 headline if present */
     var onboardH2 = onboardEl.querySelector('.ob-headline');
     if (onboardH2 && CP.clientName) {
-      var safeName = CP.clientName.charAt(0).toUpperCase() + CP.clientName.slice(1);
+      var safeName = escapeHtml(CP.clientName.charAt(0).toUpperCase() + CP.clientName.slice(1));
       onboardH2.innerHTML = 'Chris built this <em>just</em> for you, <strong>' + safeName + '!</strong>';
     }
     /* Multi-step state */
