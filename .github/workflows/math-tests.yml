@@ -1,0 +1,33 @@
+# Runs the math safety net (tests/run.js) whenever the calculator or its
+# tests change. A red X on the commit means a payment or DTI number changed.
+name: Math tests
+
+on:
+  push:
+    paths:
+      - "index.html"
+      - "tests/**"
+      - "package.json"
+      - ".github/workflows/math-tests.yml"
+  pull_request:
+    paths:
+      - "index.html"
+      - "tests/**"
+      - "package.json"
+  workflow_dispatch:
+
+jobs:
+  math-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install test tools
+        run: npm install --no-audit --no-fund
+      - name: Install headless browser
+        run: npx playwright install --with-deps chromium
+      - name: Run math tests
+        run: npm test
