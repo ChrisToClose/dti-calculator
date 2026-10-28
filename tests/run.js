@@ -1,6 +1,7 @@
 /* ============================================================
    DTI CALCULATOR — MATH SAFETY NET
-   Run:            node tests/run.js
+   Run:            node tests/run.js            (tests preview/index.html)
+                   node tests/run.js --page index.html   (tests the live copy)
    Re-lock values: node tests/run.js --update   (ONLY after a
                    deliberate, reviewed change to the numbers)
 
@@ -22,7 +23,12 @@ const { reference } = require('./reference');
 const scenarios = require('./scenarios');
 
 const ROOT = path.resolve(__dirname, '..');
-const PAGE = 'file://' + path.join(ROOT, 'index.html');
+// Which copy to test: --page <file>. Default = the preview copy (where changes
+// are made first); the publish step tests it again before copying it live.
+const pageArg = process.argv.indexOf('--page');
+const PAGE_FILE = pageArg !== -1 ? process.argv[pageArg + 1]
+  : fs.existsSync(path.join(ROOT, 'preview', 'index.html')) ? 'preview/index.html' : 'index.html';
+const PAGE = 'file://' + path.resolve(ROOT, PAGE_FILE);
 const EXPECTED_FILE = path.join(__dirname, 'expected.json');
 const UPDATE = process.argv.includes('--update');
 const FIXED_DATE = 'Oct 28, 2026';   // keeps date text on screens stable
@@ -183,9 +189,9 @@ async function readScreen(page, pattern) {
 
   notes.forEach((n) => console.log('NOTE  ' + n));
   if (failures.length) {
-    console.log(`\nFAILED — ${failures.length} difference(s):`);
+    console.log(`\nFAILED (${PAGE_FILE}) — ${failures.length} difference(s):`);
     failures.forEach((f) => console.log('  ✗ ' + f));
     process.exit(1);
   }
-  console.log(`\nPASSED — ${scenarios.length} scenarios: math engine, reference math, lender screen, client link, client screen.`);
+  console.log(`\nPASSED (${PAGE_FILE}) — ${scenarios.length} scenarios: math engine, reference math, lender screen, client link, client screen.`);
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -1,16 +1,19 @@
-# Runs the math safety net (tests/run.js) whenever the calculator or its
-# tests change. A red X on the commit means a payment or DTI number changed.
+# Runs the math safety net (tests/run.js) on the PREVIEW copy whenever it or
+# the tests change. A red X means a payment or DTI number changed.
+# (The live copy is tested again by "Publish preview to live" before it changes.)
 name: Math tests
 
 on:
   push:
     paths:
+      - "preview/index.html"
       - "index.html"
       - "tests/**"
       - "package.json"
       - ".github/workflows/math-tests.yml"
   pull_request:
     paths:
+      - "preview/index.html"
       - "index.html"
       - "tests/**"
       - "package.json"
@@ -29,5 +32,5 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install headless browser
         run: npx playwright install --with-deps chromium
-      - name: Run math tests
+      - name: Run math tests on the preview copy
         run: npm test

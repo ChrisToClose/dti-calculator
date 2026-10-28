@@ -11,7 +11,12 @@ These tests make sure no change to `index.html` quietly changes a payment or DTI
 5. **The client screen** opened from that link shows exactly the locked values.
 6. The lender and client screens agree on the payment and DTI.
 
-**When it runs:** automatically on GitHub every time `index.html` or the tests change. See the **Actions** tab, "Math tests" (green check = no number changed). To run it by hand: `npm test`.
+**There are two copies of the calculator:**
+
+- `preview/index.html` is at https://christoclose.github.io/dti-calculator/preview/ and shows an orange "PREVIEW COPY" bar. **Every change is made here first.**
+- `index.html` is the live site clients use. **Never edit it directly.** It only changes through the **"Publish preview to live"** button (Actions tab → Publish preview to live → Run workflow). That button reruns the tests on the preview copy, copies it to live only if they pass, then tests the live copy too.
+
+**When it runs:** automatically on GitHub every time the preview copy or the tests change (Actions tab → "Math tests"; a green check means no number changed). It also runs inside "Publish preview to live". To run it by hand: `npm test` (preview copy) or `node tests/run.js --page index.html` (live copy).
 
 **When a number is SUPPOSED to change** (new loan limit, new MI rate, a bug fix):
 

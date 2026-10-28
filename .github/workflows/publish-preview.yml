@@ -1,0 +1,70 @@
+# "Publish preview to live" — the ONLY way the live calculator changes.
+# Run it from the Actions tab (Publish preview to live → Run workflow) after
+# the preview copy has been checked at /dti-calculator/preview/.
+# It re-runs the math tests on the preview copy, and only if they pass,
+# copies preview/index.html over the live index.html and publishes it.
+name: Publish preview to live
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publish-live
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Anything to publish?
+        id: diff
+        run: |
+          if cmp -s preview/index.html index.html; then
+            echo "Live already matches the preview copy — nothing to publish."
+            echo "changed=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=yes" >> "$GITHUB_OUTPUT"
+            echo "version=$(grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' preview/index.html | head -1)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.diff.outputs.changed == 'yes'
+        with:
+          node-version: "22"
+
+      - name: Install test tools
+        if: steps.diff.outputs.changed == 'yes'
+        run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+
+      - name: Math tests on the preview copy (must pass)
+        if: steps.diff.outputs.changed == 'yes'
+        run: npm test
+
+      - name: Copy preview to live and test the live copy
+        if: steps.diff.outputs.changed == 'yes'
+        run: |
+          cp preview/index.html index.html
+          node tests/run.js --page index.html
+
+      - name: Publish
+        if: steps.diff.outputs.changed == 'yes'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Publish preview ${{ steps.diff.outputs.version }} to live (math tests passed)"
+          git push
+
+      - name: Rebuild the live site
+        if: steps.diff.outputs.changed == 'yes'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds"
