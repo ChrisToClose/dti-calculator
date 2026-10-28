@@ -998,6 +998,17 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 </head>
 <body>
 
+<!-- Preview banner: shows ONLY on the preview copy (/preview/ address), never on the live site -->
+<div id="preview-banner" style="display:none;background:#F5A623;color:#1a1a1a;font:700 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;text-align:center;padding:8px 12px;">
+  PREVIEW COPY &mdash; not the live calculator. Don't send this link to clients.
+</div>
+<script>
+  if (location.pathname.indexOf('/preview/') !== -1) {
+    document.getElementById('preview-banner').style.display = 'block';
+    document.title = 'PREVIEW \u00b7 ' + document.title;
+  }
+</script>
+
 <!-- Watermark: two lines, -20deg -->
 <div id="dti-watermark">
   <div class="watermark-text">DTI OVER LIMIT</div>
@@ -1026,7 +1037,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.30.0</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.30.1</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2199,7 +2210,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.30.0
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.30.1
       </div>
     </div>
 
