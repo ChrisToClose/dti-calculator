@@ -62,7 +62,8 @@ module.exports = [
   { id: 'rental-covers', note: 'Rent covers the departing payment: no shortfall',
     in: { ...PINELLAS, loanType: 'CONV', purchasePrice: 500000, downPct: 10, rate: 6.875, income: 16000, otherDebts: 900, rentalActive: true, grossRent: 3000, departingPitia: 1800 } },
 
-  { id: 'no-location', note: 'No county picked yet: tax not counted, client screen waits for a location',
+  { id: 'no-location', note: 'No county: lender cannot make a link; an old no-county link makes the client pick a location first (B9 fix, v8.30.2)',
+    clientWaitsForLocation: true,
     in: { loanType: 'CONV', purchasePrice: 400000, downPct: 5, rate: 7, income: 11000, otherDebts: 800, countyName: null, countyMillRate: null } },
 
   { id: 'income-zero', note: 'No income: calculator refuses to compute', engineOnly: true,

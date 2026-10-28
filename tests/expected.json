@@ -35,6 +35,7 @@
       "pmi-est-val": "$184/mo",
       "pmi-est-sub": "Based on $380,000 loan, 5% down, FICO 760+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=400000&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -96,6 +97,7 @@
       "down-pct-display": "20%",
       "down-amt-display": "($110,000)"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=550000&inc=15000&dbt=1200&rt=6.5&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=20&hoa=350&hs=0&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -160,6 +162,7 @@
       "pmi-est-val": "$173/mo",
       "pmi-est-sub": "Based on $292,500 loan, 10% down, FICO 680+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=325000&inc=9000&dbt=650&rt=6.875&cn=Hillsborough&mr=19.5&ts=Oct+28%2C+2026&dp=10&fco=680&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -225,6 +228,7 @@
       "pmi-est-val": "$191/mo",
       "pmi-est-sub": "Based on $279,000 loan, 7% down, FICO 700+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=300000&inc=8000&dbt=400&rt=7.125&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=7&fco=700&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -290,6 +294,7 @@
       "pmi-est-val": "$677/mo",
       "pmi-est-sub": "Based on $436,500 loan, 3% down, FICO 620+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=450000&inc=7000&dbt=1500&rt=7.5&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=3&fco=620&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -355,6 +360,7 @@
       "pmi-est-val": "$95/mo",
       "pmi-est-sub": "Using your manual override"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=400000&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&pmi=95&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -421,6 +427,7 @@
       "pmi-est-val": "$57/mo",
       "pmi-est-sub": "Based on $360,000 loan, 10% down, FICO 760+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=400000&inc=12000&dbt=500&rt=6.75&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=10&tax=481&ins=310&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -481,6 +488,7 @@
       "down-pct-display": "25%",
       "down-amt-display": "($87,500)"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=350000&inc=14000&dbt=300&rt=6.25&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=25&tm=15&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -545,6 +553,7 @@
       "pmi-est-sub": "Based on $765,000 loan, 15% down, FICO 760+",
       "jumbo-disclaimer": "⚠ Loan exceeds $806,500 (Jumbo). PMI shown is an estimate — obtain an actual MI quote."
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=900000&inc=30000&dbt=2000&rt=7.25&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=15&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -611,6 +620,7 @@
       "pmi-card-title": "FHA Mortgage Insurance (MIP)",
       "mip-val": "$NaN/mo"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=375000&inc=9500&dbt=700&rt=6.5&cn=Hillsborough&mr=19.5&ts=Oct+28%2C+2026&lt=FHA&dp=3.5&fld=1&fi=150&cdd=1&ca=1800&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -680,6 +690,7 @@
       "pmi-card-title": "FHA Mortgage Insurance (MIP)",
       "mip-val": "$NaN/mo"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=300000&inc=6500&dbt=900&rt=6.75&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&lt=FHA&dp=3.5&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -742,6 +753,7 @@
       "down-amt-display": "($21,250)",
       "pmi-card-title": "No Monthly Mortgage Insurance"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=425000&inc=10000&dbt=1100&rt=6.25&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&lt=VA&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -801,6 +813,7 @@
       "down-amt-display": "($0)",
       "pmi-card-title": "No Monthly Mortgage Insurance"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=425000&inc=10000&dbt=1100&rt=6.25&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&lt=VA&dp=0&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -863,6 +876,7 @@
       "pmi-card-title": "USDA Annual Guarantee Fee",
       "usda-val": "$NaN/mo"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=280000&inc=7500&dbt=350&rt=6.5&cn=Hillsborough&mr=19.5&ts=Oct+28%2C+2026&lt=USDA&dp=0&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -928,6 +942,7 @@
       "pmi-card-title": "USDA Annual Guarantee Fee",
       "usda-val": "$NaN/mo"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=280000&inc=7500&dbt=350&rt=6.5&cn=Hillsborough&mr=19.5&ts=Oct+28%2C+2026&lt=USDA&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -995,6 +1010,7 @@
       "pmi-est-val": "$71/mo",
       "pmi-est-sub": "Based on $450,000 loan, 10% down, FICO 760+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=500000&inc=16000&dbt=900&rt=6.875&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=10&ren=1&grn=2000&pit=1800&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -1063,6 +1079,7 @@
       "pmi-est-val": "$71/mo",
       "pmi-est-sub": "Based on $450,000 loan, 10% down, FICO 760+"
     },
+    "linkAllowed": true,
     "clientLink": "?client=1&pp=500000&inc=16000&dbt=900&rt=6.875&cn=Pinellas&mr=17.43&ts=Oct+28%2C+2026&dp=10&ren=1&grn=3000&pit=1800&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
@@ -1129,19 +1146,20 @@
       "pmi-est-val": "$184/mo",
       "pmi-est-sub": "Based on $380,000 loan, 5% down, FICO 760+"
     },
+    "linkAllowed": false,
     "clientLink": "?client=1&pp=400000&inc=11000&dbt=800&rt=7&ts=Oct+28%2C+2026&nm=Test",
     "clientScreen": {
       "client-onboard-next": "Next →",
-      "client-front-dti": "26.168%",
-      "client-back-dti": "33.441%",
-      "cbr-pi": "$2,528",
+      "client-front-dti": "—",
+      "client-back-dti": "—",
+      "cbr-pi": "—",
       "cbr-tax": "—",
-      "cbr-ins": "$167",
+      "cbr-ins": "—",
       "cbr-mi-label": "Mortgage Insurance",
-      "cbr-mi": "$184",
+      "cbr-mi": "—",
       "client-housing-label": "Total Monthly Housing Payment",
-      "client-housing-total": "$2,878",
-      "client-status-badge": "Debt-to-Income looks great!",
+      "client-housing-total": "—",
+      "client-status-badge": "Enter your location to get started",
       "client-price-val": "$400,000",
       "client-price-pencil": "✎",
       "client-down-pct": "5%",

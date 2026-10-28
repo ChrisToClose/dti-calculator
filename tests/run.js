@@ -13,6 +13,9 @@
      D. the client link built from the lender screen opens a
         client screen showing exactly the locked values
      E. lender and client screens agree on payment and DTI
+     F. the lender can only make a client link when a county (or an
+        actual tax bill) is set; without one, the client screen waits
+        for a location and Save Scenario is refused (B9)
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -83,7 +86,13 @@ async function readScreen(page, pattern) {
   const browser = await chromium.launch();
   const context = await browser.newContext({ timezoneId: 'America/New_York', locale: 'en-US' });
   // Block everything outside the local file: no fonts, CDNs, or Worker calls.
-  await context.route('**/*', (r) => (r.request().url().startsWith('file:') ? r.continue() : r.abort()));
+  const outsideCalls = [];
+  await context.route('**/*', (r) => {
+    const u = r.request().url();
+    if (u.startsWith('file:')) return r.continue();
+    outsideCalls.push(u);
+    return r.abort();
+  });
 
   const pageErrors = [];
   const lender = await context.newPage();
@@ -133,14 +142,38 @@ async function readScreen(page, pattern) {
 
     if (!sc.engineOnly) {
       rec.lenderScreen = await readScreen(lender, LENDER_IDS);
+      rec.linkAllowed = await lender.evaluate(() => validateSetup());
       rec.clientLink = new URL(run.url).search;
       await client.goto(run.url);
       await client.waitForFunction(() => document.getElementById('client-back-dti'));
       rec.clientScreen = await readScreen(client, CLIENT_IDS);
 
-      // E. lender vs client agreement
+      // F. location rule
+      const hasLocation = run.state.countyMillRate != null || run.state.taxOverride != null;
+      if (rec.linkAllowed !== hasLocation) {
+        failures.push(`${sc.id}: lender ${rec.linkAllowed ? 'ALLOWED' : 'REFUSED'} a client link ${hasLocation ? 'with' : 'without'} a county`);
+      }
+      if (sc.clientWaitsForLocation) {
+        const c = rec.clientScreen;
+        if (c['client-back-dti'] !== '—' || c['client-housing-total'] !== '—' || c['client-status-badge'] !== 'Enter your location to get started') {
+          failures.push(`${sc.id}: client screen should wait for a location but shows ${c['client-housing-total']} / ${c['client-back-dti']} / "${c['client-status-badge']}"`);
+        }
+        const save = await client.evaluate(() => {
+          document.getElementById('save-email').value = 'test@example.com';
+          document.getElementById('save-label').value = 'Test';
+          document.getElementById('save-address').value = '1 Main St';
+          document.getElementById('btn-save-scenario').click();
+          return document.getElementById('save-error').textContent;
+        });
+        await client.waitForTimeout(200);
+        if (!/Pick the property location/.test(save) || outsideCalls.some((u) => /send-scenario/.test(u))) {
+          failures.push(`${sc.id}: Save Scenario was not refused without a location (message: "${save}")`);
+        }
+      }
+
+      // E. lender vs client agreement (skipped when the client is waiting for a location)
       const pairs = [['lbr-housing', 'client-housing-total'], ['lender-front-dti', 'client-front-dti'], ['lender-back-dti', 'client-back-dti']];
-      const mismatched = pairs.filter(([l, c]) => rec.lenderScreen[l] !== rec.clientScreen[c]);
+      const mismatched = sc.clientWaitsForLocation ? [] : pairs.filter(([l, c]) => rec.lenderScreen[l] !== rec.clientScreen[c]);
       const known = KNOWN_SCREEN_DIFFS[sc.id];
       if (mismatched.length && !known) {
         for (const [l, c] of mismatched) {
