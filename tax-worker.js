@@ -1,17 +1,54 @@
 // ChrisToClose DTI Calculator — Tax & Property Lookup Worker
-// Requires secrets: ANTHROPIC_API_KEY
-// County PA APIs: Hillsborough (JSON), Pinellas (HTML), Pasco (HTML), Manatee (JSON)
+// Secrets:  ANTHROPIC_API_KEY (used only by the photo reader, currently switched off)
+// Bindings: LOOKUP_LIMITER — Cloudflare rate limiter, configured in wrangler.jsonc
+// County lookups: Hillsborough (JSON), Pinellas (county GIS JSON), Pasco (HTML), Manatee (JSON)
+
+// ── Security settings ──────────────────────────────────────────────
+// Only these websites may call this Worker. Add a preview or white-label site here when needed.
+const ALLOWED_ORIGINS = ['https://christoclose.github.io'];
+
+// AI tax-bill photo reader (/tax-lookup). Switched OFF Oct 28, 2026 — nothing on the site uses it.
+// Planned to return as a fallback when the address lookup fails (see master to-do list).
+// Before turning it back on: fix the large-photo crash below, shrink photos in the browser
+// before upload, and keep the origin check + rate limit in front of it.
+const PHOTO_READER_ENABLED = false;
+
+// Give up on a slow county website after this many milliseconds.
+const COUNTY_TIMEOUT_MS = 8000;
 
 export default {
   async fetch(request, env, ctx) {
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    };
+    const origin = request.headers.get('Origin') || '';
+    const originAllowed = ALLOWED_ORIGINS.includes(origin);
+    const corsHeaders = originAllowed
+      ? {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+          'Vary': 'Origin',
+        }
+      : { 'Vary': 'Origin' };
+    const json = (obj, status) =>
+      new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { status: originAllowed ? 204 : 403, headers: corsHeaders });
+    }
+
+    // Only answer requests coming from the calculator's own website
+    if (!originAllowed) {
+      return json({ error: 'Not allowed.' }, 403);
+    }
+
+    // Per-visitor rate limit (see wrangler.jsonc for the limit)
+    if (env.LOOKUP_LIMITER) {
+      const visitor = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const { success } = await env.LOOKUP_LIMITER.limit({ key: visitor });
+      if (!success) {
+        return json({ error: 'Too many lookups in a short time. Please wait a minute and try again.' }, 429);
+      }
+    } else {
+      console.warn('LOOKUP_LIMITER binding missing — rate limiting is OFF. Check wrangler.jsonc.');
     }
 
     const url = new URL(request.url);
@@ -67,6 +104,9 @@ export default {
 
     // ── /tax-lookup route (existing — AI tax bill image reader) ───
     if (url.pathname === '/tax-lookup' && request.method === 'POST') {
+      if (!PHOTO_READER_ENABLED) {
+        return json({ error: 'Tax bill photo reading is not available right now.' }, 410);
+      }
       try {
         const formData = await request.formData();
         const file = formData.get('bill');
@@ -168,11 +208,26 @@ If you cannot find a clear annual tax amount, return:
 };
 
 // ─────────────────────────────────────────────────────────────────
+// fetch() for county websites, with a time limit so a slow or hung county
+// site can't leave the client waiting.
+// ─────────────────────────────────────────────────────────────────
+async function countyFetch(url, options = {}) {
+  try {
+    return await fetch(url, { ...options, signal: AbortSignal.timeout(COUNTY_TIMEOUT_MS) });
+  } catch (err) {
+    if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+      throw new Error('The county records website is taking too long to respond. Please try again in a minute.');
+    }
+    throw err;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // HILLSBOROUGH COUNTY — gis.hcpafl.org JSON REST API
 // ─────────────────────────────────────────────────────────────────
 async function lookupHillsborough(address, city) {
   const searchUrl = `https://gis.hcpafl.org/CommonServices/property/search/BasicSearch?address=${encodeURIComponent(address)}&pagesize=40&page=1`;
-  const searchResp = await fetch(searchUrl, {
+  const searchResp = await countyFetch(searchUrl, {
     headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
   });
   if (!searchResp.ok) throw new Error(`Hillsborough search failed: ${searchResp.status}`);
@@ -186,7 +241,7 @@ async function lookupHillsborough(address, city) {
   if (!pin) throw new Error('Could not extract parcel PIN from Hillsborough search.');
 
   const detailUrl = `https://gis.hcpafl.org/CommonServices/property/search/ParcelData?pin=${encodeURIComponent(pin)}`;
-  const detailResp = await fetch(detailUrl, {
+  const detailResp = await countyFetch(detailUrl, {
     headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
   });
   if (!detailResp.ok) throw new Error(`Hillsborough detail fetch failed: ${detailResp.status}`);
@@ -328,7 +383,7 @@ async function lookupPinellas(address, city, unit) {
     resultRecordCount: '1000',
     f: 'json',
   });
-  const resp = await fetch(`${PINELLAS_PARCELS_URL}?${params.toString()}`, {
+  const resp = await countyFetch(`${PINELLAS_PARCELS_URL}?${params.toString()}`, {
     headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (ChrisToClose tax lookup)' },
   });
   if (!resp.ok) throw new Error(`Pinellas County records are not responding right now (status ${resp.status}). Please try again shortly.`);
@@ -479,7 +534,7 @@ async function lookupPasco(address, city) {
   const streetName = addressParts[2];
 
   const searchUrl = `https://search.pascopa.com/default.aspx?pid=add&key=K%5CI&add1=${encodeURIComponent(streetNum)}&add2=${encodeURIComponent(streetName)}`;
-  const searchResp = await fetch(searchUrl, {
+  const searchResp = await countyFetch(searchUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html' }
   });
   if (!searchResp.ok) throw new Error(`Pasco search failed: ${searchResp.status}`);
@@ -490,7 +545,7 @@ async function lookupPasco(address, city) {
   const parcelId = parcelMatch[1];
 
   const detailUrl = `https://search.pascopa.com/parcel.aspx?parcel=${encodeURIComponent(parcelId)}`;
-  const detailResp = await fetch(detailUrl, {
+  const detailResp = await countyFetch(detailUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html' }
   });
   if (!detailResp.ok) throw new Error(`Pasco detail fetch failed: ${detailResp.status}`);
@@ -603,7 +658,7 @@ async function lookupManatee(address, city) {
   searchBody.set('search[value]', '');
   searchBody.set('search[regex]', 'false');
 
-  const searchResp = await fetch('https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-parcel-search-results.php', {
+  const searchResp = await countyFetch('https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-parcel-search-results.php', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -630,13 +685,13 @@ async function lookupManatee(address, city) {
   }
   if (!parid) throw new Error('Could not extract Manatee parcel ID from search results.');
 
-  const valueResp = await fetch(`https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-value-history.php?parid=${parid}`, {
+  const valueResp = await countyFetch(`https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-value-history.php?parid=${parid}`, {
     headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0', 'Referer': `https://www.manateepao.gov/parcel/?parid=${parid}` }
   });
   if (!valueResp.ok) throw new Error(`Manatee value history fetch failed: ${valueResp.status}`);
   const valueData = await valueResp.json();
 
-  const salesResp = await fetch(`https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-sales.php?parid=${parid}`, {
+  const salesResp = await countyFetch(`https://www.manateepao.gov/wp-content/themes/frontier-child/models/pao-model-sales.php?parid=${parid}`, {
     headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0', 'Referer': `https://www.manateepao.gov/parcel/?parid=${parid}` }
   });
   let salesData = { data: [] };
