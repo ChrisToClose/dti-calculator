@@ -1026,7 +1026,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.29.4</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.30.0</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2199,7 +2199,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.29.4
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.30.0
       </div>
     </div>
 
@@ -2222,7 +2222,9 @@ var CONFIG = {
     instagram:'@ChrisToClose', applyUrl:'https://christoclose.com',
   },
   /* ── EMAILJS ─────────────────────────────────────────────── */
-  emailjs: { publicKey:'NyULYxc1h8OKkvdOA', serviceId:'service_jmgkuj5', templateId:'template_9m8q81g' },
+  /* Tax lookups + "Save Scenario" emails go through this Cloudflare Worker.
+     EmailJS settings and keys live in the Worker, not in this page. */
+  workerUrl: 'https://christoclose-tax.christoclose.workers.dev',
   /* ── DTI THRESHOLDS — update when guidelines change ──────── */
   dtiThresholds: {
     CONV: { frontWarn:28, backWarn:43, backMax:50 },
@@ -4716,9 +4718,7 @@ function initClientView(p) {
     var dateStr=now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 
     var templateParams = {
-      to_email:         email,
-      cc_email:         CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1],
-      lender_email:     CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1],
+      to_email:         email,   /* lender CC is added by the Worker, not the browser */
       scenario_label:   label,
       property_address: address,
       loan_type:        CS.loanType,
@@ -4757,21 +4757,28 @@ function initClientView(p) {
        so mobile browsers don't block it as a popup */
     triggerClientPrint(result, templateParams);
 
-    if(typeof emailjs!=='undefined'){
-      emailjs.init(CONFIG.emailjs.publicKey);
-      emailjs.send(CONFIG.emailjs.serviceId, CONFIG.emailjs.templateId, templateParams)
-        .then(function(){
-          confirmEl.style.display='block'; btn.style.display='none';
-        })
-        .catch(function(err){
-          errEl.textContent='Send failed. Please try again or contact Chris directly.';
-          errEl.style.display='block'; btn.textContent='Save Scenario \uD83D\uDCCB'; btn.disabled=false;
-          console.error('EmailJS error:', err);
+    /* Email goes through the tax Worker, which holds the EmailJS private key,
+       only accepts this site, and rate-limits sends. Success is shown only
+       after the Worker confirms EmailJS accepted the email. */
+    fetch(CONFIG.workerUrl + '/send-scenario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ params: templateParams })
+    })
+      .then(function(r){
+        return r.json().catch(function(){ return {}; }).then(function(d){
+          if (!r.ok || !d.ok) throw new Error(d.error || 'Send failed. Please try again or contact Chris directly.');
         });
-    } else {
-      /* EmailJS not loaded — just show confirm */
-      confirmEl.style.display='block'; btn.style.display='none';
-    }
+      })
+      .then(function(){
+        confirmEl.style.display='block'; btn.style.display='none';
+      })
+      .catch(function(err){
+        errEl.textContent = (err && err.message && err.message !== 'Failed to fetch')
+          ? err.message : 'Send failed. Please try again or contact Chris directly.';
+        errEl.style.display='block'; btn.textContent='Save Scenario 💾'; btn.disabled=false;
+        console.error('Scenario email error:', err);
+      });
   });
 
   /* ============================================================
@@ -5073,8 +5080,6 @@ function initClientView(p) {
 
 </script>
 
-<!-- EmailJS -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <!-- QR code generator (runs in the browser — client data never leaves the page) -->
