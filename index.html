@@ -1026,7 +1026,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.29.3</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.29.4</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2199,7 +2199,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.29.3
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.29.4
       </div>
     </div>
 
@@ -5038,31 +5038,35 @@ function initClientView(p) {
     var disclaimerLines = doc.splitTextToSize(params.disclaimer + ' • Equal Housing Opportunity • Proud to be Employee Owned', contentW);
     doc.text(disclaimerLines, margin, y); y += disclaimerLines.length * 4 + 4;
 
-    /* ---- QR Code — scan to reopen scenario ---- */
+    /* ---- QR Code — scan to reopen scenario ----
+       Built in the browser with the qrcode-generator library so the client's link
+       (which contains income and debts) is never sent to an outside service. */
     var filename = (params.scenario_label || 'DTI-Scenario').replace(/[^a-z0-9]/gi,'-') + '-ChrisToClose.pdf';
     try {
-      var scenarioUrl = window.location.href;
-      var qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + encodeURIComponent(scenarioUrl);
-      var qrImg = new Image();
-      qrImg.crossOrigin = 'anonymous';
-      qrImg.onload = function() {
-        try {
-          var canvas = document.createElement('canvas');
-          canvas.width = 80; canvas.height = 80;
-          canvas.getContext('2d').drawImage(qrImg, 0, 0, 80, 80);
-          var qrData = canvas.toDataURL('image/png');
-          doc.addImage(qrData, 'PNG', margin, y, 18, 18);
-          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(150,160,175);
-          doc.text('Scan to reopen your scenario', margin + 22, y + 6);
-          doc.text('christoclose.com', margin + 22, y + 11);
-        } catch(e){}
-        doc.save(filename);
-      };
-      qrImg.onerror = function(){ doc.save(filename); };
-      qrImg.src = qrApiUrl;
+      if (typeof qrcode === 'function') {
+        var qr = qrcode(0, 'M');               /* 0 = pick size automatically, M = medium error correction */
+        qr.addData(window.location.href);
+        qr.make();
+        var n = qr.getModuleCount(), quiet = 2, px = 8, size = (n + quiet * 2) * px;
+        var qrCanvas = document.createElement('canvas');
+        qrCanvas.width = size; qrCanvas.height = size;
+        var qctx = qrCanvas.getContext('2d');
+        qctx.fillStyle = '#ffffff'; qctx.fillRect(0, 0, size, size);
+        qctx.fillStyle = '#000000';
+        for (var qr_r = 0; qr_r < n; qr_r++) {
+          for (var qr_c = 0; qr_c < n; qr_c++) {
+            if (qr.isDark(qr_r, qr_c)) qctx.fillRect((qr_c + quiet) * px, (qr_r + quiet) * px, px, px);
+          }
+        }
+        doc.addImage(qrCanvas.toDataURL('image/png'), 'PNG', margin, y, 18, 18);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(150,160,175);
+        doc.text('Scan to reopen your scenario', margin + 22, y + 6);
+        doc.text('christoclose.com', margin + 22, y + 11);
+      }
     } catch(e) {
-      doc.save(filename);
+      console.error('QR code could not be added to PDF:', e);
     }
+    doc.save(filename);
   }
 
 } /* end initClientView */
@@ -5073,5 +5077,7 @@ function initClientView(p) {
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- QR code generator (runs in the browser — client data never leaves the page) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </body>
 </html>
