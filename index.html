@@ -1037,7 +1037,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div style="font-family:'Raleway',sans-serif;font-size:13px;font-weight:800;color:var(--yellow);letter-spacing:0.08em;text-transform:uppercase;">ChrisToClose</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;line-height:1;letter-spacing:0.04em;">Housing Payment Calculator</div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.30.1</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-right:10px;">v8.30.2</div>
       <div class="setup-header-badge">LENDER ONLY</div>
     </div>
   </div>
@@ -2210,7 +2210,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
     <div style="padding:12px 20px 32px;text-align:center;border-top:1px solid var(--border);">
       <div style="font-size:11px;color:var(--text-light);line-height:2;">
         Built for you by Chris Greenidge &bull; <a href="https://christoclose.com" target="_blank" style="color:var(--teal);text-decoration:none;">ChrisToClose.com</a><br>
-        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.30.1
+        NMLS# 2073018 &bull; Equal Housing Opportunity &bull; ChrisToClose &bull; v8.30.2
       </div>
     </div>
 
@@ -3504,6 +3504,31 @@ function validateSetup() {
     if (msg) msg.remove();
   }
 
+  /* Hard required: a county (or an actual tax bill) — otherwise the client's
+     payment and DTI would leave out property tax (B9) */
+  var zipEl = document.getElementById('zip-input');
+  var locCard = zipEl.closest('.card');
+  if (S.countyMillRate == null && S.taxOverride == null) {
+    if (ok) {
+      locCard.querySelector('.card-title').scrollIntoView({behavior:'smooth',block:'center'});
+      var lbtn = document.getElementById('btn-copy-link');
+      lbtn.classList.add('shake');
+      setTimeout(function(){lbtn.classList.remove('shake');},500);
+    }
+    var locMsg = document.getElementById('location-required-msg');
+    if (!locMsg) {
+      locMsg = document.createElement('div');
+      locMsg.id = 'location-required-msg';
+      locMsg.style.cssText = 'font-size:12px;color:var(--red);font-weight:600;margin-top:8px;';
+      locMsg.textContent = 'Pick the property county (ZIP or County) before generating a client link';
+      locCard.querySelector('.location-tabs').insertAdjacentElement('beforebegin', locMsg);
+    }
+    ok = false;
+  } else {
+    var locMsg = document.getElementById('location-required-msg');
+    if (locMsg) locMsg.remove();
+  }
+
   /* Soft required: debts — warn if never touched */
   if (!S.debtsTouched) {
     debtsEl.classList.add('field-warn-border');
@@ -4189,7 +4214,8 @@ function initClientView(p) {
     var miniDti = document.getElementById('mini-dti-val');
     var miniDot = document.getElementById('mini-status-dot');
 
-    if (!result || result.error || !CS.income) {
+    var noLocation = CS.countyMillRate == null && CS.taxOverride == null;
+    if (!result || result.error || !CS.income || noLocation) {
       if(fill) fill.style.width='0%';
       if(miniFill) miniFill.style.width='0%';
       if(badge) { badge.textContent='Enter your location to get started'; badge.style.background='var(--surface2)'; badge.style.color='var(--text-muted)'; badge.className=''; }
@@ -4710,6 +4736,11 @@ function initClientView(p) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errEl.textContent='Please enter a valid email address.';
       errEl.style.display='block'; return;
+    }
+    /* B9: no county = no property tax in the numbers — don't send or print them */
+    if (CS.countyMillRate == null && CS.taxOverride == null) {
+      errEl.textContent='Pick the property location above first, so your summary includes property tax.';
+      errEl.style.display='block'; confirmEl.style.display='none'; return;
     }
     errEl.style.display='none';
 
