@@ -23,6 +23,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Make sure this is a new run, not a re-run of an old one
+        run: |
+          git fetch --quiet --depth=1 origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "::error::This is a re-run of an OLD publish. Nothing was changed. To publish, go to Actions → Publish preview to live → Run workflow (not Re-run jobs)."
+            exit 1
+          fi
+
       - name: Anything to publish?
         id: diff
         run: |
