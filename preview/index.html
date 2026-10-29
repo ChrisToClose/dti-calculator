@@ -1519,7 +1519,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             <span class="field-hint">If entered, locks the PMI value in the client view</span>
           </div>
           <div id="jumbo-disclaimer" class="info-box" style="display:none;background:#fdf0f0;border-left-color:#e74c3c;color:#7a1010;margin-top:10px;">
-            &#9888; Loan exceeds $806,500 (Jumbo). PMI shown is an estimate — obtain an actual MI quote.
+            &#9888; Loan exceeds $<span id="jumbo-limit-text"></span> (Jumbo). PMI shown is an estimate — obtain an actual MI quote.
           </div>
         </div>
 
@@ -2226,7 +2226,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.30.3',
+  version: '8.30.4',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2263,7 +2263,7 @@ var CONFIG = {
     640:[0.0110,0.0145,0.0175], 620:[0.0128,0.0165,0.0186],
   },
   /* ── PROPERTY VALUES — update annually ──────────────────── */
-  jumboLimit:          726200,  /* Conforming loan limit */
+  jumboLimit:          832750,  /* Conforming loan limit: FHFA 2026 one-unit baseline (fhfa.gov). Update every January. NOT the FHA MIP breakpoint. */
   homesteadExemption:  50000,   /* FL standard homestead exemption */
   /* ── INSURANCE DEFAULTS ──────────────────────────────────── */
   insuranceDefaultPct: 0.005,   /* 0.5% of purchase price annually */
@@ -2275,6 +2275,7 @@ var CONFIG = {
 };
 
 document.querySelectorAll('.app-version').forEach(function(el){ el.textContent = 'v' + CONFIG.version; });
+(function(){ var j=document.getElementById('jumbo-limit-text'); if(j) j.textContent=CONFIG.jumboLimit.toLocaleString(); })();
 
 document.getElementById('footer-email').textContent =
   CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1];
@@ -3044,8 +3045,6 @@ function refreshAll() {
     document.getElementById('pmi-est-sub').textContent=S.pmiOverride!=null
       ?'Using your manual override':'Based on $'+Math.round(loanAmt).toLocaleString()+' loan, '+S.downPct+'% down, FICO '+S.ficoVal+'+';
   }
-  if (lt==='FHA') document.getElementById('mip-val').textContent='$'+Math.round((loanAmt*CONFIG.fhaMipRate)/12)+'/mo';
-  if (lt==='USDA') document.getElementById('usda-val').textContent='$'+Math.round((loanAmt*CONFIG.usdaFeeRate)/12)+'/mo';
 
   /* Run math and render */
   var result=calcAll({
@@ -3057,6 +3056,14 @@ function refreshAll() {
     rentalActive:S.rentalActive, grossRent:S.grossRent, departingPitia:S.departingPitia,
     taxOverride:S.taxOverride, insOverride:S.insOverride, homestead:S.homestead,
   });
+  /* FHA/USDA cards show the engine's monthly MI (MI doesn't depend on income,
+     so before income is entered we ask the engine with a placeholder income). */
+  if (lt==='FHA' || lt==='USDA') {
+    var miRes = (result && !result.error) ? result
+      : calcAll({ income:1, rate:S.rate, loanType:S.loanType, purchasePrice:S.purchasePrice,
+                  downPct:S.downPct, termYears:S.termYears, ficoVal:S.ficoVal });
+    document.getElementById(lt==='FHA' ? 'mip-val' : 'usda-val').textContent = '$'+Math.round(miRes.monthlyMI)+'/mo';
+  }
   renderGauge(result);
   renderBreakdown(result);
   renderLenderThermo(result);
@@ -4895,7 +4902,7 @@ function initClientView(p) {
     if(typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined'){
       /* jsPDF not loaded — fallback to print */
       var w = window.open('','_blank');
-      if(w){ w.document.write('<pre>'+JSON.stringify(params,null,2)+'</pre>'); w.print(); }
+      if(w){ var pre = w.document.createElement('pre'); pre.textContent = JSON.stringify(params,null,2); w.document.body.appendChild(pre); w.print(); }
       return;
     }
     var jsPDFLib = (typeof window.jspdf !== 'undefined') ? window.jspdf.jsPDF : jsPDF;

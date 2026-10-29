@@ -26,11 +26,10 @@ These tests make sure no change to `index.html` quietly changes a payment or DTI
 
 **Known issues locked in on purpose** (each one should change only when it's deliberately fixed):
 
-- B2: FHA/USDA card shows `$NaN/mo` on the lender screen.
-- B3: the loan limit is 726,200, and the jumbo warning text says $806,500 (2026 limit is 832,750).
 - B5: VA/USDA 0% down becomes 5% on the client link.
 
 **Rules the tests enforce (beyond the numbers):**
 
 - B9 (fixed v8.30.2): the lender can't make a client link without a county or an actual tax bill. An old no-county link makes the client pick a location first (shown as "—" and "Enter your location to get started"), and Save Scenario is refused until they do.
 - P1.4 (v8.30.3): the version number is set in ONE place, `version:` at the top of CONFIG in the page. The header and footer read it from there, the tests fail if a hand-typed version appears anywhere, and "Publish preview to live" refuses a change that still has the live version number.
+- v8.30.4: FHA/USDA lender cards show the engine's monthly MI (B2). The loan limit is $832,750 and the jumbo warning reads it from CONFIG (B3). If the PDF library fails to load, the fallback shows plain text, never HTML (Q4).

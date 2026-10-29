@@ -35,8 +35,8 @@ module.exports = [
   { id: 'conv-15yr', note: '15-year term',
     in: { ...PINELLAS, loanType: 'CONV', purchasePrice: 350000, downPct: 25, termYears: 15, rate: 6.25, income: 14000, otherDebts: 300 } },
 
-  { id: 'conv-jumbo', note: 'Loan above conforming limit (KNOWN ISSUE B3: limit is still 726,200)',
-    in: { ...PINELLAS, loanType: 'CONV', purchasePrice: 900000, downPct: 15, rate: 7.25, income: 30000, otherDebts: 2000 } },
+  { id: 'conv-jumbo', note: 'Loan above the 2026 conforming limit of $832,750 (B3 fixed v8.30.4)',
+    in: { ...PINELLAS, loanType: 'CONV', purchasePrice: 1000000, downPct: 15, rate: 7.25, income: 30000, otherDebts: 2000 } },
 
   { id: 'fha-35-flood-cdd', note: 'FHA 3.5% down with flood insurance and a CDD',
     in: { ...HILLSBOROUGH, loanType: 'FHA', purchasePrice: 375000, downPct: 3.5, rate: 6.5, income: 9500, otherDebts: 700, floodActive: true, floodIns: 150, cddActive: true, cddAnnual: 1800 } },

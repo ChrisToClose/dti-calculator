@@ -231,6 +231,21 @@ async function readScreen(page, pattern) {
     }
   }
 
+  /* H. Q4: if the PDF library is missing, the fallback shows text, never HTML from the link */
+  await client.goto(PAGE + '?client=1&pp=400000&inc=11000&dbt=800&rt=7&cn=Pinellas%3Cb%20id%3Dinj%3EX%3C%2Fb%3E&mr=17.43&ts=x&nm=Test');
+  const fb = await client.evaluate(async () => {
+    window.jspdf = undefined; let d = null;
+    window.open = () => { d = document.implementation.createHTMLDocument('x'); return { document: d, print: () => {} }; };
+    window.fetch = async () => ({ ok: true, json: async () => ({ ok: true }) });
+    document.getElementById('save-email').value = 'a@example.com';
+    document.getElementById('save-label').value = 'x';
+    document.getElementById('save-address').value = '1 Main St';
+    document.getElementById('btn-save-scenario').click();
+    await new Promise((r) => setTimeout(r, 400));
+    return { opened: !!d, injected: !!(d && d.getElementById('inj')), hasText: !!(d && /Pinellas<b/.test(d.body.textContent)) };
+  });
+  if (!fb.opened || fb.injected || !fb.hasText) failures.push(`PDF fallback: ${JSON.stringify(fb)} (expected plain text, no HTML element)`);
+
   await browser.close();
 
   for (const e of pageErrors) failures.push('Page error — ' + e);

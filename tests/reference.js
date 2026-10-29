@@ -17,7 +17,7 @@ const RULES = {
   usdaUpfrontFee: 0.01,               // financed into the loan
   usdaAnnualFee: 0.0035,              // on the total (financed) loan
   rentalUsablePct: 0.75,              // 75% of gross rent counts
-  conformingLimit: 726200,            // KNOWN ISSUE B3: 2026 limit is 832,750
+  conformingLimit: 832750,            // FHFA 2026 one-unit baseline (fixed B3, v8.30.4)
   // MGIC monthly PMI rates by FICO: [LTV <=90, LTV 90-<95, LTV 95+]
   pmi: {
     760: [0.0019, 0.0041, 0.0058], 740: [0.0026, 0.0051, 0.0071],
