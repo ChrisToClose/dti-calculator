@@ -231,6 +231,12 @@ async function readScreen(page, pattern) {
     }
   }
 
+  /* I. Q8: every outside script must carry an integrity hash */
+  const noSri = await lender.evaluate(() => [...document.querySelectorAll('script[src]')]
+    .filter((s) => /^https?:/.test(s.src) && !/^sha(256|384|512)-/.test(s.getAttribute('integrity') || ''))
+    .map((s) => s.src));
+  noSri.forEach((u) => failures.push(`outside script without an integrity hash: ${u}`));
+
   /* H. Q4: if the PDF library is missing, the fallback shows text, never HTML from the link */
   await client.goto(PAGE + '?client=1&pp=400000&inc=11000&dbt=800&rt=7&cn=Pinellas%3Cb%20id%3Dinj%3EX%3C%2Fb%3E&mr=17.43&ts=x&nm=Test');
   const fb = await client.evaluate(async () => {
