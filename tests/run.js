@@ -18,6 +18,9 @@
         for a location and Save Scenario is refused (B9)
      G. the version number shown on both screens comes from the single
         CONFIG.version setting, with no hand-typed copies left (P1.4)
+     H. no-PDF fallback shows plain text (Q4)   I. outside scripts have SRI (Q8)
+     J. client links (Q1): impossible values show the "link problem"
+        screen (no payment), and real zeros stay zero
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -43,8 +46,7 @@ const CENT = 0.005;
    the master list). They are reported but don't fail the run. If one
    disappears, the run says so — then remove it from this list. */
 const KNOWN_SCREEN_DIFFS = {
-  'va-0-down': 'B5 — client link turns 0% down into 5%',
-  'usda-0-down': 'B5 — client link turns 0% down into 5%',
+  // (empty) B5 fixed in v8.30.7 by Q1 — VA/USDA 0% down now stays 0%.
 };
 
 const ENGINE_FIELDS = ['loanAmt', 'ufmip', 'pi', 'monthlyTax', 'monthlyIns', 'monthlyMI',
@@ -251,6 +253,46 @@ async function readScreen(page, pattern) {
     return { opened: !!d, injected: !!(d && d.getElementById('inj')), hasText: !!(d && /Pinellas<b/.test(d.body.textContent)) };
   });
   if (!fb.opened || fb.injected || !fb.hasText) failures.push(`PDF fallback: ${JSON.stringify(fb)} (expected plain text, no HTML element)`);
+
+  /* J. Q1: link reader — bad links refused, real zeros kept */
+  const BASE = PAGE + '?client=1&pp=400000&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43&ts=x&nm=Test';
+  const badLinks = {
+    'negative tax': BASE + '&tax=-10000',
+    'unknown loan type': BASE + '&lt=BAD',
+    'price is text': BASE.replace('pp=400000', 'pp=abc'),
+    'income missing': BASE.replace('inc=11000&', ''),
+    'rate missing': BASE.replace('rt=7&', ''),
+    'down payment 100%': BASE + '&dp=100',
+    'unknown FICO tier': BASE + '&fco=999',
+    'negative HOA': BASE + '&hoa=-50',
+  };
+  for (const [name, url] of Object.entries(badLinks)) {
+    await client.goto(url);
+    const r = await client.evaluate(() => ({
+      problem: !!document.getElementById('link-problem'),
+      calcShown: document.getElementById('client-page').style.display !== 'none',
+    }));
+    if (!r.problem || r.calcShown) failures.push(`Q1 bad link (${name}): expected the "link problem" screen, got ${JSON.stringify(r)}`);
+  }
+  const zeroChecks = [
+    ['VA 0% down', BASE + '&lt=VA&dp=0', 'client-down-pct', '0%'],
+    ['USDA 0% down', BASE + '&lt=USDA&dp=0', 'client-down-pct', '0%'],
+    ['0% rate shown', BASE.replace('rt=7', 'rt=0') + '&rr=1', 'client-rate-display', '0.000%'],
+    ['$0 flood', BASE + '&fld=1&fi=0', 'client-flood-val', '$0/mo'],
+  ];
+  for (const [name, url, id, want] of zeroChecks) {
+    await client.goto(url);
+    const got = await client.evaluate((i) => ({
+      text: (document.getElementById(i) || {}).textContent,
+      problem: !!document.getElementById('link-problem'),
+      sliderMin: document.getElementById('client-down').min,
+    }), id);
+    if (got.problem || got.text !== want) failures.push(`Q1 zero kept (${name}): ${id} = ${JSON.stringify(got.text)}, expected "${want}"${got.problem ? ' (link problem screen shown)' : ''}`);
+    if (/0% down/.test(name) && got.sliderMin !== '0') failures.push(`Q1 ${name}: down-payment slider starts at ${got.sliderMin}%, expected 0%`);
+  }
+  // A normal link must NOT show the problem screen
+  await client.goto(BASE);
+  if (await client.evaluate(() => !!document.getElementById('link-problem'))) failures.push('Q1: a normal link showed the "link problem" screen');
 
   await browser.close();
 

@@ -2230,7 +2230,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.30.6',
+  version: '8.30.7',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -3171,9 +3171,15 @@ document.querySelectorAll('.loan-btn').forEach(function(btn){
     document.querySelectorAll('.loan-btn').forEach(function(b){b.classList.remove('active');});
     this.classList.add('active');
     S.loanType=this.dataset.loan;
+    /* Q1: VA/USDA allow 0% down; CONV/FHA start at 3% */
+    var ds=document.getElementById('down-slider');
+    ds.min=downSliderMin(S.loanType);
+    if(S.downPct<Number(ds.min)){ S.downPct=Number(ds.min); ds.value=S.downPct; }
     refreshAll();
   });
 });
+/* Lowest down payment the sliders allow for each loan type (Q1) */
+function downSliderMin(loanType){ return (loanType==='VA'||loanType==='USDA') ? 0 : 3; }
 
 /* ============================================================
    SECTION: SLIDERS
@@ -3626,6 +3632,95 @@ document.getElementById('btn-open-client').addEventListener('click',function(){
 
 
 /* ============================================================
+   SECTION: CLIENT LINK READER (Q1, v8.30.7)
+   One place reads every value from a client link.
+   - A default is used ONLY when the value is missing, so a real 0
+     (0% down, 0% rate, $0 flood) stays 0.
+   - Anything impossible (text, negatives, out of range, unknown loan
+     type or FICO tier, missing price/income/rate) is a "problem":
+     the client sees a "link problem" screen instead of a payment.
+   ============================================================ */
+function readClientLink(p) {
+  var problems = [];
+  function raw(k) { var v = p.get(k); return (v == null || String(v).trim() === '') ? null : String(v).trim(); }
+  function num(k, label, def, min, max, opts) {
+    opts = opts || {};
+    var v = raw(k);
+    if (v == null) {
+      if (opts.required) problems.push(label + ' is missing');
+      return def;
+    }
+    var n = Number(v);
+    if (!isFinite(n) || n < min || n > max || (opts.below != null && n >= opts.below) || (opts.int && n !== Math.floor(n))) {
+      problems.push(label + ' is not a valid number');
+      return def;
+    }
+    return n;
+  }
+  var LOAN_TYPES = ['CONV', 'FHA', 'VA', 'USDA'];
+  var lt = raw('lt') == null ? 'CONV' : raw('lt');
+  if (LOAN_TYPES.indexOf(lt) === -1) { problems.push('Loan type is not recognized'); lt = 'CONV'; }
+
+  var fco = num('fco', 'Credit score tier', 760, 0, 1000, { int: true });
+  if (!CONFIG.pmiTable[fco]) { problems.push('Credit score tier is not recognized'); fco = 760; }
+
+  var BIG = 1e8;
+  var values = {
+    loanType:      lt,
+    purchasePrice: num('pp',  'Purchase price',   0,    1, BIG, { required: true }),
+    downPct:       num('dp',  'Down payment',     5,    0, 100, { below: 100 }),
+    termYears:     num('tm',  'Loan term',        30,   1, 40,  { int: true }),
+    income:        num('inc', 'Income',           0,    0.01, BIG, { required: true }),
+    otherDebts:    num('dbt', 'Other debts',      0,    0, BIG),
+    rate:          num('rt',  'Interest rate',    0,    0, 30,  { required: true }),
+    rateReveal:    p.get('rr') === '1',
+    hoa:           num('hoa', 'HOA',              0,    0, BIG),
+    countyName:    raw('cn'),
+    countyMillRate:num('mr',  'County tax rate',  null, 0, 100),
+    homestead:     p.get('hs') !== '0',
+    taxOverride:   num('tax', 'Property tax',     null, 0, BIG),
+    insOverride:   num('ins', 'Insurance',        null, 0, BIG),
+    floodActive:   p.get('fld') === '1',
+    floodIns:      num('fi',  'Flood insurance',  100,  0, BIG),
+    cddActive:     p.get('cdd') === '1',
+    cddAnnual:     num('ca',  'CDD',              0,    0, BIG),
+    ficoVal:       fco,
+    pmiOverride:   num('pmi', 'PMI',              null, 0, BIG),
+    rentalActive:  p.get('ren') === '1',
+    grossRent:     num('grn', 'Rental income',    0,    0, BIG),
+    departingPitia:num('pit', 'Departing payment',0,    0, BIG),
+    ts:            p.get('ts') || '',
+    clientName:    p.get('nm') || '',
+  };
+  return { values: values, problems: problems };
+}
+
+/* Shown instead of the calculator when a client link has a problem.
+   Built with textContent only — nothing from the link is shown. */
+function showLinkProblem(problems) {
+  applyMode(!isDayTime());
+  var cp = document.getElementById('client-page');
+  if (cp) cp.style.display = 'none';
+  var box = document.createElement('div');
+  box.id = 'link-problem';
+  box.style.cssText = 'max-width:440px;margin:60px auto;padding:28px 24px;background:var(--surface);border:2px solid var(--amber);border-radius:12px;text-align:center;font-family:inherit;color:var(--text);';
+  var h = document.createElement('h2');
+  h.style.cssText = 'font-size:20px;font-weight:800;margin:0 0 12px;color:var(--text);';
+  h.textContent = 'This link has a problem';
+  var t = document.createElement('p');
+  t.style.cssText = 'font-size:14px;line-height:1.6;margin:0 0 18px;color:var(--text-muted);';
+  t.textContent = 'Some of the numbers in this link are missing or don’t look right, so we can’t show an accurate payment. Please contact ' +
+    CONFIG.lender.name.split(' ')[0] + ' for a fresh link.';
+  var a = document.createElement('a');
+  a.href = 'tel:' + CONFIG.lender.phone;
+  a.textContent = 'Call ' + CONFIG.lender.phoneDisplay;
+  a.style.cssText = 'display:inline-block;padding:12px 22px;border-radius:8px;background:var(--yellow);color:#1B3A6B;font-weight:800;text-decoration:none;';
+  box.appendChild(h); box.appendChild(t); box.appendChild(a);
+  box.setAttribute('data-problems', problems.length);
+  document.body.appendChild(box);
+}
+
+/* ============================================================
    SECTION: INIT
    ============================================================ */
 (function(){
@@ -3637,6 +3732,8 @@ document.getElementById('btn-open-client').addEventListener('click',function(){
     document.getElementById('client-page').style.display='block';
     /* Show help button on client view */
     var hb=document.getElementById('help-btn');
+    var linkCheck = readClientLink(p);
+    if (linkCheck.problems.length) { showLinkProblem(linkCheck.problems); return; }
     if(hb) hb.style.display='flex';
     initClientView(p);
     return;
@@ -3650,34 +3747,8 @@ document.getElementById('btn-open-client').addEventListener('click',function(){
    ============================================================ */
 function initClientView(p) {
 
-  /* -- Parse URL params -- */
-  var CP = {
-    loanType:  p.get('lt')||'CONV',
-    purchasePrice: parseFloat(p.get('pp'))||400000,
-    downPct:   parseFloat(p.get('dp'))||5,
-    termYears: parseInt(p.get('tm'))||30,
-    income:    parseFloat(p.get('inc'))||0,
-    otherDebts:parseFloat(p.get('dbt'))||0,
-    rate:      parseFloat(p.get('rt'))||7,
-    rateReveal:p.get('rr')==='1',
-    hoa:       parseFloat(p.get('hoa'))||0,
-    countyName:p.get('cn')||null,
-    countyMillRate: p.get('mr')?parseFloat(p.get('mr')):null,
-    homestead: p.get('hs')!=='0',
-    taxOverride: p.get('tax')?parseFloat(p.get('tax')):null,
-    insOverride: p.get('ins')?parseFloat(p.get('ins')):null,
-    floodActive: p.get('fld')==='1',
-    floodIns:  parseFloat(p.get('fi'))||100,
-    cddActive: p.get('cdd')==='1',
-    cddAnnual: parseFloat(p.get('ca'))||0,
-    ficoVal:   parseInt(p.get('fco'))||760,
-    pmiOverride: p.get('pmi')?parseFloat(p.get('pmi')):null,
-    rentalActive: p.get('ren')==='1',
-    grossRent: parseFloat(p.get('grn'))||0,
-    departingPitia: parseFloat(p.get('pit'))||0,
-    ts: p.get('ts')||'',
-    clientName: p.get('nm')||'',
-  };
+  /* -- Parse URL params (Q1: one checked reader; see readClientLink) -- */
+  var CP = readClientLink(p).values;
 
   /* -- Client state -- */
   var CS = {
@@ -3797,6 +3868,7 @@ function initClientView(p) {
   /* -- Pre-fill sliders from URL -- */
   document.getElementById('client-price').value = CS.purchasePrice;
   document.getElementById('client-price-val').textContent = '$'+CS.purchasePrice.toLocaleString();
+  document.getElementById('client-down').min = downSliderMin(CS.loanType);
   document.getElementById('client-down').value = CS.downPct;
   document.getElementById('client-down-pct').textContent = CS.downPct+'%';
   document.getElementById('client-down-amt').textContent = '($'+Math.round(CS.purchasePrice*(CS.downPct/100)).toLocaleString()+')';

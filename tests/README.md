@@ -26,7 +26,7 @@ These tests make sure no change to `index.html` quietly changes a payment or DTI
 
 **Known issues locked in on purpose** (each one should change only when it's deliberately fixed):
 
-- B5: VA/USDA 0% down becomes 5% on the client link.
+- (none) — B5 fixed in v8.30.7 (Q1).
 
 **Rules the tests enforce (beyond the numbers):**
 
@@ -34,3 +34,4 @@ These tests make sure no change to `index.html` quietly changes a payment or DTI
 - P1.4 (v8.30.3): the version number is set in ONE place, `version:` at the top of CONFIG in the page. The header and footer read it from there, the tests fail if a hand-typed version appears anywhere, and "Publish preview to live" refuses a change that still has the live version number.
 - v8.30.4: FHA/USDA lender cards show the engine's monthly MI (B2). The loan limit is $832,750 and the jumbo warning reads it from CONFIG (B3). If the PDF library fails to load, the fallback shows plain text, never HTML (Q4).
 - v8.30.5: every outside script (jsPDF, qrcode-generator) carries an SRI integrity hash; the tests fail if one is missing (Q8). Hashes were checked two ways: computed from the served files and matched against cdnjs's published values.
+- v8.30.7 (Q1): one link reader (`readClientLink`). A default is used only when a value is missing, so real zeros stay zero (VA/USDA 0% down, 0% rate, $0 flood). Impossible values (text, negatives, unknown loan type or FICO tier, missing price/income/rate, 100% down) show a "This link has a problem" screen with no payment. VA/USDA down-payment sliders start at 0%. Test J checks 8 bad links, 4 zero cases and a normal link.
