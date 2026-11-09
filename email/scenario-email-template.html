@@ -1,0 +1,121 @@
+<!-- ============================================================
+  "Save Scenario" email — EmailJS template (template_9m8q81g)
+  Paste this whole file into EmailJS → Email Templates → (template) → Content → "Edit Content" (code view).
+  Matches the PDF: navy header, DTI boxes + real DTI bar, payment / loan / location tables.
+  Double-brace fields are filled in by the Worker (tax-worker.js). Built with tables + inline styles
+  because email apps (Gmail, Outlook, iPhone Mail) ignore most modern CSS.
+  The headshot is hosted at christoclose.github.io/dti-calculator/email/headshot.jpg
+  ============================================================ -->
+<div style="margin:0;padding:0;background:#F3F5F9;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3F5F9;">
+<tr><td align="center" style="padding:16px 8px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#FFFFFF;font-family:Helvetica,Arial,sans-serif;color:#1B2A41;">
+
+  <!-- HEADER -->
+  <tr><td style="background:#1B3A6B;border-left:8px solid #2B7FA4;padding:20px 20px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+      <td width="84" valign="middle" style="padding-right:14px;">
+        <img src="https://christoclose.github.io/dti-calculator/email/headshot.jpg" width="72" height="72" alt="Chris Greenidge" style="display:block;width:72px;height:72px;border-radius:50%;border:3px solid #F5A623;">
+      </td>
+      <td valign="middle">
+        <div style="font-size:10px;letter-spacing:1px;color:#5DB4D8;font-weight:bold;">CHRISTOCLOSE</div>
+        <div style="font-size:20px;font-weight:bold;color:#FFFFFF;line-height:1.3;">Housing Payment Calculator</div>
+        <div style="font-size:11px;color:#C9D4E5;line-height:1.6;">Chris Greenidge &bull; Senior Loan Officer &bull; American Pacific Mortgage &bull; NMLS# 2073018</div>
+        <div style="font-size:11px;color:#C9D4E5;line-height:1.6;"><a href="tel:7276421374" style="color:#C9D4E5;text-decoration:none;">727.642.1374</a> &bull; <a href="mailto:cgreenidge@apmortgage.com" style="color:#C9D4E5;text-decoration:none;">cgreenidge@apmortgage.com</a> &bull; <a href="https://christoclose.com" style="color:#C9D4E5;text-decoration:none;">christoclose.com</a></div>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- TITLE -->
+  <tr><td style="padding:20px 20px 6px;">
+    <div style="font-size:22px;font-weight:bold;color:#1B3A6B;">{{scenario_label}}</div>
+    <div style="font-size:12px;color:#6B7A90;padding-top:4px;">{{property_address}} &bull; Prepared by Chris Greenidge &bull; {{prepared_date}}</div>
+  </td></tr>
+
+  <!-- DTI BOXES -->
+  <tr><td style="padding:12px 20px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="49%" align="center" style="border:2px solid {{status_color}};padding:12px 6px;">
+        <div style="font-size:11px;color:#6B7A90;font-weight:bold;letter-spacing:0.5px;">FRONT-END DTI</div>
+        <div style="font-size:28px;font-weight:bold;color:{{status_color}};padding-top:4px;">{{front_dti}}</div>
+      </td>
+      <td width="2%">&nbsp;</td>
+      <td width="49%" align="center" style="border:2px solid {{status_color}};padding:12px 6px;">
+        <div style="font-size:11px;color:#6B7A90;font-weight:bold;letter-spacing:0.5px;">BACK-END DTI</div>
+        <div style="font-size:28px;font-weight:bold;color:{{status_color}};padding-top:4px;">{{back_dti}}</div>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- STATUS + DTI BAR -->
+  <tr><td style="padding:12px 20px 0;">
+    <div style="background:{{status_color}};color:#FFFFFF;font-size:14px;font-weight:bold;text-align:center;padding:9px;border-radius:6px;">{{dti_status}}</div>
+  </td></tr>
+  <tr><td style="padding:14px 20px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="{{bar_pos}}%" style="font-size:1px;line-height:1px;">&nbsp;</td>
+      <td style="font-size:11px;font-weight:bold;color:#1B3A6B;white-space:nowrap;line-height:14px;">&#9660; You: {{back_dti}}</td>
+    </tr></table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:2px;"><tr>
+      <td width="{{bar_ok}}%" height="12" style="background:#27AE60;font-size:1px;line-height:1px;">&nbsp;</td>
+      <td width="{{bar_warn}}%" height="12" style="background:#E8A317;font-size:1px;line-height:1px;">&nbsp;</td>
+      <td width="{{bar_over}}%" height="12" style="background:#E74C3C;font-size:1px;line-height:1px;">&nbsp;</td>
+    </tr></table>
+    <div style="font-size:11px;color:#6B7A90;padding-top:6px;">Back-end DTI: <span style="color:#27AE60;font-weight:bold;">comfortable under {{dti_warn}}%</span> &bull; <span style="color:#C0392B;font-weight:bold;">maximum {{dti_max}}%</span> for {{loan_type}} loans</div>
+    <div style="font-size:11px;color:#C0392B;font-weight:bold;padding-top:4px;">{{pdf_note}}</div>
+  </td></tr>
+
+  <!-- MONTHLY PAYMENT BREAKDOWN -->
+  <tr><td style="padding:14px 20px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px;">
+      <tr><td colspan="2" style="background:#2B7FA4;color:#FFFFFF;font-size:11px;font-weight:bold;letter-spacing:0.5px;padding:7px 10px;">MONTHLY PAYMENT BREAKDOWN</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Principal &amp; Interest</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{monthly_pi}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Property Tax</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{monthly_tax}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Home Insurance</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{monthly_ins}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Mortgage Insurance</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{pmi}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">HOA</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{hoa}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Flood Insurance</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{flood}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">CDD</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{cdd}}</td></tr>
+      <tr><td style="padding:9px 10px;background:#1B3A6B;color:#FFFFFF;font-weight:bold;">Total Housing Payment</td><td align="right" style="padding:9px 10px;background:#1B3A6B;color:#FFFFFF;font-weight:bold;">{{housing_payment}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Other Monthly Debts</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{other_debts}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Rental Shortfall</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{rental_shortfall}}</td></tr>
+      <tr><td style="padding:9px 10px;background:#1B3A6B;color:#FFFFFF;font-weight:bold;">Total Monthly Obligations</td><td align="right" style="padding:9px 10px;background:#1B3A6B;color:#FFFFFF;font-weight:bold;">{{total_obligations}}</td></tr>
+    </table>
+  </td></tr>
+
+  <!-- LOAN DETAILS -->
+  <tr><td style="padding:14px 20px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px;">
+      <tr><td colspan="2" style="background:#2B7FA4;color:#FFFFFF;font-size:11px;font-weight:bold;letter-spacing:0.5px;padding:7px 10px;">LOAN DETAILS</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Loan Type</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{loan_type}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Purchase Price</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{purchase_price}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Down Payment</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{down_payment}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Loan Term</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{term}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Interest Rate</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{rate}}</td></tr>
+    </table>
+  </td></tr>
+
+  <!-- LOCATION & TAX -->
+  <tr><td style="padding:14px 20px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px;">
+      <tr><td colspan="2" style="background:#2B7FA4;color:#FFFFFF;font-size:11px;font-weight:bold;letter-spacing:0.5px;padding:7px 10px;">LOCATION &amp; TAX</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">County</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{county}}</td></tr>
+      <tr><td style="padding:7px 10px;color:#4A5568;">Mill Rate</td><td align="right" style="padding:7px 10px;font-weight:bold;color:#1B3A6B;">{{mill_rate}}</td></tr>
+      <tr><td style="padding:7px 10px;background:#F1F3F8;color:#4A5568;">Homestead Exemption</td><td align="right" style="padding:7px 10px;background:#F1F3F8;font-weight:bold;color:#1B3A6B;">{{homestead}}</td></tr>
+    </table>
+  </td></tr>
+
+  <!-- CALL TO ACTION -->
+  <tr><td align="center" style="padding:20px 20px 4px;">
+    <a href="tel:7276421374" style="display:inline-block;background:#F5A623;color:#1B3A6B;font-weight:bold;font-size:14px;text-decoration:none;padding:12px 22px;border-radius:6px;">Questions? Call Chris &mdash; 727.642.1374</a>
+  </td></tr>
+
+  <!-- DISCLAIMER + FOOTER -->
+  <tr><td style="padding:16px 20px 20px;">
+    <div style="border-top:1px solid #E2E8F0;padding-top:12px;font-size:11px;line-height:1.6;color:#8A97AB;">{{disclaimer}} &bull; Equal Housing Opportunity &bull; Proud to be Employee Owned</div>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</div>

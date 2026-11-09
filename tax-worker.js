@@ -51,6 +51,10 @@ const SCENARIO_FIELDS = [
   'other_debts', 'total_obligations', 'front_dti', 'back_dti', 'dti_status', 'pdf_note',
   'prepared_date', 'disclaimer',
 ];
+// Numbers for the email's DTI bar (0–100). Anything that isn't a number in range is dropped.
+const SCENARIO_NUMBER_FIELDS = ['bar_ok', 'bar_warn', 'bar_over', 'bar_pos', 'dti_warn', 'dti_max'];
+// Colour of the status badge / DTI figures, chosen here from the status text (not from the browser).
+const STATUS_COLORS = { 'Looks Good': '#27AE60', 'Approaching Limit': '#E8A317', 'OVER LIMIT': '#E74C3C' };
 
 export default {
   async fetch(request, env, ctx) {
@@ -284,6 +288,14 @@ async function handleSendScenario(request, env, json) {
       params[key] = String(incoming[key]).slice(0, key === 'disclaimer' ? 600 : 200);
     }
   }
+
+  for (const key of SCENARIO_NUMBER_FIELDS) {
+    const v = Number(incoming[key]);
+    if (incoming[key] !== undefined && incoming[key] !== null && incoming[key] !== '' && isFinite(v) && v >= 0 && v <= 100) {
+      params[key] = String(Math.round(v * 10) / 10);
+    }
+  }
+  params.status_color = STATUS_COLORS[params.dti_status] || '#2B7FA4';
 
   params.to_email = (params.to_email || '').trim();
   if (params.to_email.length > 254 || !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(params.to_email)) {

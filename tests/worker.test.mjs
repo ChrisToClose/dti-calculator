@@ -22,10 +22,11 @@ const check = (name, cond, detail) => { if (!cond) failures.push(name + (detail 
 
 /* Fake outside world */
 let emailsSent = 0;
+let lastEmail = null;
 let turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
-globalThis.fetch = async (url) => {
+globalThis.fetch = async function (url) {
   url = String(url);
-  if (url.includes('api.emailjs.com')) { emailsSent++; return new Response('OK', { status: 200 }); }
+  if (url.includes('api.emailjs.com')) { emailsSent++; lastEmail = JSON.parse(arguments[1].body); return new Response('OK', { status: 200 }); }
   if (url.includes('turnstile/v0/siteverify')) return new Response(JSON.stringify(turnstileAnswer), { status: 200 });
   throw new Error('unexpected outside call: ' + url);
 };
@@ -131,6 +132,17 @@ const baseEnv = () => ({ EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_
 /* 9. Lender CC is still forced by the Worker */
 {
   check('lender CC still set by the Worker', /params\.cc_email = EMAILJS_SETTINGS\.lenderEmail/.test(src));
+}
+/* 9b. DTI bar numbers: only real numbers 0–100 pass; badge colour set by the Worker */
+{
+  const env = baseEnv();
+  await send(env, params('m@example.com', { bar_ok: 71.7, bar_warn: '11.7', bar_over: 16.6, bar_pos: '<b>x</b>', dti_warn: 150, dti_max: -1, dti_status: 'Approaching Limit', status_color: 'red;background:url(x)' }), 'tok');
+  const p = lastEmail && lastEmail.template_params || {};
+  check('bar numbers kept', p.bar_ok === '71.7' && p.bar_warn === '11.7' && p.bar_over === '16.6', JSON.stringify(p));
+  check('bad bar values dropped', p.bar_pos === undefined && p.dti_warn === undefined && p.dti_max === undefined, JSON.stringify(p));
+  check('status colour chosen by the Worker, not the browser', p.status_color === '#E8A317', p.status_color);
+  await send(env, params('n@example.com', { dti_status: 'whatever' }), 'tok');
+  check('unknown status gets the neutral colour', lastEmail.template_params.status_color === '#2B7FA4');
 }
 /* 10. Missing token: allowed only while TURNSTILE_REQUIRED is false */
 {

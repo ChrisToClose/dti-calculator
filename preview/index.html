@@ -4932,6 +4932,19 @@ function initClientView(p) {
       prepared_date:    dateStr,
       disclaimer:       'Rate, payment estimates, and qualification figures are subject to change and do not constitute a loan commitment. Contact Chris for current pricing and a formal pre-approval.',
     };
+    /* DTI bar for the email (same limits as the on-screen bar): zone widths and
+       the marker position as % of a scale that runs to 10 points past the max. */
+    var thr = CONFIG.dtiThresholds[CS.loanType];
+    if (thr && result && !result.error) {
+      var scale = thr.backMax + 10;
+      var pctOf = function(v){ return (Math.round(Math.min(Math.max(v,0),scale)/scale*1000)/10); };
+      templateParams.bar_ok   = pctOf(thr.backWarn);
+      templateParams.bar_warn = Math.round((pctOf(thr.backMax) - pctOf(thr.backWarn))*10)/10;
+      templateParams.bar_over = Math.round((100 - pctOf(thr.backMax))*10)/10;
+      templateParams.bar_pos  = pctOf(result.backDTI);
+      templateParams.dti_warn = thr.backWarn;
+      templateParams.dti_max  = thr.backMax;
+    }
 
     var btn=document.getElementById('btn-save-scenario');
     btn.textContent='Sending\u2026'; btn.disabled=true;
