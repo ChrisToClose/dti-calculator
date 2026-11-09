@@ -1,0 +1,9 @@
+{
+  // Throwaway Realie bake-off Worker (C6). NOT the live tax Worker. Delete after the test.
+  "name": "christoclose-realie-lab",
+  "compatibility_date": "2026-10-19",
+  "main": "worker.js",
+  "kv_namespaces": [
+    { "binding": "LAB_KV", "id": "38136e1bd7bb417894a0a430bc349b41" }
+  ]
+}
