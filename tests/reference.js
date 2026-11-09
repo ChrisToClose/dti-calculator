@@ -92,11 +92,12 @@ function reference(s) {
   const back = (housing + (s.otherDebts || 0) + shortfall) / s.income * 100;
 
   const t = RULES.dti[s.loanType];
-  // Note: the front-end ratio is compared to the BACK maximum for "over" (today's rule).
+  // Front-end status is still worked out for reference, but no longer affects the overall status.
   const frontStatus = t.frontWarn == null ? 'ok' : front < t.frontWarn ? 'ok' : front <= t.backMax ? 'warn' : 'over';
   const backStatus = back < t.backWarn ? 'ok' : back <= t.backMax ? 'warn' : 'over';
-  const overall = [frontStatus, backStatus].includes('over') ? 'over'
-    : [frontStatus, backStatus].includes('warn') ? 'warn' : 'ok';
+  // Nov 9, 2026 (Chris): overall status follows the back-end ratio only.
+  void frontStatus;
+  const overall = backStatus;
 
   return {
     loanAmt: loan, ufmip: upfront, pi, monthlyTax: tax, monthlyIns: ins, monthlyMI: mi,

@@ -11,7 +11,7 @@
       "rentalShortfall": 0,
       "frontDTI": 30.79,
       "backDTI": 38.06,
-      "overallStatus": "warn",
+      "overallStatus": "ok",
       "isJumbo": false
     },
     "lenderScreen": {
@@ -49,7 +49,7 @@
       "cbr-mi": "$184",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$3,387",
-      "client-status-badge": "Approaching DTI Limit",
+      "client-status-badge": "Debt-to-Income looks great!",
       "client-unlock-msg": "✓ You're all set — Chris loaded your numbers. Start exploring.",
       "client-price-val": "$400,000",
       "client-price-pencil": "✎",
@@ -142,7 +142,7 @@
       "rentalShortfall": 0,
       "frontDTI": 29.74,
       "backDTI": 36.97,
-      "overallStatus": "warn",
+      "overallStatus": "ok",
       "isJumbo": false
     },
     "lenderScreen": {
@@ -180,7 +180,7 @@
       "cbr-mi": "$173",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$2,677",
-      "client-status-badge": "Approaching DTI Limit",
+      "client-status-badge": "Debt-to-Income looks great!",
       "client-unlock-msg": "✓ You're all set — Chris loaded your numbers. Start exploring.",
       "client-price-val": "$325,000",
       "client-price-pencil": "✎",
@@ -210,7 +210,7 @@
       "rentalShortfall": 0,
       "frontDTI": 31.98,
       "backDTI": 36.98,
-      "overallStatus": "warn",
+      "overallStatus": "ok",
       "isJumbo": false
     },
     "lenderScreen": {
@@ -248,7 +248,7 @@
       "cbr-mi": "$191",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$2,558",
-      "client-status-badge": "Approaching DTI Limit",
+      "client-status-badge": "Debt-to-Income looks great!",
       "client-unlock-msg": "✓ You're all set — Chris loaded your numbers. Start exploring.",
       "client-price-val": "$300,000",
       "client-price-pencil": "✎",
@@ -346,7 +346,7 @@
       "rentalShortfall": 0,
       "frontDTI": 29.98,
       "backDTI": 37.26,
-      "overallStatus": "warn",
+      "overallStatus": "ok",
       "isJumbo": false
     },
     "lenderScreen": {
@@ -384,7 +384,7 @@
       "cbr-mi": "$95",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$3,298",
-      "client-status-badge": "Approaching DTI Limit",
+      "client-status-badge": "Debt-to-Income looks great!",
       "cbr-pmi-badge": "QUOTED",
       "client-unlock-msg": "✓ You're all set — Chris loaded your numbers. Start exploring.",
       "client-price-val": "$400,000",
@@ -879,7 +879,7 @@
       "rentalShortfall": 0,
       "frontDTI": 31.47,
       "backDTI": 36.14,
-      "overallStatus": "warn",
+      "overallStatus": "ok",
       "isJumbo": false
     },
     "lenderScreen": {
@@ -916,7 +916,7 @@
       "cbr-mi": "$82",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$2,360",
-      "client-status-badge": "Approaching DTI Limit",
+      "client-status-badge": "Debt-to-Income looks great!",
       "cbr-ufmip-note": "USDA: $2,800 upfront guarantee fee financed into loan.",
       "client-unlock-msg": "✓ You're all set — Chris loaded your numbers. Start exploring.",
       "client-price-val": "$280,000",
@@ -947,7 +947,7 @@
       "rentalShortfall": 0,
       "frontDTI": 30.23,
       "backDTI": 34.89,
-      "overallStatus": "warn",
+      "overallStatus": "ok",
       "isJumbo": false
     },
     "lenderScreen": {
@@ -984,7 +984,7 @@
       "cbr-mi": "$78",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$2,267",
-      "client-status-badge": "Approaching DTI Limit",
+      "client-status-badge": "Debt-to-Income looks great!",
       "cbr-ufmip-note": "USDA: $2,660 upfront guarantee fee financed into loan.",
       "client-unlock-msg": "✓ You're all set — Chris loaded your numbers. Start exploring.",
       "client-price-val": "$280,000",
