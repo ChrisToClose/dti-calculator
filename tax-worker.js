@@ -40,7 +40,7 @@ const EMAIL_LIMITS = {
 // Turnstile ("I'm human" check). While false, a request WITHOUT a token is still
 // accepted (so the live page keeps working until the new page is published);
 // a request WITH a bad token is always refused. Set true once the page sends tokens.
-const TURNSTILE_REQUIRED = false;
+const TURNSTILE_REQUIRED = true;   // switched on Nov 9, 2026 after v8.30.8 went live
 const TURNSTILE_HOSTNAMES = ['christoclose.github.io'];
 
 // Only these template fields are accepted from the browser (anything else is dropped).
