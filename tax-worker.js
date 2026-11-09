@@ -24,7 +24,7 @@ const COUNTY_TIMEOUT_MS = 8000;
 // private key is the EMAILJS_PRIVATE_KEY Worker secret. (White-label: per-LO values.)
 const EMAILJS_SETTINGS = {
   serviceId: 'service_zj9mg9w', // "ChrisToClose sold" (sold@christoclose.com). Was service_jmgkuj5 (APM Outlook) — APM's Microsoft 365 blocked EmailJS, Nov 9, 2026.
-  templateId: 'template_9m8q81g',
+  templateId: 'template_y4abscl', // new PDF-style template (email/scenario-email-template.html), Nov 9, 2026. Old template_9m8q81g was deleted.
   publicKey: 'NyULYxc1h8OKkvdOA',
   lenderEmail: 'cgreenidge@apmortgage.com', // always CC'd; cannot be changed by the browser
 };
