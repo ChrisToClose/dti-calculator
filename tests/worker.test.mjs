@@ -1,0 +1,150 @@
+/* ============================================================
+   WORKER TESTS — Save Scenario protection (Q7)
+   Run: node tests/worker.test.mjs
+   Loads the real tax-worker.js with a fake EmailJS, a fake
+   Turnstile check and fake KV storage — nothing real is sent.
+   Exit code 0 = all good, 1 = something is wrong.
+   ============================================================ */
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const src = fs.readFileSync(path.join(ROOT, 'tax-worker.js'), 'utf8');
+const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'wt-')), 'worker.mjs');
+fs.writeFileSync(tmp, src);
+const worker = (await import(pathToFileURL(tmp).href)).default;
+
+const ORIGIN = 'https://christoclose.github.io';
+const failures = [];
+const check = (name, cond, detail) => { if (!cond) failures.push(name + (detail ? ' — ' + detail : '')); };
+
+/* Fake outside world */
+let emailsSent = 0;
+let turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+globalThis.fetch = async (url) => {
+  url = String(url);
+  if (url.includes('api.emailjs.com')) { emailsSent++; return new Response('OK', { status: 200 }); }
+  if (url.includes('turnstile/v0/siteverify')) return new Response(JSON.stringify(turnstileAnswer), { status: 200 });
+  throw new Error('unexpected outside call: ' + url);
+};
+function fakeKV() {
+  const m = new Map();
+  return {
+    m,
+    async get(k, type) { const v = m.has(k) ? m.get(k) : null; return v == null ? null : type === 'json' ? JSON.parse(v) : v; },
+    async put(k, v) { m.set(k, v); },
+  };
+}
+const okLimiter = { limit: async () => ({ success: true }) };
+
+let n = 0;
+function params(to, extra) {
+  return { to_email: to, scenario_label: 'Test ' + (++n), property_address: '1 Main St', housing_payment: '$3,000', ...extra };
+}
+async function send(env, p, token) {
+  const body = { params: p };
+  if (token !== undefined) body.turnstileToken = token;
+  const r = await worker.fetch(new Request('https://w.example/send-scenario', {
+    method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
+    body: JSON.stringify(body),
+  }), env, {});
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+const baseEnv = () => ({ EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_LIMITS_KV: fakeKV(), LOOKUP_LIMITER: okLimiter, EMAIL_LIMITER: okLimiter });
+
+/* 1. A valid send works and is counted */
+{
+  const env = baseEnv(); emailsSent = 0;
+  const r = await send(env, params('a@example.com'), 'tok');
+  check('valid send accepted', r.status === 200 && r.body.ok, JSON.stringify(r));
+  check('valid send reaches EmailJS', emailsSent === 1);
+  check('send is counted', env.EMAIL_LIMITS_KV.m.size === 3, 'keys: ' + [...env.EMAIL_LIMITS_KV.m.keys()].join(','));
+  check('recipient address is not stored in plain text', ![...env.EMAIL_LIMITS_KV.m.keys(), ...env.EMAIL_LIMITS_KV.m.values()].some((x) => String(x).includes('a@example.com')));
+}
+/* 2. A bad Turnstile token is refused, nothing sent */
+{
+  const env = baseEnv(); emailsSent = 0;
+  turnstileAnswer = { success: false, 'error-codes': ['invalid-input-response'] };
+  const r = await send(env, params('b@example.com'), 'bad');
+  check('bad human-check token refused', r.status === 403 && emailsSent === 0, JSON.stringify(r));
+  turnstileAnswer = { success: true, hostname: 'evil.example' };
+  const r2 = await send(env, params('b@example.com'), 'tok');
+  check('token from another website refused', r2.status === 403 && emailsSent === 0, JSON.stringify(r2));
+  turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+}
+/* 3. Token present but no secret configured → refuse */
+{
+  const env = baseEnv(); delete env.TURNSTILE_SECRET; emailsSent = 0;
+  const r = await send(env, params('c@example.com'), 'tok');
+  check('no Turnstile secret = refuse', r.status === 503 && emailsSent === 0, JSON.stringify(r));
+}
+/* 4. No storage → refuse (fail closed) */
+{
+  const env = baseEnv(); delete env.EMAIL_LIMITS_KV; emailsSent = 0;
+  const r = await send(env, params('d@example.com'), 'tok');
+  check('no limit storage = refuse', r.status === 503 && emailsSent === 0, JSON.stringify(r));
+}
+/* 5. 5 per hour per recipient */
+{
+  const env = baseEnv(); emailsSent = 0;
+  const results = [];
+  for (let i = 0; i < 6; i++) results.push((await send(env, params('e@example.com'), 'tok')).status);
+  check('5 per hour allowed, 6th refused', results.slice(0, 5).every((s) => s === 200) && results[5] === 429 && emailsSent === 5, results.join(','));
+  const other = await send(env, params('f@example.com'), 'tok');
+  check('another recipient is not blocked', other.status === 200);
+}
+/* 6. 15 per day per recipient (sends spread over the last 24h) */
+{
+  const env = baseEnv(); emailsSent = 0;
+  const now = Date.now();
+  // seed: 15 earlier sends, each 2h+ apart, all within 24h? 15 sends over 23h → ~1.5h apart
+  const seeded = Array.from({ length: 15 }, (_, i) => now - (2 + i * 1.4) * 3600000);
+  const keyed = [...(await (async () => { await send(env, params('g@example.com'), 'tok'); return env.EMAIL_LIMITS_KV.m.keys(); })())].find((k) => k.startsWith('rcpt:'));
+  env.EMAIL_LIMITS_KV.m.set(keyed, JSON.stringify(seeded));
+  emailsSent = 0;
+  const r = await send(env, params('g@example.com'), 'tok');
+  check('16th in 24 hours refused', r.status === 429 && emailsSent === 0 && /today/.test(r.body.error || ''), JSON.stringify(r));
+  env.EMAIL_LIMITS_KV.m.set(keyed, JSON.stringify(seeded.slice(0, 14)));
+  const r2 = await send(env, params('g@example.com'), 'tok');
+  check('15th in 24 hours allowed', r2.status === 200, JSON.stringify(r2));
+}
+/* 7. 50 per day site-wide */
+{
+  const env = baseEnv(); emailsSent = 0;
+  await send(env, params('h@example.com'), 'tok');
+  const siteKey = [...env.EMAIL_LIMITS_KV.m.keys()].find((k) => k.startsWith('site:'));
+  env.EMAIL_LIMITS_KV.m.set(siteKey, '50');
+  emailsSent = 0;
+  const r = await send(env, params('i@example.com'), 'tok');
+  check('51st email of the day site-wide refused', r.status === 429 && emailsSent === 0, JSON.stringify(r));
+}
+/* 8. Exact duplicate within a minute is ignored (reported OK, sent once) */
+{
+  const env = baseEnv(); emailsSent = 0;
+  const p = params('j@example.com');
+  const r1 = await send(env, p, 'tok');
+  const r2 = await send(env, { ...p }, 'tok2');
+  check('duplicate sent only once', r1.status === 200 && r2.status === 200 && r2.body.duplicate === true && emailsSent === 1, JSON.stringify([r1, r2, emailsSent]));
+}
+/* 9. Lender CC is still forced by the Worker */
+{
+  check('lender CC still set by the Worker', /params\.cc_email = EMAILJS_SETTINGS\.lenderEmail/.test(src));
+}
+/* 10. Missing token: allowed only while TURNSTILE_REQUIRED is false */
+{
+  const required = /const TURNSTILE_REQUIRED = true;/.test(src);
+  const env = baseEnv(); emailsSent = 0;
+  const r = await send(env, params('k@example.com'));
+  if (required) check('no token refused (TURNSTILE_REQUIRED on)', r.status === 403 && emailsSent === 0, JSON.stringify(r));
+  else check('no token accepted while TURNSTILE_REQUIRED is off (limits still apply)', r.status === 200, JSON.stringify(r));
+  console.log('Turnstile required: ' + (required ? 'YES' : 'NO (transition — turn on after the page is published)'));
+}
+
+if (failures.length) {
+  console.log(`\nWORKER TESTS FAILED — ${failures.length}:`);
+  failures.forEach((f) => console.log('  ✗ ' + f));
+  process.exit(1);
+}
+console.log('\nWORKER TESTS PASSED — Save Scenario: human check, 5/hour + 15/day per recipient, 50/day site, duplicates, fail-closed.');

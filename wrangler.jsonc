@@ -16,5 +16,10 @@
       "namespace_id": "28002",
       "simple": { "limit": 5, "period": 60 }
     }
+  ],
+  // Save Scenario send counts (Q7): per-recipient 5/hour + 15/day, site 50/day, duplicate block.
+  // Namespace "christoclose-tax-email-limits" (separate from Tick by Tick's KV).
+  "kv_namespaces": [
+    { "binding": "EMAIL_LIMITS_KV", "id": "d26fc7b330bd4570843d84079fcfbcb3" }
   ]
 }

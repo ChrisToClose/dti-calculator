@@ -2196,6 +2196,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <label>Property Address</label>
           <input type="text" id="save-address" placeholder="e.g. 456 Oak Ave, St. Petersburg FL" style="height:46px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 14px;background:var(--surface2);color:var(--text);width:100%;font-size:15px;">
         </div>
+        <div id="turnstile-box" style="display:flex;justify-content:center;margin-bottom:8px;"></div>
         <button id="btn-save-scenario" style="width:100%;height:54px;background:var(--navy);color:#fff;border:2px solid var(--navy);border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:background 0.15s;">Save Scenario &#128190;</button>
         <!-- Share button -->
         <button id="btn-share-scenario" style="width:100%;height:54px;background:var(--surface2);color:var(--navy);border:2px solid var(--border);border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:0;display:flex;align-items:center;justify-content:center;gap:7px;"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-bottom:1px;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share These Numbers</button>
@@ -2230,7 +2231,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.30.7',
+  version: '8.30.8',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2244,6 +2245,9 @@ var CONFIG = {
   /* Tax lookups + "Save Scenario" emails go through this Cloudflare Worker.
      EmailJS settings and keys live in the Worker, not in this page. */
   workerUrl: 'https://christoclose-tax.christoclose.workers.dev',
+  /* Cloudflare Turnstile "I'm human" check on Save Scenario (Q7). This SITE key is
+     public by design; the matching SECRET key lives only in the Worker. */
+  turnstileSiteKey: '',
   /* ── DTI THRESHOLDS — update when guidelines change ──────── */
   dtiThresholds: {
     CONV: { frontWarn:28, backWarn:43, backMax:50 },
@@ -3635,7 +3639,49 @@ document.getElementById('btn-open-client').addEventListener('click',function(){
 
 
 /* ============================================================
-   SECTION: CLIENT LINK READER (Q1, v8.30.7)
+   SECTION: HUMAN CHECK (Q7) — Cloudflare Turnstile
+   Invisible for most people; shows a checkbox only if Cloudflare
+   needs one. The token is single-use and checked by the Worker.
+   ============================================================ */
+var tsWidgetId = null, tsPending = null, tsLoadFailed = false;
+function loadHumanCheck() {
+  if (!CONFIG.turnstileSiteKey || document.getElementById('turnstile-script')) return;
+  window.onTurnstileLoad = function () {
+    try {
+      tsWidgetId = window.turnstile.render('#turnstile-box', {
+        sitekey: CONFIG.turnstileSiteKey,
+        appearance: 'interaction-only',
+        execution: 'execute',
+        callback: function (token) { if (tsPending) { var p = tsPending; tsPending = null; p.resolve(token); } },
+        'error-callback': function () { if (tsPending) { var p = tsPending; tsPending = null; p.reject(new Error('The security check didn\u2019t work. Please refresh the page and try again.')); } },
+        'expired-callback': function () {},
+      });
+    } catch (e) { tsLoadFailed = true; }
+  };
+  var sc = document.createElement('script');
+  sc.id = 'turnstile-script';
+  sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad';
+  sc.async = true; sc.defer = true;
+  sc.onerror = function () { tsLoadFailed = true; };
+  document.head.appendChild(sc);
+}
+function getHumanToken() {
+  return new Promise(function (resolve, reject) {
+    if (!CONFIG.turnstileSiteKey) { resolve(''); return; }   /* not switched on yet */
+    if (tsLoadFailed || !window.turnstile || tsWidgetId == null) {
+      reject(new Error('The security check didn\u2019t load. Please refresh the page and try again.')); return;
+    }
+    tsPending = { resolve: resolve, reject: reject };
+    try { window.turnstile.reset(tsWidgetId); window.turnstile.execute(tsWidgetId); }
+    catch (e) { tsPending = null; reject(new Error('The security check didn\u2019t work. Please refresh the page and try again.')); return; }
+    setTimeout(function () {
+      if (tsPending) { tsPending = null; reject(new Error('The security check timed out. Please try again.')); }
+    }, 60000);
+  });
+}
+
+/* ============================================================
+   SECTION: CLIENT LINK READER (Q1)
    One place reads every value from a client link.
    - A default is used ONLY when the value is missing, so a real 0
      (0% down, 0% rate, $0 flood) stays 0.
@@ -4895,13 +4941,17 @@ function initClientView(p) {
     triggerClientPrint(result, templateParams);
 
     /* Email goes through the tax Worker, which holds the EmailJS private key,
-       only accepts this site, and rate-limits sends. Success is shown only
-       after the Worker confirms EmailJS accepted the email. */
-    fetch(CONFIG.workerUrl + '/send-scenario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ params: templateParams })
-    })
+       only accepts this site, checks the Turnstile "I'm human" token and the
+       send limits (Q7). Success is shown only after the Worker confirms
+       EmailJS accepted the email. */
+    getHumanToken()
+      .then(function(token){
+        return fetch(CONFIG.workerUrl + '/send-scenario', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ params: templateParams, turnstileToken: token })
+        });
+      })
       .then(function(r){
         return r.json().catch(function(){ return {}; }).then(function(d){
           if (!r.ok || !d.ok) throw new Error(d.error || 'Send failed. Please try again or contact Chris directly.');
@@ -4917,6 +4967,9 @@ function initClientView(p) {
         console.error('Scenario email error:', err);
       });
   });
+
+  /* -- Turnstile "I'm human" check (Q7): loaded on the client view only -- */
+  loadHumanCheck();
 
   /* ============================================================
      CLIENT: SHARE BUTTON — native share sheet with dynamic message

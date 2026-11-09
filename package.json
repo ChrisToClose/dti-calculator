@@ -1,10 +1,11 @@
 {
   "name": "dti-calculator",
   "private": true,
-  "description": "ChrisToClose Housing Payment Calculator — test tools only (the site itself is index.html).",
+  "description": "ChrisToClose Housing Payment Calculator \u2014 test tools only (the site itself is index.html).",
   "scripts": {
     "test": "node tests/run.js",
-    "test:update": "node tests/run.js --update"
+    "test:update": "node tests/run.js --update",
+    "test:worker": "node tests/worker.test.mjs"
   },
   "devDependencies": {
     "playwright": "1.56.0"

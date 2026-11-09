@@ -21,6 +21,8 @@
      H. no-PDF fallback shows plain text (Q4)   I. outside scripts have SRI (Q8)
      J. client links (Q1): impossible values show the "link problem"
         screen (no payment), and real zeros stay zero
+     K. Save Scenario (Q7) sends the Turnstile token, and sends nothing
+        when the check can't load. Worker side: tests/worker.test.mjs
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -234,8 +236,9 @@ async function readScreen(page, pattern) {
   }
 
   /* I. Q8: every outside script must carry an integrity hash */
+  // Exception: Cloudflare Turnstile (Q7) changes on Cloudflare's side and can't carry a hash.
   const noSri = await lender.evaluate(() => [...document.querySelectorAll('script[src]')]
-    .filter((s) => /^https?:/.test(s.src) && !/^sha(256|384|512)-/.test(s.getAttribute('integrity') || ''))
+    .filter((s) => /^https?:/.test(s.src) && !/^https:\/\/challenges\.cloudflare\.com\/turnstile\//.test(s.src) && !/^sha(256|384|512)-/.test(s.getAttribute('integrity') || ''))
     .map((s) => s.src));
   noSri.forEach((u) => failures.push(`outside script without an integrity hash: ${u}`));
 
@@ -295,6 +298,32 @@ async function readScreen(page, pattern) {
   // A normal link must NOT show the problem screen
   await client.goto(BASE);
   if (await client.evaluate(() => !!document.getElementById('link-problem'))) failures.push('Q1: a normal link showed the "link problem" screen');
+
+  /* K. Q7: Save Scenario sends the human-check token; if the check can't load, nothing is sent */
+  await client.goto(BASE);
+  const k = await client.evaluate(async () => {
+    const sent = [];
+    window.fetch = async (u, o) => { sent.push(JSON.parse(o.body)); return { ok: true, json: async () => ({ ok: true }) }; };
+    window.open = () => ({ document: document.implementation.createHTMLDocument('x'), print: () => {} });
+    const fill = () => {
+      document.getElementById('save-email').value = 'a@example.com';
+      document.getElementById('save-label').value = 'x';
+      document.getElementById('save-address').value = '1 Main St';
+      const b = document.getElementById('btn-save-scenario'); b.disabled = false; b.style.display = '';
+      b.click();
+    };
+    const wait = () => new Promise((r) => setTimeout(r, 300));
+    CONFIG.turnstileSiteKey = 'test-site-key';
+    tsLoadFailed = true;                       // check failed to load
+    fill(); await wait();
+    const blocked = { sent: sent.length, msg: document.getElementById('save-error').textContent };
+    tsLoadFailed = false; tsWidgetId = 1;       // check works
+    window.turnstile = { reset() {}, execute() { setTimeout(() => { const p = tsPending; tsPending = null; p.resolve('TOKEN123'); }, 10); } };
+    fill(); await wait();
+    return { blocked, token: sent.length ? sent[sent.length - 1].turnstileToken : null, total: sent.length };
+  });
+  if (k.blocked.sent !== 0 || !/security check/.test(k.blocked.msg)) failures.push(`Q7: when the human check can't load, Save Scenario must not send (sent ${k.blocked.sent}, message "${k.blocked.msg}")`);
+  if (k.token !== 'TOKEN123' || k.total !== 1) failures.push(`Q7: Save Scenario did not pass the human-check token to the Worker (${JSON.stringify(k)})`);
 
   await browser.close();
 

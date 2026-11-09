@@ -1,7 +1,9 @@
 // ChrisToClose DTI Calculator — Tax Lookup + Scenario Email Worker
 // Secrets:  ANTHROPIC_API_KEY  (used only by the photo reader, currently switched off)
 //           EMAILJS_PRIVATE_KEY (EmailJS private key — lets this Worker send "Save Scenario" emails)
+//           TURNSTILE_SECRET (Cloudflare Turnstile secret key — the "I'm human" check on Save Scenario)
 // Bindings: LOOKUP_LIMITER, EMAIL_LIMITER — Cloudflare rate limiters, configured in wrangler.jsonc
+//           EMAIL_LIMITS_KV — KV storage for Save Scenario send counts (wrangler.jsonc)
 // County lookups: Hillsborough (JSON), Pinellas (county GIS JSON), Pasco (HTML), Manatee (JSON)
 
 // ── Security settings ──────────────────────────────────────────────
@@ -26,6 +28,21 @@ const EMAILJS_SETTINGS = {
   publicKey: 'NyULYxc1h8OKkvdOA',
   lenderEmail: 'cgreenidge@apmortgage.com', // always CC'd; cannot be changed by the browser
 };
+// Save Scenario abuse limits (Q7, Chris decided Nov 9, 2026 — decision D3 Option A).
+// ⚠️ LATER: when short lender-issued links exist (S5/P4.4), switch to "only people
+// with a link Chris made" (D3 Option B).
+const EMAIL_LIMITS = {
+  perRecipientPerHour: 5,   // same recipient address, rolling 60 minutes
+  perRecipientPerDay: 15,   // same recipient address, rolling 24 hours
+  sitePerDay: 50,           // whole site, per calendar day (Eastern time)
+  duplicateWindowSec: 60,   // the exact same email again within this window is ignored
+};
+// Turnstile ("I'm human" check). While false, a request WITHOUT a token is still
+// accepted (so the live page keeps working until the new page is published);
+// a request WITH a bad token is always refused. Set true once the page sends tokens.
+const TURNSTILE_REQUIRED = false;
+const TURNSTILE_HOSTNAMES = ['christoclose.github.io'];
+
 // Only these template fields are accepted from the browser (anything else is dropped).
 const SCENARIO_FIELDS = [
   'to_email', 'scenario_label', 'property_address', 'loan_type', 'purchase_price', 'down_payment',
@@ -276,6 +293,53 @@ async function handleSendScenario(request, env, json) {
     return json({ error: 'Please fill in all three fields before sending.' }, 400);
   }
 
+  // ── Q7: "I'm human" check (Cloudflare Turnstile) ──
+  const token = typeof body.turnstileToken === 'string' ? body.turnstileToken.slice(0, 2048) : '';
+  if (token || TURNSTILE_REQUIRED) {
+    if (!env.TURNSTILE_SECRET) {
+      console.error('TURNSTILE_SECRET is not set — refusing to send.');
+      return json({ error: 'Email is not available right now. Please contact Chris directly.' }, 503);
+    }
+    if (!token) {
+      return json({ error: 'We couldn\u2019t confirm you\u2019re not a robot. Please refresh the page and try again.' }, 403);
+    }
+    const human = await verifyTurnstile(token, env.TURNSTILE_SECRET, request.headers.get('CF-Connecting-IP'));
+    if (!human) {
+      return json({ error: 'We couldn\u2019t confirm you\u2019re not a robot. Please refresh the page and try again.' }, 403);
+    }
+  }
+
+  // ── Q7: send limits (fail closed: no storage = no sending) ──
+  const kv = env.EMAIL_LIMITS_KV;
+  if (!kv) {
+    console.error('EMAIL_LIMITS_KV binding missing — refusing to send. Check wrangler.jsonc.');
+    return json({ error: 'Email is not available right now. Please contact Chris directly.' }, 503);
+  }
+  const now = Date.now();
+  const rcptKey = 'rcpt:' + (await sha256Hex(params.to_email.toLowerCase())).slice(0, 32);
+  const dayKey = 'site:' + easternDate(now);
+  const dupKey = 'dup:' + (await sha256Hex(JSON.stringify(params))).slice(0, 32);
+  let sends, siteCount, dup;
+  try {
+    [sends, siteCount, dup] = await Promise.all([kv.get(rcptKey, 'json'), kv.get(dayKey), kv.get(dupKey)]);
+  } catch (e) {
+    console.error('Limit storage read failed:', e && e.message);
+    return json({ error: 'Email is not available right now. Please contact Chris directly.' }, 503);
+  }
+  if (dup) return json({ ok: true, duplicate: true }, 200);   // same email just sent — don't send twice
+  sends = (Array.isArray(sends) ? sends : []).filter((t) => typeof t === 'number' && now - t < 86400000);
+  siteCount = parseInt(siteCount, 10) || 0;
+  if (sends.filter((t) => now - t < 3600000).length >= EMAIL_LIMITS.perRecipientPerHour) {
+    return json({ error: 'This email address has received ' + EMAIL_LIMITS.perRecipientPerHour + ' saved scenarios in the last hour. Please try again a little later, or contact Chris directly.' }, 429);
+  }
+  if (sends.length >= EMAIL_LIMITS.perRecipientPerDay) {
+    return json({ error: 'This email address has received ' + EMAIL_LIMITS.perRecipientPerDay + ' saved scenarios today. Please try again tomorrow, or contact Chris directly.' }, 429);
+  }
+  if (siteCount >= EMAIL_LIMITS.sitePerDay) {
+    console.warn('Site-wide daily email cap reached:', siteCount);
+    return json({ error: 'Save Scenario has reached its daily limit. Please try again tomorrow, or contact Chris directly.' }, 429);
+  }
+
   // Set by the Worker only — the browser can't change who gets copied
   params.cc_email = EMAILJS_SETTINGS.lenderEmail;
   params.lender_email = EMAILJS_SETTINGS.lenderEmail;
@@ -305,7 +369,47 @@ async function handleSendScenario(request, env, json) {
     return json({ error: 'Send failed. Please try again or contact Chris directly.' }, 502);
   }
 
+  // Count the send only after EmailJS accepted it
+  try {
+    await Promise.all([
+      kv.put(rcptKey, JSON.stringify(sends.concat(now)), { expirationTtl: 90000 }),
+      kv.put(dayKey, String(siteCount + 1), { expirationTtl: 172800 }),
+      kv.put(dupKey, '1', { expirationTtl: Math.max(60, EMAIL_LIMITS.duplicateWindowSec) }),
+    ]);
+  } catch (e) {
+    console.error('Limit storage write failed (email was sent):', e && e.message);
+  }
   return json({ ok: true }, 200);
+}
+
+// Asks Cloudflare whether the Turnstile token is real, unused, and from our site.
+async function verifyTurnstile(token, secret, ip) {
+  try {
+    const form = new FormData();
+    form.append('secret', secret);
+    form.append('response', token);
+    if (ip) form.append('remoteip', ip);
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST', body: form, signal: AbortSignal.timeout(8000),
+    });
+    const d = await r.json();
+    if (!d.success) { console.warn('Turnstile refused:', JSON.stringify(d['error-codes'] || [])); return false; }
+    if (d.hostname && !TURNSTILE_HOSTNAMES.includes(d.hostname)) { console.warn('Turnstile hostname mismatch:', d.hostname); return false; }
+    return true;
+  } catch (e) {
+    console.error('Turnstile check failed:', e && e.message);
+    return false;
+  }
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Calendar date in Eastern time, e.g. 2026-11-09 (site-wide daily cap resets at midnight ET)
+function easternDate(ms) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
 }
 
 // ─────────────────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ on:
       - 'tax-worker.js'
       - 'wrangler.jsonc'
       - '.github/workflows/deploy-tax-worker.yml'
+      - 'tests/worker.test.mjs'
   workflow_dispatch:   # lets us re-run a deploy by hand from the Actions tab
 
 concurrency:
@@ -22,6 +23,9 @@ jobs:
     steps:
       - name: Get the code
         uses: actions/checkout@v4
+
+      - name: Worker tests (must pass before deploying)
+        run: node tests/worker.test.mjs
 
       - name: Deploy to Cloudflare (christoclose-tax only)
         uses: cloudflare/wrangler-action@v3
