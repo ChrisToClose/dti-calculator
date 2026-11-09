@@ -1368,7 +1368,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             <span class="slider-block-val" id="down-val"><span class="down-pct" id="down-pct-display">5%</span><span class="down-amt" id="down-amt-display">($20,000)</span></span>
           </div>
           <input type="range" id="down-slider" min="3" max="50" step="0.5" value="5">
-          <div class="slider-hint"><span>3%</span><span>50%</span></div>
+          <div class="slider-hint"><span id="down-min-label">3%</span><span>50%</span></div>
         </div>
 
         <!-- Loan Term -->
@@ -1877,7 +1877,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <span style="font-size:16px;font-weight:800;"><span style="color:var(--navy);" id="client-down-pct">5%</span><span style="color:var(--text-muted);font-weight:400;font-size:13px;margin-left:4px;" id="client-down-amt">($20,000)</span></span>
         </div>
         <input type="range" id="client-down" min="3" max="50" step="0.5" value="5" style="width:100%;accent-color:var(--teal);">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span>3%</span><span>50%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px;"><span id="client-down-min-label">3%</span><span>50%</span></div>
       </div>
 
       <div style="padding:16px;background:var(--surface);border-bottom:1px solid var(--border);">
@@ -3007,6 +3007,9 @@ function refreshAll() {
   document.getElementById('price-val').textContent='$'+price.toLocaleString();
   /* Down payment: bold % + muted gray ($amt) in parens */
   document.getElementById('down-pct-display').textContent=S.downPct+'%';
+  /* Q1: slider floor follows the loan type (VA/USDA 0%, CONV/FHA 3%) */
+  var dsl=document.getElementById('down-slider'); dsl.min=downSliderMin(S.loanType);
+  document.getElementById('down-min-label').textContent=dsl.min+'%';
   document.getElementById('down-amt-display').textContent='($'+downAmt.toLocaleString()+')';
 
   /* Tax display */
@@ -3173,8 +3176,8 @@ document.querySelectorAll('.loan-btn').forEach(function(btn){
     S.loanType=this.dataset.loan;
     /* Q1: VA/USDA allow 0% down; CONV/FHA start at 3% */
     var ds=document.getElementById('down-slider');
-    ds.min=downSliderMin(S.loanType);
-    if(S.downPct<Number(ds.min)){ S.downPct=Number(ds.min); ds.value=S.downPct; }
+    var floor=downSliderMin(S.loanType);
+    if(S.downPct<floor){ S.downPct=floor; ds.min=floor; ds.value=floor; }
     refreshAll();
   });
 });
@@ -3701,6 +3704,8 @@ function showLinkProblem(problems) {
   applyMode(!isDayTime());
   var cp = document.getElementById('client-page');
   if (cp) cp.style.display = 'none';
+  var hb = document.getElementById('help-btn');
+  if (hb) hb.style.display = 'none';
   var box = document.createElement('div');
   box.id = 'link-problem';
   box.style.cssText = 'max-width:440px;margin:60px auto;padding:28px 24px;background:var(--surface);border:2px solid var(--amber);border-radius:12px;text-align:center;font-family:inherit;color:var(--text);';
@@ -3869,6 +3874,7 @@ function initClientView(p) {
   document.getElementById('client-price').value = CS.purchasePrice;
   document.getElementById('client-price-val').textContent = '$'+CS.purchasePrice.toLocaleString();
   document.getElementById('client-down').min = downSliderMin(CS.loanType);
+  document.getElementById('client-down-min-label').textContent = downSliderMin(CS.loanType)+'%';
   document.getElementById('client-down').value = CS.downPct;
   document.getElementById('client-down-pct').textContent = CS.downPct+'%';
   document.getElementById('client-down-amt').textContent = '($'+Math.round(CS.purchasePrice*(CS.downPct/100)).toLocaleString()+')';

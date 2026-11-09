@@ -271,8 +271,9 @@ async function readScreen(page, pattern) {
     const r = await client.evaluate(() => ({
       problem: !!document.getElementById('link-problem'),
       calcShown: document.getElementById('client-page').style.display !== 'none',
+      helpShown: getComputedStyle(document.getElementById('help-btn')).display !== 'none',
     }));
-    if (!r.problem || r.calcShown) failures.push(`Q1 bad link (${name}): expected the "link problem" screen, got ${JSON.stringify(r)}`);
+    if (!r.problem || r.calcShown || r.helpShown) failures.push(`Q1 bad link (${name}): expected the "link problem" screen, got ${JSON.stringify(r)}`);
   }
   const zeroChecks = [
     ['VA 0% down', BASE + '&lt=VA&dp=0', 'client-down-pct', '0%'],
@@ -286,9 +287,10 @@ async function readScreen(page, pattern) {
       text: (document.getElementById(i) || {}).textContent,
       problem: !!document.getElementById('link-problem'),
       sliderMin: document.getElementById('client-down').min,
+      minLabel: (document.getElementById('client-down-min-label') || {}).textContent,
     }), id);
     if (got.problem || got.text !== want) failures.push(`Q1 zero kept (${name}): ${id} = ${JSON.stringify(got.text)}, expected "${want}"${got.problem ? ' (link problem screen shown)' : ''}`);
-    if (/0% down/.test(name) && got.sliderMin !== '0') failures.push(`Q1 ${name}: down-payment slider starts at ${got.sliderMin}%, expected 0%`);
+    if (/0% down/.test(name) && (got.sliderMin !== '0' || got.minLabel !== '0%')) failures.push(`Q1 ${name}: down-payment slider starts at ${got.sliderMin}% (label "${got.minLabel}"), expected 0%`);
   }
   // A normal link must NOT show the problem screen
   await client.goto(BASE);
