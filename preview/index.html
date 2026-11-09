@@ -2231,7 +2231,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.30.9',
+  version: '8.30.10',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5085,7 +5085,7 @@ function initClientView(p) {
     rowCount += 3; /* Location */
     if(CP.rentalActive) rowCount += 2; /* Rental section */
     /* Estimate total height: header(50) + scenario(16) + DTI boxes(26) + badge(14) + sections(rowCount*7 + 4 section headers*15) + disclaimer(16) + QR(25) */
-    var estH = 50 + 16 + 26 + 14 + (rowCount * 7) + (CP.rentalActive ? 4 : 3) * 15 + 16 + 25;
+    var estH = 50 + 16 + 26 + 14 + 14 /* DTI bar */ + (rowCount * 7) + (CP.rentalActive ? 4 : 3) * 15 + 16 + 25;
     var sf = estH > (pageH - margin) ? (pageH - margin) / estH : 1.0;
     /* Apply scale to row/section dimensions */
     var rowH = Math.floor(7 * sf * 10) / 10;
@@ -5164,7 +5164,34 @@ function initClientView(p) {
     doc.roundedRect(margin, y, contentW, 8, 2, 2, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
     doc.text(params.dti_status, pageW/2, y+5.5, {align:'center'});
-    y += 14;
+    y += 12;
+
+    /* DTI bar — same back-end bar and scale as the calculator and the email:
+       green (comfortable) / amber (approaching) / red (over), marker at the client's back-end DTI */
+    var thPdf = CONFIG.dtiThresholds[CS.loanType];
+    if (thPdf && result && !result.error) {
+      var bMax = dtiBarMax(thPdf);
+      var xAt = function(v){ return margin + contentW * Math.min(Math.max(v, 0), bMax) / bMax; };
+      var barY = y + 5, barH = 3.5;
+      var xWarn = xAt(thPdf.backWarn), xMax = xAt(thPdf.backMax), xEnd = margin + contentW;
+      doc.setFillColor(green[0],green[1],green[2]); doc.rect(margin, barY, xWarn - margin, barH, 'F');
+      doc.setFillColor(amber[0],amber[1],amber[2]); doc.rect(xWarn, barY, xMax - xWarn, barH, 'F');
+      doc.setFillColor(red[0],red[1],red[2]);       doc.rect(xMax, barY, xEnd - xMax, barH, 'F');
+      /* marker: triangle pointing at the bar + label */
+      var xYou = xAt(result.backDTI);
+      doc.setFillColor(navy[0],navy[1],navy[2]);
+      doc.triangle(xYou - 1.6, barY - 2.6, xYou + 1.6, barY - 2.6, xYou, barY - 0.4, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(navy[0],navy[1],navy[2]);
+      var youLabel = 'You: ' + params.back_dti;
+      var lblAlign = xYou > xEnd - 25 ? 'right' : xYou < margin + 25 ? 'left' : 'center';
+      doc.text(youLabel, xYou, barY - 3.4, {align: lblAlign});
+      /* caption */
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(gray[0],gray[1],gray[2]);
+      doc.text('Back-end DTI:  comfortable under ' + thPdf.backWarn + '%   \u2022   maximum ' + thPdf.backMax + '% for ' + CS.loanType + ' loans', margin, barY + barH + 4.5);
+      y = barY + barH + 9;
+    } else {
+      y += 2;
+    }
 
     /* Watermark if over */
     if(isOver){
