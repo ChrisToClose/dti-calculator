@@ -1746,15 +1746,15 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   </div>
 
   <!-- FLOATING RESET BUTTON — appears when price/down drifts from originally quoted values -->
-  <div id="client-reset-btn" title="Return to my quoted scenario" style="display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:900;background:var(--navy);color:var(--yellow);border:none;border-radius:0 8px 8px 0;padding:10px 8px 10px 6px;cursor:pointer;box-shadow:3px 0 12px rgba(27,58,107,0.35);writing-mode:vertical-rl;text-orientation:mixed;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;align-items:center;gap:6px;flex-direction:column;font-family:inherit;">
+  <div id="client-reset-btn" title="Go back to the numbers Chris quoted you" style="display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:900;background:var(--navy);color:var(--yellow);border:none;border-radius:0 8px 8px 0;padding:10px 8px 10px 6px;cursor:pointer;box-shadow:3px 0 12px rgba(27,58,107,0.35);writing-mode:vertical-rl;text-orientation:mixed;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;align-items:center;gap:6px;flex-direction:column;font-family:inherit;">
     <span style="font-size:16px;writing-mode:horizontal-tb;">🏠</span>
-    <span style="writing-mode:vertical-rl;text-orientation:mixed;">Reset to Quote</span>
+    <span style="writing-mode:vertical-rl;text-orientation:mixed;">Back to My Quote</span>
   </div>
 
 
   <!-- HELP DRAWER -->
   <div id="help-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:850;"></div>
-  <div id="help-drawer" style="position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);background:var(--surface);z-index:900;transform:translateX(100%);transition:transform 0.35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,0.2);">
+  <div id="help-drawer" style="position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);background:var(--surface);z-index:900;transform:translateX(100%);transition:transform 0.35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:none;">
     <div style="background:var(--navy);padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-size:13px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:0.07em;">Help Guide</div>
@@ -2261,7 +2261,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.35.1',
+  version: '8.36.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5018,7 +5018,7 @@ function initClientView(p) {
     {
       title:'5. Homeowners insurance',
       img:'07-insurance.jpg',
-      body:'If Chris already got you an insurance quote, it’s already in here — you’ll see <strong>ACTUAL</strong> instead of <strong>EST</strong>, so you can leave it. Otherwise it’s an estimate. Shopping a different home or got your own quote? Tap the <strong>✎ pencil</strong> and type the monthly amount.',
+      body:'If Chris already got you an insurance quote, it’s already in here — you’ll see <strong>ACTUAL</strong> instead of <strong>EST</strong>, so you can leave it (if you change the price, it switches back to an estimate). Otherwise it’s an estimate. Shopping a different home or got your own quote? Tap the <strong>✎ pencil</strong> and type the monthly amount.',
     },
     {
       title:'6. Property tax',
@@ -5028,9 +5028,9 @@ function initClientView(p) {
       body2:'<strong>Have an address? Look up the real tax bill.</strong> Tap the button under Property Tax, start typing, and <strong>pick the address from the list</strong> — city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the record isn’t an exact match we’ll ask <strong>“Is this the right property?”</strong> first. In some counties you’ll see the <strong>current owner’s</strong> bill as a guide — yours will likely be higher after you buy.',
     },
     {
-      title:'Changed too much? Start over',
+      title:'Want to go back to Chris’s numbers?',
       img:'12-reset.jpg',
-      body:'Once you change the price or down payment, a <strong>Reset to Quote</strong> tab appears on the <strong>left edge</strong> of your screen. Tap it to snap back to the numbers Chris set up for you.',
+      body:'Playing with the price or down payment? Go for it — you can’t break anything. As soon as you move one, a small tab pops up on the <strong>left side of your screen</strong> that says <strong>Back to My Quote</strong>. Tap it and everything goes right back to the numbers Chris quoted you.',
     },
     {
       title:'Save your scenario',
@@ -5093,11 +5093,14 @@ function initClientView(p) {
 
   function openHelp(){
     helpCurrent=0; renderHelpStep();
+    helpDrawer.style.boxShadow='-4px 0 24px rgba(0,0,0,0.2)';
     helpDrawer.style.transform='translateX(0)';
     if(helpOverlay){helpOverlay.style.display='block';}
   }
   function closeHelp(){
     helpDrawer.style.transform='translateX(100%)';
+    /* drop the shadow once it has slid away — otherwise it shades the right edge of the page */
+    setTimeout(function(){ if (helpDrawer.style.transform==='translateX(100%)') helpDrawer.style.boxShadow='none'; }, 380);
     if(helpOverlay){helpOverlay.style.display='none';}
   }
   document.getElementById('help-close').addEventListener('click', closeHelp);
