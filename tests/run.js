@@ -31,6 +31,7 @@
         picking one fills street, city, county and unit
      O. Help: "?" opens the full help guide (not the welcome popup), no outdated text
      P. UX: phone Back closes the guide/welcome, swipe closes the guide, skeleton while loading
+     Q. Q2: Chris's PMI quote scales with the client's price and down payment
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -499,6 +500,27 @@ async function readScreen(page, pattern) {
     release(); await pending;
     return { during, after: document.getElementById('tax-skeleton').style.display === 'none' };
   });
+  /* Q. Q2: Chris's PMI quote follows the client's price and down payment */
+  await client.goto(PAGE + '?client=1&pp=400000&dp=5&inc=15000&dbt=500&rt=7&cn=Pinellas&mr=17.43&pmi=100&nm=Test');
+  await client.waitForFunction(() => typeof calcAll === 'function' && document.getElementById('cbr-mi'));
+  const Q = await client.evaluate(async () => {
+    const wait = () => new Promise((r) => setTimeout(r, 60));
+    const set = async (id, v) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); await wait(); };
+    const read = () => ({ mi: document.getElementById('cbr-mi').textContent.trim(), badge: document.getElementById('cbr-pmi-badge').textContent.trim() });
+    const m = document.getElementById('pmi-drift-modal'); const hide = () => { m.style.display = 'none'; };
+    const out = {};
+    out.start = read();
+    await set('client-price', 600000); hide(); out.price600 = read();
+    await set('client-down', 10); hide(); out.down10 = read();
+    await set('client-down', 20); hide(); out.down20 = read();
+    out.math = { same: scalePmiQuote(100, 400000, 5, 600000, 5, 760), tier: Math.round(scalePmiQuote(100, 400000, 5, 600000, 10, 760)) };
+    return out;
+  });
+  if (Q.start.mi !== '$100' || Q.start.badge !== 'QUOTED') failures.push(`Q2: at Chris's numbers the PMI should be his $100 quote, marked QUOTED (${JSON.stringify(Q.start)})`);
+  if (Q.price600.mi !== '$150' || Q.price600.badge !== 'EST') failures.push(`Q2: $100 quote at $400K should become $150 at $600K, marked EST (${JSON.stringify(Q.price600)})`);
+  if (Q.math.same !== 150 || Q.math.tier !== 47) failures.push(`Q2: PMI scaling math is off (${JSON.stringify(Q.math)})`);
+  if (Q.down10.mi !== '$' + Q.math.tier) failures.push(`Q2: moving to 10% down should use the scaled quote, $${Q.math.tier} (${JSON.stringify(Q.down10)})`);
+
   if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);
   if (!P.helpOpen || !P.helpClosedByBack || !P.stillOnCalculator2) failures.push(`UX12: Back should close the help guide and stay on the calculator (${JSON.stringify(P)})`);
   if (!sw.closed || !sw.sprangBack) failures.push(`UX10: swiping the guide right should close it; a short swipe should spring back (${JSON.stringify(sw)})`);

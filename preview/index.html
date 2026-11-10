@@ -1728,7 +1728,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="padding:18px 20px;">
         <p id="pmi-drift-msg" style="font-size:13px;line-height:1.6;color:var(--text);margin:0 0 12px;"></p>
         <p style="font-size:12px;line-height:1.6;color:var(--text-muted);margin:0 0 16px;">
-          PMI rates are impacted by loan-to-value ratio, purchase price, credit score, loan amount, and loan type. For an accurate PMI quote at your new numbers, reach out to Chris.
+          We keep the rate from Chris's quote and apply it to your new loan amount. If your down payment moves you into a different PMI tier, we adjust for that too. Put 20% or more down and PMI goes away. For an exact PMI quote at your new numbers, reach out to Chris. Tap <strong>Back to My Quote</strong> anytime to return to his original quote.
         </p>
         <!-- Acknowledge checkbox -->
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:var(--text-muted);margin-bottom:16px;">
@@ -2296,7 +2296,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.38.1',
+  version: '8.39.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2571,6 +2571,23 @@ function getPmiRate(fico, ltv) {
   if (ltv <= 90) return row[0];
   if (ltv < 95)  return row[1];
   return row[2];
+}
+
+/* Q2: keep Chris's PMI quote as the client's own rate when they move the
+   price or down payment. Same loan-to-value band -> same rate on the new
+   loan amount. New band -> scaled by the table's step between the bands.
+   20%+ down -> no PMI. Returns a monthly dollar amount, or null if it can't. */
+function scalePmiQuote(quote, origPrice, origDown, newPrice, newDown, fico) {
+  if (quote == null || !(quote >= 0)) return null;
+  if (newDown >= 20) return 0;
+  var origLoan = origPrice * (1 - origDown/100);
+  var newLoan  = newPrice  * (1 - newDown/100);
+  if (!(origLoan > 0) || !(newLoan > 0)) return null;
+  var annualRate = quote * 12 / origLoan;
+  var fromBand = getPmiRate(fico, 100 - origDown);
+  var toBand   = getPmiRate(fico, 100 - newDown);
+  var step = (fromBand > 0) ? toBand / fromBand : 1;
+  return newLoan * annualRate * step / 12;
 }
 
 /* ============================================================
@@ -4102,6 +4119,18 @@ function initClientView(p) {
     departingPitia: CP.departingPitia,
   };
 
+  /* Q2: the PMI the client sees. At Chris's numbers it is his quote; after a
+     price or down-payment change it is his quote scaled to the new numbers. */
+  function pmiQuoteDrifted(){
+    return CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
+  }
+  function clientPmi(){
+    if (CP.pmiOverride == null) return null;
+    if (!pmiQuoteDrifted()) return CP.pmiOverride;
+    return scalePmiQuote(CP.pmiOverride, CP.purchasePrice, CP.downPct,
+                         CS.purchasePrice, CS.downPct, CS.ficoVal);
+  }
+
   /* PMI drift modal: show once per session */
   var pmiDriftShown = false;
 
@@ -4125,7 +4154,7 @@ function initClientView(p) {
       ' with '+CP.downPct+'% down ('+origLtv+'% LTV). '+
       'You\'re now exploring $'+CS.purchasePrice.toLocaleString()+
       ' with '+CS.downPct+'% down ('+newLtv+'% LTV). '+
-      'The PMI shown is now an estimate based on your adjusted numbers.';
+      'The PMI shown is now an estimate: Chris\'s quote, adjusted to your new numbers.';
 
     modal.style.display = 'flex';
 
@@ -4766,10 +4795,12 @@ function initClientView(p) {
         pmiBadge.style.display = '';
         if(hasDrift){
           pmiBadge.textContent = 'EST';
+          pmiBadge.title = "Estimate based on Chris's quote, adjusted to your new price and down payment";
           pmiBadge.style.background = '#e67e22';
           pmiBadge.style.color = '#fff';
         } else {
           pmiBadge.textContent = 'QUOTED';
+          pmiBadge.title = "Chris's PMI quote";
           pmiBadge.style.background = 'var(--green)';
           pmiBadge.style.color = '#fff';
         }
@@ -4851,7 +4882,7 @@ function initClientView(p) {
       purchasePrice:CS.purchasePrice, downPct:CS.downPct, termYears:CS.termYears,
       hoa:CS.hoa, floodActive:CS.floodActive, floodIns:CS.floodIns,
       cddActive:CS.cddActive, cddAnnual:CS.cddAnnual,
-      countyMillRate:CS.countyMillRate, pmiOverride:CS.pmiOverride, ficoVal:CS.ficoVal,
+      countyMillRate:CS.countyMillRate, pmiOverride:clientPmi(), ficoVal:CS.ficoVal,
       rentalActive:CP.rentalActive, grossRent:CS.grossRent, departingPitia:CP.departingPitia,
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
@@ -5239,7 +5270,7 @@ function initClientView(p) {
       purchasePrice:CS.purchasePrice, downPct:CS.downPct, termYears:CS.termYears,
       hoa:CS.hoa, floodActive:CS.floodActive, floodIns:CS.floodIns,
       cddActive:CS.cddActive, cddAnnual:CS.cddAnnual,
-      countyMillRate:CS.countyMillRate, pmiOverride:CS.pmiOverride, ficoVal:CS.ficoVal,
+      countyMillRate:CS.countyMillRate, pmiOverride:clientPmi(), ficoVal:CS.ficoVal,
       rentalActive:CP.rentalActive, grossRent:CS.grossRent, departingPitia:CP.departingPitia,
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
@@ -5342,7 +5373,7 @@ function initClientView(p) {
       purchasePrice:CS.purchasePrice, downPct:CS.downPct, termYears:CS.termYears,
       hoa:CS.hoa, floodActive:CS.floodActive, floodIns:CS.floodIns,
       cddActive:CS.cddActive, cddAnnual:CS.cddAnnual,
-      countyMillRate:CS.countyMillRate, pmiOverride:CS.pmiOverride, ficoVal:CS.ficoVal,
+      countyMillRate:CS.countyMillRate, pmiOverride:clientPmi(), ficoVal:CS.ficoVal,
       rentalActive:CP.rentalActive, grossRent:CS.grossRent, departingPitia:CP.departingPitia,
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
