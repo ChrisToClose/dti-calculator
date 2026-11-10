@@ -2046,6 +2046,18 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <!-- LOOKUP STATUS / RESULT -->
           <div id="realie-status" style="display:none;margin-top:10px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
 
+          <!-- Q5: not an exact match → ask before using anything -->
+          <div id="tax-confirm-box" style="display:none;margin-top:12px;padding:12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
+            <div style="font-size:13px;font-weight:800;color:#92400e;">⚠️ Is this the right property?</div>
+            <div style="font-size:12px;color:#92400e;margin-top:6px;line-height:1.5;">We didn&rsquo;t find an exact match for what you typed. The closest county record is:</div>
+            <div id="tax-confirm-found" style="font-size:13px;font-weight:800;color:#1B3A6B;margin-top:6px;"></div>
+            <div id="tax-confirm-reason" style="font-size:11px;color:#92400e;margin-top:4px;line-height:1.5;"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button type="button" id="tax-confirm-yes" style="flex:1;height:38px;background:#1B3A6B;color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">Yes, use this property</button>
+              <button type="button" id="tax-confirm-no" style="flex:1;height:38px;background:#fff;color:#92400e;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">No, I&rsquo;ll fix the address</button>
+            </div>
+          </div>
+
           <!-- RESULT CARD (shown after successful lookup) -->
           <div id="realie-result-card" style="display:none;margin-top:12px;padding:12px;background:var(--surface);border:1.5px solid #22c55e;border-radius:var(--radius-sm);">
             <div id="realie-result-title" style="font-size:12px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">✅ Tax Record Found</div>
@@ -2241,7 +2253,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.31.2',
+  version: '8.32.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2660,6 +2672,8 @@ async function lookupRealieAddress() {
   statusEl.style.color = 'var(--text-muted)';
   statusEl.textContent = 'Pulling property tax record…';
   resultCard.style.display = 'none';
+  document.getElementById('tax-confirm-box').style.display = 'none';
+  taxPendingApply = null;
   document.getElementById('realie-guidance').style.display = 'none';
   realiePendingAnnual = null;
   newConstrWarn.style.display = 'none';
@@ -2690,72 +2704,91 @@ async function lookupRealieAddress() {
       return;
     }
 
-    var monthlyTax = Math.round((data.annual_tax / 12) * 100) / 100;
-    var guidanceOnly = data.source === 'realie' || data.guidance_only === true;
-    var titleEl = document.getElementById('realie-result-title');
-    var guidanceEl = document.getElementById('realie-guidance');
-    if (guidanceOnly) {
-      /* Counties without a county lookup: show the current owner's public-record bill as
-         GUIDANCE only — the payment keeps the estimate unless they choose to use it (with a confirm). */
-      realiePendingAnnual = data.annual_tax;
-      titleEl.textContent = '📄 Current owner\u2019s tax bill (public record)';
-      titleEl.style.color = 'var(--teal)';
-      resultCard.style.borderColor = 'var(--teal)';
-      guidanceEl.style.display = 'block';
-      realieUsing = false;
-      document.getElementById('realie-use-btn').textContent = 'Use this number instead';
-    } else {
-      realiePendingAnnual = null;
-      titleEl.textContent = '✅ Tax Record Found';
-      titleEl.style.color = '#15803d';
-      resultCard.style.borderColor = '#22c55e';
-      guidanceEl.style.display = 'none';
-      // ── Auto-fill the monthly tax override (county lookups) ──
-      fillClientTaxOverride(data.annual_tax);
-    }
-
-    // ── Show result card ─────────────────────────────────────────
-    var annualFmt = '$' + Math.round(data.annual_tax).toLocaleString();
-    document.getElementById('realie-result-address').textContent =
-      (data.address_confirmed || address) + (data.county ? ' — ' + data.county + ' County' : '');
-    document.getElementById('realie-result-tax').textContent = annualFmt + '/yr';
-    document.getElementById('realie-result-year').textContent = data.tax_year || '—';
-    document.getElementById('realie-result-assessed').textContent =
-      data.assessed_value ? '$' + Math.round(data.assessed_value).toLocaleString() : '—';
-    resultCard.style.display = 'block';
-
-    statusEl.style.color = guidanceOnly ? 'var(--text-muted)' : '#16a34a';
-    statusEl.textContent = guidanceOnly
-      ? 'Shown for guidance — your payment still uses the estimate for you.'
-      : '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo' + (data._note ? ' — ' + data._note : '');
-
-    // ── New construction warning (auto-detected by API) ──────────
-    if (data.is_new_construction) {
-      newConstrWarn.style.display = 'block';
-      var reasonsEl = document.getElementById('realie-new-const-reasons');
-      if (reasonsEl && data.new_construction_reasons && data.new_construction_reasons.length) {
-        reasonsEl.innerHTML = "Signals from this property's tax record:<br>" +
-          data.new_construction_reasons.map(function(r){ return '&bull; ' + r; }).join('<br>');
+    /* Shows the tax record (and fills the payment for county lookups). Runs right away for an
+       exact match, or after the client taps "Yes, use this property" (Q5). */
+    var showTaxResult = function(data) {
+      var monthlyTax = Math.round((data.annual_tax / 12) * 100) / 100;
+      var guidanceOnly = data.source === 'realie' || data.guidance_only === true;
+      var titleEl = document.getElementById('realie-result-title');
+      var guidanceEl = document.getElementById('realie-guidance');
+      if (guidanceOnly) {
+        /* Counties without a county lookup: show the current owner's public-record bill as
+           GUIDANCE only — the payment keeps the estimate unless they choose to use it (with a confirm). */
+        realiePendingAnnual = data.annual_tax;
+        titleEl.textContent = '📄 Current owner\u2019s tax bill (public record)';
+        titleEl.style.color = 'var(--teal)';
+        resultCard.style.borderColor = 'var(--teal)';
+        guidanceEl.style.display = 'block';
+        realieUsing = false;
+        document.getElementById('realie-use-btn').textContent = 'Use this number instead';
+      } else {
+        realiePendingAnnual = null;
+        titleEl.textContent = '✅ Tax Record Found';
+        titleEl.style.color = '#15803d';
+        resultCard.style.borderColor = '#22c55e';
+        guidanceEl.style.display = 'none';
+        // ── Auto-fill the monthly tax override (county lookups) ──
+        fillClientTaxOverride(data.annual_tax);
       }
+
+      // ── Show result card ─────────────────────────────────────────
+      var annualFmt = '$' + Math.round(data.annual_tax).toLocaleString();
+      document.getElementById('realie-result-address').textContent =
+        (data.address_confirmed || address) + (data.county ? ' — ' + data.county + ' County' : '');
+      document.getElementById('realie-result-tax').textContent = annualFmt + '/yr';
+      document.getElementById('realie-result-year').textContent = data.tax_year || '—';
+      document.getElementById('realie-result-assessed').textContent =
+        data.assessed_value ? '$' + Math.round(data.assessed_value).toLocaleString() : '—';
+      resultCard.style.display = 'block';
+
+      statusEl.style.color = guidanceOnly ? 'var(--text-muted)' : '#16a34a';
+      statusEl.textContent = guidanceOnly
+        ? 'Shown for guidance — your payment still uses the estimate for you.'
+        : '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo' + (data._note ? ' — ' + data._note : '');
+
+      // ── New construction warning (auto-detected by API) ──────────
+      if (data.is_new_construction) {
+        newConstrWarn.style.display = 'block';
+        var reasonsEl = document.getElementById('realie-new-const-reasons');
+        if (reasonsEl && data.new_construction_reasons && data.new_construction_reasons.length) {
+          reasonsEl.innerHTML = "Signals from this property's tax record:<br>" +
+            data.new_construction_reasons.map(function(r){ return '&bull; ' + r; }).join('<br>');
+        }
+      }
+
+      // ── Homestead info (auto-detected by API) ───────────────────
+      if (data.is_homesteaded) {
+        homesteadInfo.style.display = 'block';
+      }
+
+      // Reset button
+      btnIcon.textContent = '✅';
+      btnText.textContent = 'Tax Record Pulled!';
+      btn.style.background = '#16a34a';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+
+      setTimeout(function(){
+        btnIcon.textContent = '🔍';
+        btnText.textContent = 'Look Up Again';
+        btn.style.background = 'var(--teal)';
+      }, 4000);
+    };
+
+    if (data.needs_confirmation) {
+      /* Q5: not an exact match — ask instead of guessing. Nothing is filled in yet. */
+      taxPendingApply = function(){ document.getElementById('tax-confirm-box').style.display = 'none'; showTaxResult(data); };
+      document.getElementById('tax-confirm-found').textContent =
+        (data.address_confirmed || 'No street address on the county record') + (data.county ? ' — ' + data.county + ' County' : '');
+      document.getElementById('tax-confirm-reason').textContent = data.confirm_reason || '';
+      document.getElementById('tax-confirm-box').style.display = 'block';
+      statusEl.style.color = '#b45309';
+      statusEl.textContent = '⚠️ Please confirm the property below before we use its tax bill.';
+      btnIcon.textContent = '🔍'; btnText.textContent = 'Look Up Again';
+      btn.disabled = false; btn.style.opacity = '1';
+      return;
     }
-
-    // ── Homestead info (auto-detected by API) ───────────────────
-    if (data.is_homesteaded) {
-      homesteadInfo.style.display = 'block';
-    }
-
-    // Reset button
-    btnIcon.textContent = '✅';
-    btnText.textContent = 'Tax Record Pulled!';
-    btn.style.background = '#16a34a';
-    btn.disabled = false;
-    btn.style.opacity = '1';
-
-    setTimeout(function(){
-      btnIcon.textContent = '🔍';
-      btnText.textContent = 'Look Up Again';
-      btn.style.background = 'var(--teal)';
-    }, 4000);
+    showTaxResult(data);
 
   } catch (err) {
     statusEl.style.color = '#ef4444';
@@ -2766,6 +2799,22 @@ async function lookupRealieAddress() {
     btn.style.opacity = '1';
   }
 }
+
+/* Q5: "Is this the right property?" buttons */
+var taxPendingApply = null;
+document.addEventListener('DOMContentLoaded', function(){
+  var yes = document.getElementById('tax-confirm-yes'), no = document.getElementById('tax-confirm-no');
+  if (!yes || !no) return;
+  yes.addEventListener('click', function(){ if (taxPendingApply) { var f = taxPendingApply; taxPendingApply = null; f(); } });
+  no.addEventListener('click', function(){
+    taxPendingApply = null;
+    document.getElementById('tax-confirm-box').style.display = 'none';
+    var st = document.getElementById('realie-status');
+    st.style.display = 'block'; st.style.color = 'var(--text-muted)';
+    st.textContent = 'Check the street type (St / Ave / Dr), direction (N / S / E / W) and unit #, then look up again.';
+    var a = document.getElementById('realie-address'); if (a) a.focus();
+  });
+});
 
 /* Fills the client's property-tax override with an annual bill (shown monthly). */
 var realiePendingAnnual = null;
