@@ -1852,8 +1852,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
         <div id="client-compact-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Principal &amp; Interest</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-pi">&mdash;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Property Taxes</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-tax">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Homeowner's Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-ins">&mdash;</span></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;" id="cbr-mi-row"><span id="cbr-mi-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Mortgage Insurance</span><span id="cbr-pmi-badge" style="display:none;font-size:7.5px;font-weight:800;letter-spacing:0.04em;padding:1px 4px;border-radius:3px;line-height:1.3;flex-shrink:0;align-self:center;"></span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-mi">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Homeowner's Ins.</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-ins">&mdash;</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;" id="cbr-mi-row"><span id="cbr-mi-label" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Mortgage Ins.</span><span id="cbr-pmi-badge" style="display:none;font-size:7.5px;font-weight:800;letter-spacing:0.04em;padding:1px 4px;border-radius:3px;line-height:1.3;flex-shrink:0;align-self:center;"></span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-mi">&mdash;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;display:none;" id="cbr-flood-row"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Flood Insurance</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-flood">&mdash;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;display:none;" id="cbr-hoa-row"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">HOA Payment</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-hoa">&mdash;</span></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:9.5px;color:rgba(255,255,255,0.55);padding:1px 0;min-width:0;display:none;" id="cbr-cdd-row"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">CDD Fee</span><span style="font-weight:700;color:rgba(255,255,255,0.9);flex-shrink:0;white-space:nowrap;" id="cbr-cdd">&mdash;</span></div>
@@ -2301,7 +2301,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.40.2',
+  version: '8.40.3',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -4816,13 +4816,13 @@ function initClientView(p) {
     sd('cbr-cdd-row', CS.cddActive&&result.cddMonthly>0);
     s('cbr-cdd', fmt(result.cddMonthly));
 
-    var miLabels={CONV:'Mortgage Insurance',FHA:'Mortgage Insurance',VA:'',USDA:'USDA Fee'};  /* label already set in HTML; JS override kept for loan-type variants */
+    var miLabels={CONV:'Mortgage Ins.',FHA:'Mortgage Ins.',VA:'',USDA:'USDA Fee'};  /* short so the QUOTED/EST tag fits on small phones; label already set in HTML; JS override kept for loan-type variants */
     var showMI = !(CS.loanType==='VA'||(CS.loanType==='CONV'&&CS.downPct>=20));
     var showNoPMI = CS.loanType==='CONV'&&CS.downPct>=20;
     sd('cbr-mi-row', showMI);
     sd('cbr-no-pmi-row', showNoPMI);
     if(showMI){
-      s('cbr-mi-label', miLabels[CS.loanType]||'Mortgage Insurance');
+      s('cbr-mi-label', miLabels[CS.loanType]||'Mortgage Ins.');
       s('cbr-mi', fmt(result.monthlyMI));
       /* PMI badge: show QUOTED vs EST for CONV with pmiOverride */
       var pmiBadge = document.getElementById('cbr-pmi-badge');
