@@ -12,7 +12,7 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://christoclose.github.io/dti-calculator/og-image-1200x630-3.png">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ChrisToClose Home Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -75,6 +75,31 @@ body.dark-mode .onboarding-body strong { color:var(--yellow); }
 .onboarding-dot.active { background:var(--navy); width:20px; border-radius:4px; }
 body.dark-mode .onboarding-dot.active { background:var(--yellow); }
 
+/* ============================================================
+   UX FOUNDATION — Release A (Chris, Nov 9 2026)
+   ============================================================ */
+/* UX16: steady numbers — digits all the same width so totals and % don't jiggle while dragging */
+body { font-variant-numeric: tabular-nums; }
+/* UX17: balanced headlines — no single word stranded on the last line */
+h1, h2, h3, .help-title { text-wrap: balance; }
+/* UX13: bigger tap areas without changing the look (invisible padding around small buttons) */
+.info-btn, .pencil-btn { position: relative; }
+.info-btn::after { content: ''; position: absolute; inset: -10px -13px; }
+.pencil-btn::after { content: ''; position: absolute; inset: -8px; }
+#help-close { position: relative; }
+#help-close::after { content: ''; position: absolute; inset: -6px; }
+/* UX14: keep floating buttons clear of the iPhone notch and home bar */
+#mode-toggle { bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important; right: calc(16px + env(safe-area-inset-right, 0px)) !important; }
+#help-btn { bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important; right: calc(16px + env(safe-area-inset-right, 0px)) !important; }
+#client-reset-btn { left: env(safe-area-inset-left, 0px) !important; }
+#help-drawer > div:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important; }
+#client-thermo-section.is-sticky { padding-top: env(safe-area-inset-top, 0px); }
+
+/* UX1: skeleton placeholders while something loads */
+.skel-bar { height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(127,140,160,0.16) 25%, rgba(127,140,160,0.30) 50%, rgba(127,140,160,0.16) 75%); background-size: 200% 100%; animation: skel-shimmer 1.2s ease-in-out infinite; }
+@keyframes skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel-bar { animation: none; } }
+
 /* Frozen thermometer — navy background in light mode when sticky */
 #client-thermo-section.is-sticky {
   position: fixed !important;
@@ -113,6 +138,9 @@ body.dark-mode #realie-result-tax { color: #fff !important; }
 body.dark-mode #realie-result-title { color: var(--yellow) !important; }
 body.dark-mode #realie-use-btn { color: var(--yellow) !important; border-color: var(--yellow) !important; }
 /* B10: PMI popup 'Got It' was navy on the navy popup card in dark mode */
+/* Night mode: example text in boxes readable but dimmer than typed text; number-box arrows dark */
+body.dark-mode input::placeholder, body.dark-mode textarea::placeholder { color: rgba(255,255,255,0.55); opacity: 1; }
+body.dark-mode input[type="number"] { color-scheme: dark; }
 body.dark-mode #pmi-drift-close { background: var(--yellow) !important; color: var(--navy) !important; }
 body.dark-mode #btn-save-scenario { background:#fff !important; color:var(--navy) !important; border:2px solid #fff !important; outline:2px solid var(--navy) !important; }
 body.dark-mode #btn-share-scenario { background:var(--navy); color:#fff !important; border-color:rgba(255,255,255,0.4) !important; }
@@ -1703,7 +1731,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="padding:18px 20px;">
         <p id="pmi-drift-msg" style="font-size:13px;line-height:1.6;color:var(--text);margin:0 0 12px;"></p>
         <p style="font-size:12px;line-height:1.6;color:var(--text-muted);margin:0 0 16px;">
-          PMI rates are impacted by loan-to-value ratio, purchase price, credit score, loan amount, and loan type. For an accurate PMI quote at your new numbers, reach out to Chris.
+          We keep the rate from Chris's quote and apply it to your new loan amount. If your down payment moves you into a different PMI tier, we adjust for that too. Put 20% or more down and PMI goes away. For an exact PMI quote at your new numbers, reach out to Chris. Tap <strong>Back to My Quote</strong> anytime to return to his original quote.
         </p>
         <!-- Acknowledge checkbox -->
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:var(--text-muted);margin-bottom:16px;">
@@ -1735,7 +1763,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div class="ob-step" data-step="2" style="display:none;">
         <div style="font-size:42px;margin-bottom:12px;">&#10067;</div>
         <h2 style="font-size:19px;font-weight:800;margin-bottom:12px;line-height:1.3;">Never feel lost</h2>
-        <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.75;margin-bottom:0;">See the <strong style="color:var(--yellow);">?</strong> button in the bottom-right corner? Tap it anytime for a full guided tour of every section &mdash; taxes, saving your scenario, sharing your numbers, and more.<br><br>Tap the <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--yellow);color:var(--navy);font-size:9px;font-weight:800;vertical-align:middle;">i</span> next to any field to learn what it means.</p>
+        <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.75;margin-bottom:0;">See the <strong style="color:var(--yellow);">?</strong> button in the bottom-right corner? Tap it anytime for a full guided tour of every section &mdash; taxes, saving your scenario, sharing your numbers, and more.<br><br>Tap the yellow <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--yellow);color:var(--navy);font-size:9px;font-weight:800;vertical-align:middle;">i</span> next to any field to learn what it means.</p>
       </div>
       <!-- Dots -->
       <div style="display:flex;justify-content:center;gap:7px;margin:20px 0 16px;">
@@ -2057,6 +2085,13 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <!-- LOOKUP STATUS / RESULT -->
           <div id="realie-status" style="display:none;margin-top:10px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
 
+          <!-- UX1: placeholder card while the tax record loads -->
+          <div id="tax-skeleton" aria-hidden="true" style="display:none;margin-top:12px;padding:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
+            <div class="skel-bar" style="width:55%;"></div>
+            <div class="skel-bar" style="width:85%;margin-top:10px;"></div>
+            <div style="display:flex;gap:10px;margin-top:14px;"><div class="skel-bar" style="flex:1;height:22px;"></div><div class="skel-bar" style="flex:1;height:22px;"></div><div class="skel-bar" style="flex:1;height:22px;"></div></div>
+          </div>
+
           <!-- Q5: not an exact match → ask before using anything -->
           <div id="tax-confirm-box" style="display:none;margin-top:12px;padding:12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
             <div style="font-size:13px;font-weight:800;color:#92400e;">⚠️ Is this the right property?</div>
@@ -2264,7 +2299,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.36.1',
+  version: '8.40.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2541,6 +2576,23 @@ function getPmiRate(fico, ltv) {
   return row[2];
 }
 
+/* Q2: keep Chris's PMI quote as the client's own rate when they move the
+   price or down payment. Same loan-to-value band -> same rate on the new
+   loan amount. New band -> scaled by the table's step between the bands.
+   20%+ down -> no PMI. Returns a monthly dollar amount, or null if it can't. */
+function scalePmiQuote(quote, origPrice, origDown, newPrice, newDown, fico) {
+  if (quote == null || !(quote >= 0)) return null;
+  if (newDown >= 20) return 0;
+  var origLoan = origPrice * (1 - origDown/100);
+  var newLoan  = newPrice  * (1 - newDown/100);
+  if (!(origLoan > 0) || !(newLoan > 0)) return null;
+  var annualRate = quote * 12 / origLoan;
+  var fromBand = getPmiRate(fico, 100 - origDown);
+  var toBand   = getPmiRate(fico, 100 - newDown);
+  var step = (fromBand > 0) ? toBand / fromBand : 1;
+  return newLoan * annualRate * step / 12;
+}
+
 /* ============================================================
    SECTION: MATH ENGINE — Single source of truth
    ============================================================ */
@@ -2689,6 +2741,7 @@ async function lookupRealieAddress() {
   realiePendingAnnual = null;
   newConstrWarn.style.display = 'none';
   homesteadInfo.style.display = 'none';
+  document.getElementById('tax-skeleton').style.display = 'block';
 
   try {
     var response = await fetch('https://christoclose-tax.christoclose.workers.dev/realie-lookup', {
@@ -2808,6 +2861,8 @@ async function lookupRealieAddress() {
     btnText.textContent = 'Pull Tax Record';
     btn.disabled = false;
     btn.style.opacity = '1';
+  } finally {
+    document.getElementById('tax-skeleton').style.display = 'none';
   }
 }
 
@@ -2859,6 +2914,10 @@ document.addEventListener('DOMContentLoaded', function(){
     if (q.length < 4) { hideAddrSuggest(); return; }
     addrTimer = setTimeout(async function(){
       var mySeq = ++addrSeq;
+      /* UX1: grey placeholder rows while suggestions load */
+      box.innerHTML = '<div style="padding:10px 12px;"><div class="skel-bar" style="width:60%;"></div><div class="skel-bar" style="width:40%;height:9px;margin-top:7px;"></div></div>'+
+                      '<div style="padding:10px 12px;"><div class="skel-bar" style="width:52%;"></div><div class="skel-bar" style="width:36%;height:9px;margin-top:7px;"></div></div>';
+      box.style.display = 'block';
       if (!addrSession) addrSession = newAddrSession();
       try {
         var d = await addrFetch('/address-suggest', { input: q, sessionToken: addrSession });
@@ -2888,6 +2947,19 @@ document.addEventListener('DOMContentLoaded', function(){
   });
   addrEl.addEventListener('blur', function(){ setTimeout(hideAddrSuggest, 150); });
   addrEl.addEventListener('keydown', function(e){ if (e.key === 'Escape') hideAddrSuggest(); });
+});
+
+/* UX12: the phone's Back button closes an open panel instead of leaving the calculator.
+   Opening a panel adds one history step; closing it by hand removes that step again. */
+var ctcOpenPanel = null;
+function pushPanel(name, closeFn){
+  try { history.pushState({ ctcPanel: name }, ''); ctcOpenPanel = { name: name, close: closeFn }; } catch (e) {}
+}
+function panelClosedByHand(name){
+  if (ctcOpenPanel && ctcOpenPanel.name === name) { ctcOpenPanel = null; try { history.back(); } catch (e) {} }
+}
+window.addEventListener('popstate', function(){
+  if (ctcOpenPanel) { var p = ctcOpenPanel; ctcOpenPanel = null; p.close(true); }
 });
 
 /* Q5: "Is this the right property?" buttons */
@@ -3958,6 +4030,8 @@ function readClientLink(p) {
     cddAnnual:     num('ca',  'CDD',              0,    0, BIG),
     ficoVal:       fco,
     pmiOverride:   num('pmi', 'PMI',              null, 0, BIG),
+    pmiQuotePrice: num('pqp', 'PMI quote price',  null, 1, BIG),
+    pmiQuoteDown:  num('pqd', 'PMI quote down payment', null, 0, 100, { below: 100 }),
     rentalActive:  p.get('ren') === '1',
     grossRent:     num('grn', 'Rental income',    0,    0, BIG),
     departingPitia:num('pit', 'Departing payment',0,    0, BIG),
@@ -4050,6 +4124,47 @@ function initClientView(p) {
     departingPitia: CP.departingPitia,
   };
 
+  /* Q2: the PMI the client sees. At Chris's numbers it is his quote; after a
+     price or down-payment change it is his quote scaled to the new numbers. */
+  /* Q3: a shared link remembers the price/down payment Chris's quote was made at */
+  var PQ = {
+    price: CP.pmiQuotePrice != null ? CP.pmiQuotePrice : CP.purchasePrice,
+    down:  CP.pmiQuoteDown  != null ? CP.pmiQuoteDown  : CP.downPct
+  };
+  function pmiQuoteDrifted(){
+    return CS.purchasePrice !== PQ.price || CS.downPct !== PQ.down;
+  }
+  function clientPmi(){
+    if (CP.pmiOverride == null) return null;
+    if (!pmiQuoteDrifted()) return CP.pmiOverride;
+    return scalePmiQuote(CP.pmiOverride, PQ.price, PQ.down,
+                         CS.purchasePrice, CS.downPct, CS.ficoVal);
+  }
+
+  /* Q3: ONE link for whatever is on the client's screen right now.
+     Used by Share and by the PDF's QR code. */
+  function buildClientShareUrl(){
+    var base = window.location.href.split('?')[0].split('#')[0];
+    var p = new URLSearchParams(window.location.search);
+    function put(k, on, v){ if (on) p.set(k, v); else p.delete(k); }
+    p.set('pp', CS.purchasePrice);
+    p.set('dp', CS.downPct);
+    put('tm',  CS.termYears !== 30, CS.termYears);
+    put('hoa', CS.hoa > 0, CS.hoa);
+    put('cn',  !!CS.countyName, CS.countyName);
+    put('mr',  CS.countyMillRate != null, CS.countyMillRate);
+    put('tax', CS.taxOverride != null, CS.taxOverride);
+    put('ins', CS.insOverride != null, CS.insOverride);
+    put('fld', CS.floodActive, '1');
+    put('fi',  CS.floodActive && CS.floodIns !== 100, CS.floodIns);
+    put('cdd', CS.cddActive, '1');
+    put('ca',  CS.cddActive && CS.cddAnnual > 0, CS.cddAnnual);
+    put('grn', CP.rentalActive && CS.grossRent > 0, CS.grossRent);
+    put('pqp', CP.pmiOverride != null && PQ.price !== CS.purchasePrice, PQ.price);
+    put('pqd', CP.pmiOverride != null && PQ.down !== CS.downPct, PQ.down);
+    return base + '?' + p.toString();
+  }
+
   /* PMI drift modal: show once per session */
   var pmiDriftShown = false;
 
@@ -4057,7 +4172,7 @@ function initClientView(p) {
     if(pmiDriftShown) return;
     if(CS.loanType !== 'CONV') return;
     if(CP.pmiOverride == null) return;
-    var hasDrift = CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
+    var hasDrift = pmiQuoteDrifted();
     if(!hasDrift) return;
     pmiDriftShown = true;
 
@@ -4067,13 +4182,13 @@ function initClientView(p) {
     var closeBtn = document.getElementById('pmi-drift-close');
     if(!modal||!msg||!ackBox||!closeBtn) return;
 
-    var origLtv = Math.round((1-(CP.downPct/100))*100);
+    var origLtv = Math.round((1-(PQ.down/100))*100);
     var newLtv = Math.round((1-(CS.downPct/100))*100);
-    msg.textContent = 'Your PMI was quoted at $'+CP.purchasePrice.toLocaleString()+
-      ' with '+CP.downPct+'% down ('+origLtv+'% LTV). '+
+    msg.textContent = 'Your PMI was quoted at $'+PQ.price.toLocaleString()+
+      ' with '+PQ.down+'% down ('+origLtv+'% LTV). '+
       'You\'re now exploring $'+CS.purchasePrice.toLocaleString()+
       ' with '+CS.downPct+'% down ('+newLtv+'% LTV). '+
-      'The PMI shown is now an estimate based on your adjusted numbers.';
+      'The PMI shown is now an estimate: Chris\'s quote, adjusted to your new numbers.';
 
     modal.style.display = 'flex';
 
@@ -4710,14 +4825,16 @@ function initClientView(p) {
       /* PMI badge: show QUOTED vs EST for CONV with pmiOverride */
       var pmiBadge = document.getElementById('cbr-pmi-badge');
       if(pmiBadge && CS.loanType==='CONV' && CP.pmiOverride!=null){
-        var hasDrift = CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
+        var hasDrift = pmiQuoteDrifted();
         pmiBadge.style.display = '';
         if(hasDrift){
           pmiBadge.textContent = 'EST';
+          pmiBadge.title = "Estimate based on Chris's quote, adjusted to your new price and down payment";
           pmiBadge.style.background = '#e67e22';
           pmiBadge.style.color = '#fff';
         } else {
           pmiBadge.textContent = 'QUOTED';
+          pmiBadge.title = "Chris's PMI quote";
           pmiBadge.style.background = 'var(--green)';
           pmiBadge.style.color = '#fff';
         }
@@ -4799,7 +4916,7 @@ function initClientView(p) {
       purchasePrice:CS.purchasePrice, downPct:CS.downPct, termYears:CS.termYears,
       hoa:CS.hoa, floodActive:CS.floodActive, floodIns:CS.floodIns,
       cddActive:CS.cddActive, cddAnnual:CS.cddAnnual,
-      countyMillRate:CS.countyMillRate, pmiOverride:CS.pmiOverride, ficoVal:CS.ficoVal,
+      countyMillRate:CS.countyMillRate, pmiOverride:clientPmi(), ficoVal:CS.ficoVal,
       rentalActive:CP.rentalActive, grossRent:CS.grossRent, departingPitia:CP.departingPitia,
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
@@ -4872,13 +4989,18 @@ function initClientView(p) {
           obStep++;
           showObStep(obStep);
         } else {
-          onboardEl.style.opacity = '0';
-          onboardEl.style.transition = 'opacity 0.3s';
-          setTimeout(function(){ onboardEl.style.display = 'none'; }, 300);
-          try { localStorage.setItem('ctc_onboard_seen', today); } catch(e){}
+          closeWelcome();
         }
       });
     }
+    function closeWelcome(fromBack){
+      if (fromBack !== true) panelClosedByHand('welcome');
+      onboardEl.style.opacity = '0';
+      onboardEl.style.transition = 'opacity 0.3s';
+      setTimeout(function(){ onboardEl.style.display = 'none'; }, 300);
+      try { localStorage.setItem('ctc_onboard_seen', today); } catch(e){}
+    }
+    if (onboardEl.style.display !== 'none') pushPanel('welcome', closeWelcome);
     /* Dot click navigation */
     obDots.forEach(function(d) {
       d.addEventListener('click', function(){
@@ -4991,7 +5113,7 @@ function initClientView(p) {
     {
       title:'Your numbers are already loaded',
       img:'01-based-on.jpg',
-      body:'Chris set this up for you from your pre-approval — your income and monthly debts are already in. You don’t need to change those. Everything below is about <strong>the home</strong>: try any house you’re looking at and see what it means for you.',
+      body:'Chris set this up for you from your pre-approval — your income and monthly debts are already in. You don’t need to change those. Everything below is about <strong>the home</strong>: try any house you’re looking at and see what it means for you.<br><br>See a yellow <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--yellow);color:var(--navy);font-size:9px;font-weight:800;vertical-align:middle;">i</span> next to something? Tap it anytime for a quick explanation.',
     },
     {
       title:'Your payment, live',
@@ -5053,10 +5175,13 @@ function initClientView(p) {
   ];
 
   /* Screenshot with one even, rounded gold frame (drawn by the page, not baked into the picture) */
+  /* UX8: picture sizes are known up front, so the space is reserved and the page doesn't jump while it loads */
+  var HELP_IMG_SIZE = {"01-based-on.jpg": [836, 396], "02-payment-bar.jpg": [836, 354], "03-price.jpg": [836, 282], "04-down.jpg": [836, 276], "05-term.jpg": [836, 266], "06-hoa.jpg": [836, 276], "07-insurance.jpg": [836, 392], "09-tax.jpg": [836, 368], "10-lookup.jpg": [772, 700], "12-reset.jpg": [780, 975], "13-save.jpg": [836, 972], "14-share.jpg": [772, 164]};
   function helpImg(file){
     if (!file) return '';
-    return '<div style="border:3px solid #F5A623;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#fff;line-height:0;">'+
-      '<img src="'+HELP_IMG+file+'" alt="" loading="lazy" style="display:block;width:100%;height:auto;" onerror="this.parentNode.style.display=\'none\'"></div>';
+    var wh = HELP_IMG_SIZE[file] || [780, 300];
+    return '<div style="border:3px solid #F5A623;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#eef1f6;line-height:0;">'+
+      '<img src="'+HELP_IMG+file+'" alt="" loading="lazy" width="'+wh[0]+'" height="'+wh[1]+'" style="display:block;width:100%;height:auto;aspect-ratio:'+wh[0]+' / '+wh[1]+';" onerror="this.parentNode.style.display=\'none\'"></div>';
   }
   var helpCurrent = 0;
   var helpDrawer  = document.getElementById('help-drawer');
@@ -5066,7 +5191,7 @@ function initClientView(p) {
     var step = helpSteps[helpCurrent];
     document.getElementById('help-step-label').textContent = 'Step '+(helpCurrent+1)+' of '+helpSteps.length;
     var content = document.getElementById('help-content');
-    content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
+    content.innerHTML = '<div class="help-title" style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
       helpImg(step.img)+
       '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body+'</div>'+
       (step.img2 ? '<div style="height:18px;"></div>'+helpImg(step.img2) : '')+
@@ -5096,25 +5221,56 @@ function initClientView(p) {
 
   function openHelp(){
     helpCurrent=0; renderHelpStep();
+    if (!ctcOpenPanel) pushPanel('help', closeHelp);
     helpDrawer.style.boxShadow='-4px 0 24px rgba(0,0,0,0.2)';
     helpDrawer.style.transform='translateX(0)';
     if(helpOverlay){helpOverlay.style.display='block';}
   }
-  function closeHelp(){
+  function closeHelp(fromBack){
+    if (fromBack !== true) panelClosedByHand('help');
+    helpDrawer.style.transition='transform 0.35s cubic-bezier(.4,0,.2,1)';
     helpDrawer.style.transform='translateX(100%)';
     /* drop the shadow once it has slid away — otherwise it shades the right edge of the page */
     setTimeout(function(){ if (helpDrawer.style.transform==='translateX(100%)') helpDrawer.style.boxShadow='none'; }, 380);
     if(helpOverlay){helpOverlay.style.display='none';}
   }
-  document.getElementById('help-close').addEventListener('click', closeHelp);
-  if(helpOverlay) helpOverlay.addEventListener('click', closeHelp);
+  document.getElementById('help-close').addEventListener('click', function(){ closeHelp(); });
+  if(helpOverlay) helpOverlay.addEventListener('click', function(){ closeHelp(); });
+
+  /* UX10: swipe the help guide to the right to close it (follows the finger; let go early and it springs back) */
+  (function(){
+    var startX = null, startY = null, dx = 0, dragging = false;
+    helpDrawer.addEventListener('touchstart', function(e){
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY; dx = 0; dragging = false;
+    }, { passive: true });
+    helpDrawer.addEventListener('touchmove', function(e){
+      if (startX == null) return;
+      var mx = e.touches[0].clientX - startX, my = e.touches[0].clientY - startY;
+      if (!dragging && Math.abs(mx) > 10 && Math.abs(mx) > Math.abs(my) * 1.5 && mx > 0) dragging = true;
+      if (dragging) { dx = Math.max(0, mx); helpDrawer.style.transition = 'none'; helpDrawer.style.transform = 'translateX(' + dx + 'px)'; }
+    }, { passive: true });
+    helpDrawer.addEventListener('touchend', function(){
+      if (startX == null) return;
+      helpDrawer.style.transition = 'transform 0.25s cubic-bezier(.4,0,.2,1)';
+      if (dragging && dx > 80) { closeHelp(); } else { helpDrawer.style.transform = 'translateX(0)'; }
+      startX = null; dragging = false; dx = 0;
+    });
+  })();
 
   /* Help button — will be added to floating buttons */
   var helpBtn = document.getElementById('help-btn');
   /* The "?" button opens the full help guide (it had been switched to reopen the
      3-page welcome on Oct 20, 2026 — Chris wants the full guide back). */
   if(helpBtn) helpBtn.addEventListener('click', function(){
-    if (onboardEl && onboardEl.style.display !== 'none') onboardEl.style.display = 'none';
+    if (onboardEl && onboardEl.style.display !== 'none') {
+      onboardEl.style.display = 'none';
+      /* swap the welcome's Back step for the guide's (no extra history step, no race) */
+      if (ctcOpenPanel && ctcOpenPanel.name === 'welcome') {
+        ctcOpenPanel = { name: 'help', close: closeHelp };
+        try { history.replaceState({ ctcPanel: 'help' }, ''); } catch (e) {}
+      }
+    }
     openHelp();
   });
 
@@ -5148,7 +5304,7 @@ function initClientView(p) {
       purchasePrice:CS.purchasePrice, downPct:CS.downPct, termYears:CS.termYears,
       hoa:CS.hoa, floodActive:CS.floodActive, floodIns:CS.floodIns,
       cddActive:CS.cddActive, cddAnnual:CS.cddAnnual,
-      countyMillRate:CS.countyMillRate, pmiOverride:CS.pmiOverride, ficoVal:CS.ficoVal,
+      countyMillRate:CS.countyMillRate, pmiOverride:clientPmi(), ficoVal:CS.ficoVal,
       rentalActive:CP.rentalActive, grossRent:CS.grossRent, departingPitia:CP.departingPitia,
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
@@ -5251,24 +5407,13 @@ function initClientView(p) {
       purchasePrice:CS.purchasePrice, downPct:CS.downPct, termYears:CS.termYears,
       hoa:CS.hoa, floodActive:CS.floodActive, floodIns:CS.floodIns,
       cddActive:CS.cddActive, cddAnnual:CS.cddAnnual,
-      countyMillRate:CS.countyMillRate, pmiOverride:CS.pmiOverride, ficoVal:CS.ficoVal,
+      countyMillRate:CS.countyMillRate, pmiOverride:clientPmi(), ficoVal:CS.ficoVal,
       rentalActive:CP.rentalActive, grossRent:CS.grossRent, departingPitia:CP.departingPitia,
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
 
-    /* Build snapshot URL with current slider state */
-    var base = window.location.href.split('?')[0];
-    var p = new URLSearchParams(window.location.search);
-    /* Update mutable params with current CS values */
-    p.set('pp', CS.purchasePrice);
-    p.set('dp', CS.downPct);
-    if (CS.termYears !== 30) p.set('tm', CS.termYears); else p.delete('tm');
-    if (CS.hoa > 0) p.set('hoa', CS.hoa); else p.delete('hoa');
-    if (CS.floodActive) p.set('fld','1'); else p.delete('fld');
-    if (CS.cddActive) p.set('cdd','1'); else p.delete('cdd');
-    if (CS.taxOverride != null) p.set('tax', CS.taxOverride); else p.delete('tax');
-    if (CS.insOverride != null) p.set('ins', CS.insOverride); else p.delete('ins');
-    var shareUrl = base + '?' + p.toString();
+    /* Q3: same link builder as the PDF QR code — everything on screen */
+    var shareUrl = buildClientShareUrl();
 
     /* Build dynamic message */
     var payment = result && !result.error ? '$'+Math.round(result.housingPayment).toLocaleString()+'/mo' : 'your estimated payment';
@@ -5540,7 +5685,7 @@ function initClientView(p) {
     try {
       if (typeof qrcode === 'function') {
         var qr = qrcode(0, 'M');               /* 0 = pick size automatically, M = medium error correction */
-        qr.addData(window.location.href);
+        qr.addData(buildClientShareUrl());   /* Q3: the numbers they saved, not the original link */
         qr.make();
         var n = qr.getModuleCount(), quiet = 2, px = 8, size = (n + quiet * 2) * px;
         var qrCanvas = document.createElement('canvas');
