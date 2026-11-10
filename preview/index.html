@@ -13,6 +13,8 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://christoclose.github.io/dti-calculator/og-image-1200x630-3.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- SEC2: never tell other sites which page a visitor came from (client links carry income and debts) -->
+<meta name="referrer" content="same-origin">
 <title>ChrisToClose Home Calculator</title>
 <!-- Fonts are hosted on this site (fonts/ folder) — no visitor request goes to Google or any other font server.
      Bebas Neue, Montserrat, Raleway: SIL Open Font License 1.1 (fonts/OFL-*.txt), files from Fontsource 5.3.0. -->
@@ -2477,7 +2479,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.41.0',
+  version: '8.41.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',

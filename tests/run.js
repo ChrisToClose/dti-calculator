@@ -647,6 +647,8 @@ async function readScreen(page, pattern) {
     const html = fs.readFileSync(path.resolve(ROOT, PAGE_FILE), 'utf8');
     const outside = html.match(/https?:\/\/[^"'\s)]*(fonts\.googleapis|fonts\.gstatic|typekit|use\.fontawesome|fonts\.bunny|fontshare|cloud\.typography|fast\.fonts)[^"'\s)]*/gi) || [];
     if (outside.length) failures.push(`Fonts: still loading from an outside server — ${[...new Set(outside)].join(', ')}`);
+    /* V. SEC2: other sites never learn which page (and numbers) a visitor came from */
+    if (!/<meta name="referrer" content="(same-origin|no-referrer)">/.test(html)) failures.push('Security: the page must tell browsers not to pass its address (with client numbers) to other sites — referrer rule missing');
     const urls = [...html.matchAll(/@font-face\s*{[^}]*?url\(([^)]+)\)/g)].map((m) => m[1].replace(/['"]/g, ''));
     if (!urls.length) failures.push('Fonts: no @font-face rules found (headings would fall back to plain fonts)');
     for (const u of urls) {
