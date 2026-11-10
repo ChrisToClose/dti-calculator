@@ -400,6 +400,9 @@ body.dark-mode #tax-lookup-toggle { color: #ffffff !important; border-color: #5D
 body.dark-mode #tax-lookup-toggle.open { background: var(--teal) !important; }
 /* Help guide: readable "Next" button in night mode */
 body.dark-mode #help-next { background: var(--yellow) !important; color: #1B3A6B !important; }
+/* Help guide last page: Call / Email Chris buttons readable in night mode */
+body.dark-mode .help-cta-call { background: var(--yellow) !important; color: #1B3A6B !important; }
+body.dark-mode .help-cta-email { border-color: #ffffff !important; color: #ffffff !important; }
 
 /* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
 body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
@@ -2261,7 +2264,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.36.0',
+  version: '8.36.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5069,8 +5072,8 @@ function initClientView(p) {
       (step.img2 ? '<div style="height:18px;"></div>'+helpImg(step.img2) : '')+
       (step.body2 ? '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body2+'</div>' : '')+
       (step.cta?'<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">'+
-        '<a href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
-        '<a href="mailto:'+CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1]+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:transparent;border:2px solid var(--teal);color:var(--teal);text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#9993; Email Chris</a>'+
+        '<a class="help-cta-call" href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
+        '<a class="help-cta-email" href="mailto:'+CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1]+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:transparent;border:2px solid var(--teal);color:var(--teal);text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#9993; Email Chris</a>'+
         '</div>':'');
 
     /* Dots */
