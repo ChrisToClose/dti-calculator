@@ -2070,13 +2070,6 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <div id="realie-guidance" style="display:none;margin-top:10px;padding:12px;background:var(--surface);border:1.5px dashed var(--teal);border-radius:var(--radius-sm);">
             <div style="font-size:12px;line-height:1.6;color:var(--text);">This is what the <strong>current owner</strong> pays. Because property taxes reset after a sale, <strong>your bill will likely be higher</strong> &mdash; especially if they&rsquo;ve owned it a long time or have a homestead exemption. Your payment above still uses the estimate for you at this price.</div>
             <button type="button" id="realie-use-btn" style="margin-top:10px;width:100%;height:38px;background:none;border:1.5px solid var(--teal);color:var(--teal);border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">Use this number instead</button>
-            <div id="realie-use-confirm" style="display:none;margin-top:10px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm);">
-              <div style="font-size:12px;line-height:1.6;color:var(--text);">This is the current owner&rsquo;s tax bill. Your actual bill after purchase will likely be higher. Use it anyway?</div>
-              <div style="display:flex;gap:8px;margin-top:8px;">
-                <button type="button" id="realie-use-yes" style="flex:1;height:36px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;">Use it</button>
-                <button type="button" id="realie-use-no" style="flex:1;height:36px;background:none;border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-weight:700;cursor:pointer;">Keep estimate</button>
-              </div>
-            </div>
           </div>
 
           <!-- NEW CONSTRUCTION WARNING (auto-shown by API flag) -->
@@ -2248,7 +2241,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.31.1',
+  version: '8.31.2',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2709,8 +2702,8 @@ async function lookupRealieAddress() {
       titleEl.style.color = 'var(--teal)';
       resultCard.style.borderColor = 'var(--teal)';
       guidanceEl.style.display = 'block';
-      document.getElementById('realie-use-btn').style.display = '';
-      document.getElementById('realie-use-confirm').style.display = 'none';
+      realieUsing = false;
+      document.getElementById('realie-use-btn').textContent = 'Use this number instead';
     } else {
       realiePendingAnnual = null;
       titleEl.textContent = '✅ Tax Record Found';
@@ -2789,20 +2782,29 @@ function fillClientTaxOverride(annual) {
   if (pencil) pencil.classList.add('active');
   return monthly;
 }
-/* "Use this number instead" → confirm → fill. Counties without a county lookup only. */
+/* "Use this number instead" — one tap (the note above already warns). The button then
+   becomes "Switch back to my estimate" so it's easy to undo. Counties without a county lookup only. */
+var realieUsing = false;
 document.addEventListener('DOMContentLoaded', function(){
   var useBtn = document.getElementById('realie-use-btn');
-  var box = document.getElementById('realie-use-confirm');
-  if (!useBtn || !box) return;
-  useBtn.addEventListener('click', function(){ box.style.display = 'block'; useBtn.style.display = 'none'; });
-  document.getElementById('realie-use-no').addEventListener('click', function(){ box.style.display = 'none'; useBtn.style.display = ''; });
-  document.getElementById('realie-use-yes').addEventListener('click', function(){
-    if (realiePendingAnnual == null) return;
-    var m = fillClientTaxOverride(realiePendingAnnual);
-    box.style.display = 'none';
+  if (!useBtn) return;
+  useBtn.addEventListener('click', function(){
     var st = document.getElementById('realie-status');
-    st.style.display = 'block'; st.style.color = '#16a34a';
-    st.textContent = '✅ Using the current owner\u2019s bill: $' + m.toFixed(2) + '/mo. Your actual bill will likely be higher.';
+    st.style.display = 'block';
+    if (!realieUsing) {
+      if (realiePendingAnnual == null) return;
+      var m = fillClientTaxOverride(realiePendingAnnual);
+      realieUsing = true;
+      useBtn.textContent = 'Switch back to my estimate';
+      st.style.color = '#16a34a';
+      st.textContent = '✅ Using the current owner\u2019s bill: $' + m.toFixed(2) + '/mo. Your actual bill will likely be higher.';
+    } else {
+      document.getElementById('client-tax-override-clear').click();
+      realieUsing = false;
+      useBtn.textContent = 'Use this number instead';
+      st.style.color = 'var(--text-muted)';
+      st.textContent = 'Back to the estimate for you at this price.';
+    }
   });
   /* County list: our 4 county lookups first, then every other Florida county (public records) */
   var sel = document.getElementById('realie-county');

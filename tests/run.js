@@ -23,8 +23,8 @@
         screen (no payment), and real zeros stay zero
      K. Save Scenario (Q7) sends the Turnstile token, and sends nothing
         when the check can't load. Worker side: tests/worker.test.mjs
-     L. Realie fallback (C6): a public-record bill is guidance only; using it
-        needs a confirm; the 4 county lookups still auto-fill
+     L. Realie fallback (C6): a public-record bill is guidance only; one tap
+        uses it, one tap switches back; the 4 county lookups still auto-fill
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -343,10 +343,11 @@ async function readScreen(page, pattern) {
     out.afterGuidance = taxShown();
     out.guidanceVisible = document.getElementById('realie-guidance').style.display === 'block';
     document.getElementById('realie-use-btn').click();
-    out.confirmVisible = document.getElementById('realie-use-confirm').style.display === 'block';
-    out.afterAskOnly = taxShown();
-    document.getElementById('realie-use-yes').click();
-    out.afterYes = taxShown();
+    out.afterUse = taxShown();
+    out.btnAfterUse = document.getElementById('realie-use-btn').textContent;
+    document.getElementById('realie-use-btn').click();
+    out.afterSwitchBack = taxShown();
+    out.btnAfterBack = document.getElementById('realie-use-btn').textContent;
     // county lookup answer (Pinellas) still auto-fills
     document.getElementById('client-tax-override').value = '';
     window.fetch = reply({ annual_tax: 4468, tax_year: 2025, county: 'Pinellas', address_confirmed: '4900 BRITTANY DR S UNIT 1808' });
@@ -358,8 +359,8 @@ async function readScreen(page, pattern) {
   });
   if (L.countyOptions !== 67) failures.push(`C6: tax-lookup county list should have all 67 Florida counties, has ${L.countyOptions}`);
   if (L.afterGuidance !== '' || !L.guidanceVisible) failures.push(`C6: public-record bill must be guidance only (tax box "${L.afterGuidance}", guidance shown ${L.guidanceVisible})`);
-  if (!L.confirmVisible || L.afterAskOnly !== '') failures.push('C6: "Use this number instead" must ask for confirmation before changing the payment');
-  if (L.afterYes !== '325.96') failures.push(`C6: after confirming, the monthly tax should be 325.96, got "${L.afterYes}"`);
+  if (L.afterUse !== '325.96' || L.btnAfterUse !== 'Switch back to my estimate') failures.push(`C6: one tap on "Use this number instead" should set 325.96/mo and offer "Switch back" (got "${L.afterUse}", button "${L.btnAfterUse}")`);
+  if (L.afterSwitchBack !== '' || L.btnAfterBack !== 'Use this number instead') failures.push(`C6: "Switch back to my estimate" should clear the owner's bill (got "${L.afterSwitchBack}", button "${L.btnAfterBack}")`);
   if (L.countyFill !== '372.33' || !L.guidanceHiddenForCounty) failures.push(`C6: county lookups must still auto-fill (got "${L.countyFill}") and hide the guidance note`);
 
   await browser.close();
