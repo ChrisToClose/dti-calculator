@@ -138,6 +138,9 @@ body.dark-mode #realie-result-tax { color: #fff !important; }
 body.dark-mode #realie-result-title { color: var(--yellow) !important; }
 body.dark-mode #realie-use-btn { color: var(--yellow) !important; border-color: var(--yellow) !important; }
 /* B10: PMI popup 'Got It' was navy on the navy popup card in dark mode */
+/* Night mode: example text in boxes readable but dimmer than typed text; number-box arrows dark */
+body.dark-mode input::placeholder, body.dark-mode textarea::placeholder { color: rgba(255,255,255,0.55); opacity: 1; }
+body.dark-mode input[type="number"] { color-scheme: dark; }
 body.dark-mode #pmi-drift-close { background: var(--yellow) !important; color: var(--navy) !important; }
 body.dark-mode #btn-save-scenario { background:#fff !important; color:var(--navy) !important; border:2px solid #fff !important; outline:2px solid var(--navy) !important; }
 body.dark-mode #btn-share-scenario { background:var(--navy); color:#fff !important; border-color:rgba(255,255,255,0.4) !important; }
@@ -2296,7 +2299,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.40.0',
+  version: '8.40.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
