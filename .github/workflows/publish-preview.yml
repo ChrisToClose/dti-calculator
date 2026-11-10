@@ -61,7 +61,7 @@ jobs:
 
       - name: Install test tools
         if: steps.diff.outputs.changed == 'yes'
-        run: npm install --no-audit --no-fund && npx playwright install --with-deps chromium
+        run: npm ci --no-audit --no-fund && npx playwright install --with-deps chromium
 
       - name: Math tests on the preview copy (must pass)
         if: steps.diff.outputs.changed == 'yes'

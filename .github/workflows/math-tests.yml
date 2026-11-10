@@ -10,6 +10,7 @@ on:
       - "index.html"
       - "tests/**"
       - "package.json"
+      - "package-lock.json"
       - ".github/workflows/math-tests.yml"
   pull_request:
     paths:
@@ -25,12 +26,25 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
       - name: Install test tools
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Install headless browser
         run: npx playwright install --with-deps chromium
       - name: Run math tests on the preview copy
         run: npm test
+      # Q9: if the LIVE page changed in this push, test it too. Live normally only
+      # changes through "Publish preview to live"; anything else gets a red X here.
+      - name: Did the live page change?
+        id: live
+        run: |
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then BEFORE="HEAD~1"; fi
+          if git diff --name-only "$BEFORE" HEAD 2>/dev/null | grep -qx "index.html"; then echo "changed=yes" >> "$GITHUB_OUTPUT"; else echo "changed=no" >> "$GITHUB_OUTPUT"; fi
+      - name: Run math tests on the live copy
+        if: steps.live.outputs.changed == 'yes'
+        run: node tests/run.js --page index.html

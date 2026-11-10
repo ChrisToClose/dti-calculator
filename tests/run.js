@@ -592,6 +592,14 @@ async function readScreen(page, pattern) {
 
   for (const e of pageErrors) failures.push('Page error — ' + e);
 
+  /* Q9: --update only saves new locked numbers when EVERY other check passed
+     (independent math, screens agree, feature checks, no page errors).
+     The locked-number comparison is the only check allowed to differ. */
+  if (UPDATE && failures.length) {
+    console.log(`\nREFUSED: new numbers were NOT saved — ${failures.length} other check(s) failed. Fix these first:`);
+    failures.forEach((f) => console.log('  ✗ ' + f));
+    process.exit(1);
+  }
   if (UPDATE) {
     fs.writeFileSync(EXPECTED_FILE, JSON.stringify(actual, null, 2) + '\n');
     console.log(`Locked values written for ${scenarios.length} scenarios → tests/expected.json`);
