@@ -649,6 +649,10 @@ async function readScreen(page, pattern) {
     if (outside.length) failures.push(`Fonts: still loading from an outside server — ${[...new Set(outside)].join(', ')}`);
     /* V. SEC2: other sites never learn which page (and numbers) a visitor came from */
     if (!/<meta name="referrer" content="(same-origin|no-referrer)">/.test(html)) failures.push('Security: the page must tell browsers not to pass its address (with client numbers) to other sites — referrer rule missing');
+    /* SEC3: every link that opens a new tab can't control or learn about this page */
+    const unsafeTabs = [...html.matchAll(/<a\b[^>]*target="_blank"[^>]*>/g)].map((m) => m[0]).filter((a) => !/rel="[^"]*noopener[^"]*noreferrer|rel="[^"]*noreferrer[^"]*noopener/.test(a));
+    if (unsafeTabs.length) failures.push(`Security: ${unsafeTabs.length} new-tab link(s) missing rel="noopener noreferrer" — ${unsafeTabs.map((a) => a.slice(0, 80)).join(' | ')}`);
+    if (/window\.open\((?!''\s*,\s*'_blank'\))/.test(html)) failures.push('Security: a window.open to an outside page needs noopener');
     const urls = [...html.matchAll(/@font-face\s*{[^}]*?url\(([^)]+)\)/g)].map((m) => m[1].replace(/['"]/g, ''));
     if (!urls.length) failures.push('Fonts: no @font-face rules found (headings would fall back to plain fonts)');
     for (const u of urls) {
