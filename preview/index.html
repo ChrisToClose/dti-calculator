@@ -2044,7 +2044,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
           <!-- RESULT CARD (shown after successful lookup) -->
           <div id="realie-result-card" style="display:none;margin-top:12px;padding:12px;background:var(--surface);border:1.5px solid #22c55e;border-radius:var(--radius-sm);">
-            <div style="font-size:12px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">✅ Tax Record Found</div>
+            <div id="realie-result-title" style="font-size:12px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">✅ Tax Record Found</div>
             <div id="realie-result-address" style="font-size:12px;color:var(--text-muted);margin-bottom:8px;"></div>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <div style="flex:1;min-width:120px;">
@@ -2058,6 +2058,19 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
               <div style="flex:1;min-width:120px;">
                 <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Assessed Value</div>
                 <div id="realie-result-assessed" style="font-size:14px;font-weight:700;color:var(--text);"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PUBLIC-RECORD GUIDANCE (counties without a county lookup — Realie). Shown as guidance only. -->
+          <div id="realie-guidance" style="display:none;margin-top:10px;padding:12px;background:var(--surface);border:1.5px dashed var(--teal);border-radius:var(--radius-sm);">
+            <div style="font-size:12px;line-height:1.6;color:var(--text);">This is what the <strong>current owner</strong> pays. Because property taxes reset after a sale, <strong>your bill will likely be higher</strong> &mdash; especially if they&rsquo;ve owned it a long time or have a homestead exemption. Your payment above still uses the estimate for you at this price.</div>
+            <button type="button" id="realie-use-btn" style="margin-top:10px;width:100%;height:38px;background:none;border:1.5px solid var(--teal);color:var(--teal);border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;">Use this number instead</button>
+            <div id="realie-use-confirm" style="display:none;margin-top:10px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm);">
+              <div style="font-size:12px;line-height:1.6;color:var(--text);">This is the current owner&rsquo;s tax bill. Your actual bill after purchase will likely be higher. Use it anyway?</div>
+              <div style="display:flex;gap:8px;margin-top:8px;">
+                <button type="button" id="realie-use-yes" style="flex:1;height:36px;background:var(--teal);color:#fff;border:none;border-radius:var(--radius-sm);font-weight:700;cursor:pointer;">Use it</button>
+                <button type="button" id="realie-use-no" style="flex:1;height:36px;background:none;border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-weight:700;cursor:pointer;">Keep estimate</button>
               </div>
             </div>
           </div>
@@ -2231,7 +2244,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.30.10',
+  version: '8.31.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2650,6 +2663,8 @@ async function lookupRealieAddress() {
   statusEl.style.color = 'var(--text-muted)';
   statusEl.textContent = 'Pulling property tax record…';
   resultCard.style.display = 'none';
+  document.getElementById('realie-guidance').style.display = 'none';
+  realiePendingAnnual = null;
   newConstrWarn.style.display = 'none';
   homesteadInfo.style.display = 'none';
 
@@ -2678,17 +2693,29 @@ async function lookupRealieAddress() {
       return;
     }
 
-    // ── Auto-fill the monthly tax override ──────────────────────
     var monthlyTax = Math.round((data.annual_tax / 12) * 100) / 100;
-    var overrideInput = document.getElementById('client-tax-override');
-    var overrideWrap  = document.getElementById('client-tax-override-wrap');
-    var pencil        = document.getElementById('client-tax-pencil');
-    if (overrideInput) {
-      overrideInput.value = monthlyTax.toFixed(2);
-      overrideInput.dispatchEvent(new Event('input', { bubbles: true }));
+    var guidanceOnly = data.source === 'realie' || data.guidance_only === true;
+    var titleEl = document.getElementById('realie-result-title');
+    var guidanceEl = document.getElementById('realie-guidance');
+    if (guidanceOnly) {
+      /* Counties without a county lookup: show the current owner's public-record bill as
+         GUIDANCE only — the payment keeps the estimate unless they choose to use it (with a confirm). */
+      realiePendingAnnual = data.annual_tax;
+      titleEl.textContent = '📄 Current owner\u2019s tax bill (public record)';
+      titleEl.style.color = 'var(--teal)';
+      resultCard.style.borderColor = 'var(--teal)';
+      guidanceEl.style.display = 'block';
+      document.getElementById('realie-use-btn').style.display = '';
+      document.getElementById('realie-use-confirm').style.display = 'none';
+    } else {
+      realiePendingAnnual = null;
+      titleEl.textContent = '✅ Tax Record Found';
+      titleEl.style.color = '#15803d';
+      resultCard.style.borderColor = '#22c55e';
+      guidanceEl.style.display = 'none';
+      // ── Auto-fill the monthly tax override (county lookups) ──
+      fillClientTaxOverride(data.annual_tax);
     }
-    if (overrideWrap) overrideWrap.classList.add('visible');
-    if (pencil) pencil.classList.add('active');
 
     // ── Show result card ─────────────────────────────────────────
     var annualFmt = '$' + Math.round(data.annual_tax).toLocaleString();
@@ -2700,8 +2727,10 @@ async function lookupRealieAddress() {
       data.assessed_value ? '$' + Math.round(data.assessed_value).toLocaleString() : '—';
     resultCard.style.display = 'block';
 
-    statusEl.style.color = '#16a34a';
-    statusEl.textContent = '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo' + (data._note ? ' — ' + data._note : '');
+    statusEl.style.color = guidanceOnly ? 'var(--text-muted)' : '#16a34a';
+    statusEl.textContent = guidanceOnly
+      ? 'Shown for guidance — your payment still uses the estimate for you.'
+      : '✅ Filled in $' + monthlyTax.toFixed(2) + '/mo' + (data._note ? ' — ' + data._note : '');
 
     // ── New construction warning (auto-detected by API) ──────────
     if (data.is_new_construction) {
@@ -2740,6 +2769,50 @@ async function lookupRealieAddress() {
     btn.style.opacity = '1';
   }
 }
+
+/* Fills the client's property-tax override with an annual bill (shown monthly). */
+var realiePendingAnnual = null;
+function fillClientTaxOverride(annual) {
+  var monthly = Math.round((annual / 12) * 100) / 100;
+  var overrideInput = document.getElementById('client-tax-override');
+  var overrideWrap  = document.getElementById('client-tax-override-wrap');
+  var pencil        = document.getElementById('client-tax-pencil');
+  if (overrideInput) {
+    overrideInput.value = monthly.toFixed(2);
+    overrideInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  if (overrideWrap) overrideWrap.classList.add('visible');
+  if (pencil) pencil.classList.add('active');
+  return monthly;
+}
+/* "Use this number instead" → confirm → fill. Counties without a county lookup only. */
+document.addEventListener('DOMContentLoaded', function(){
+  var useBtn = document.getElementById('realie-use-btn');
+  var box = document.getElementById('realie-use-confirm');
+  if (!useBtn || !box) return;
+  useBtn.addEventListener('click', function(){ box.style.display = 'block'; useBtn.style.display = 'none'; });
+  document.getElementById('realie-use-no').addEventListener('click', function(){ box.style.display = 'none'; useBtn.style.display = ''; });
+  document.getElementById('realie-use-yes').addEventListener('click', function(){
+    if (realiePendingAnnual == null) return;
+    var m = fillClientTaxOverride(realiePendingAnnual);
+    box.style.display = 'none';
+    var st = document.getElementById('realie-status');
+    st.style.display = 'block'; st.style.color = '#16a34a';
+    st.textContent = '✅ Using the current owner\u2019s bill: $' + m.toFixed(2) + '/mo. Your actual bill will likely be higher.';
+  });
+  /* County list: our 4 county lookups first, then every other Florida county (public records) */
+  var sel = document.getElementById('realie-county');
+  if (sel && typeof COUNTIES === 'object') {
+    var have = ['Pinellas','Hillsborough','Pasco','Manatee'];
+    var grp = document.createElement('optgroup');
+    grp.label = 'Other Florida counties (public records)';
+    Object.keys(COUNTIES).sort().forEach(function(c){
+      if (have.indexOf(c) !== -1) return;
+      var o = document.createElement('option'); o.value = c; o.textContent = c; grp.appendChild(o);
+    });
+    sel.appendChild(grp);
+  }
+});
 
 /* ── Allow Enter key to trigger lookup ── */
 document.addEventListener('DOMContentLoaded', function(){

@@ -24,9 +24,16 @@ const check = (name, cond, detail) => { if (!cond) failures.push(name + (detail 
 let emailsSent = 0;
 let lastEmail = null;
 let turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+let realieCalls = 0;
+let realieAnswer = { status: 200, body: { property: {
+  propertyIdentification: { county: 'MIAMI-DADE', currentOwner: { ownerName: 'SECRET OWNER' } },
+  propertyLocation: { addressFull: '1 TEST ST APT 5, MIAMI, FL 33101', unitNumberStripped: '5' },
+  valuationInformation: { totalAssessedValue: 300000, exemptions: [{ exemptionType: 'Homestead' }] },
+  taxInformation: { taxAmount: 3911.5, taxYear: 2024 }, mortgages: [{ amount: 1 }] }, otherResults: [] } };
 globalThis.fetch = async function (url) {
   url = String(url);
   if (url.includes('api.emailjs.com')) { emailsSent++; lastEmail = JSON.parse(arguments[1].body); return new Response('OK', { status: 200 }); }
+  if (url.includes('app.realie.ai')) { realieCalls++; return new Response(JSON.stringify(realieAnswer.body), { status: realieAnswer.status }); }
   if (url.includes('turnstile/v0/siteverify')) return new Response(JSON.stringify(turnstileAnswer), { status: 200 });
   throw new Error('unexpected outside call: ' + url);
 };
@@ -53,7 +60,7 @@ async function send(env, p, token) {
   }), env, {});
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
-const baseEnv = () => ({ EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_LIMITS_KV: fakeKV(), LOOKUP_LIMITER: okLimiter, EMAIL_LIMITER: okLimiter });
+const baseEnv = () => ({ REALIE_API_KEY: 'rk', LOOKUP_KV: null, EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_LIMITS_KV: fakeKV(), LOOKUP_LIMITER: okLimiter, EMAIL_LIMITER: okLimiter });
 
 /* 1. A valid send works and is counted */
 {
@@ -143,6 +150,45 @@ const baseEnv = () => ({ EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_
   check('status colour chosen by the Worker, not the browser', p.status_color === '#E8A317', p.status_color);
   await send(env, params('n@example.com', { dti_status: 'whatever' }), 'tok');
   check('unknown status gets the neutral colour', lastEmail.template_params.status_color === '#2B7FA4');
+}
+/* 11. Realie fallback for counties without a county lookup (C6) */
+async function lookup(env, body) {
+  const r = await worker.fetch(new Request('https://w.example/realie-lookup', {
+    method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' }, body: JSON.stringify(body),
+  }), env, {});
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+{
+  const env = baseEnv(); env.LOOKUP_KV = fakeKV(); realieCalls = 0;
+  const q = { address: '1 Test St', unit: '5', state: 'FL', county: 'Miami-Dade', city: 'Miami' };
+  const r1 = await lookup(env, q);
+  check('Realie used for an unsupported county', r1.status === 200 && r1.body.source === 'realie' && r1.body.guidance_only === true && r1.body.annual_tax === 3911.5 && r1.body.tax_year === 2024 && r1.body.is_homesteaded === true, JSON.stringify(r1));
+  check('no owner or mortgage data passed on', !/SECRET OWNER|mortgage/i.test(JSON.stringify(r1.body)));
+  const r2 = await lookup(env, q);
+  check('second lookup of the same address comes from the 30-day save (not paid again)', r2.status === 200 && r2.body.cached === true && realieCalls === 1, 'calls ' + realieCalls);
+  // monthly cap
+  const monthKey = [...env.LOOKUP_KV.m.keys()].find((k) => k.startsWith('realie-month:'));
+  env.LOOKUP_KV.m.set(monthKey, '50'); realieCalls = 0;
+  const r3 = await lookup(env, { ...q, address: '2 Test St' });
+  check('monthly cap of 50 stops new Realie lookups', r3.status === 500 && realieCalls === 0 && /enter it with the pencil/.test(r3.body.error || ''), JSON.stringify(r3));
+}
+{
+  const env = baseEnv(); env.LOOKUP_KV = fakeKV();
+  const r = await lookup(env, { address: '1 Test St', unit: '5', state: 'FL', county: 'Broward' });
+  check('address found in a different county is refused', r.status === 500 && /Miami-Dade County, not Broward/.test(r.body.error || ''), JSON.stringify(r));
+  const r2 = await lookup(env, { address: '1 Test St', unit: '7', state: 'FL', county: 'Miami-Dade' });
+  check('different unit is refused', r2.status === 500 && /Unit 7/.test(r2.body.error || ''), JSON.stringify(r2));
+  const saved = realieAnswer;
+  realieAnswer = { status: 200, body: { ...saved.body, otherResults: [{}] } };
+  const r3 = await lookup(env, { address: '9 Test St', state: 'FL', county: 'Miami-Dade' });
+  check('several matches are refused (no guessing)', r3.status === 500 && /More than one/.test(r3.body.error || ''), JSON.stringify(r3));
+  realieAnswer = { status: 404, body: { error: 'not found' } };
+  const r4 = await lookup(env, { address: '8 Test St', state: 'FL', county: 'Miami-Dade' });
+  check('not found gives a clear message', r4.status === 500 && /couldn.t find that address/.test(r4.body.error || ''), JSON.stringify(r4));
+  realieAnswer = saved;
+  const env2 = baseEnv(); delete env2.REALIE_API_KEY; env2.LOOKUP_KV = fakeKV(); realieCalls = 0;
+  const r5 = await lookup(env2, { address: '1 Test St', state: 'FL', county: 'Miami-Dade' });
+  check('no Realie key = friendly refusal, no call', r5.status === 500 && realieCalls === 0, JSON.stringify(r5));
 }
 /* 10. Missing token: allowed only while TURNSTILE_REQUIRED is false */
 {

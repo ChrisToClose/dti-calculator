@@ -4,6 +4,8 @@
 //           TURNSTILE_SECRET (Cloudflare Turnstile secret key — the "I'm human" check on Save Scenario)
 // Bindings: LOOKUP_LIMITER, EMAIL_LIMITER — Cloudflare rate limiters, configured in wrangler.jsonc
 //           EMAIL_LIMITS_KV — KV storage for Save Scenario send counts (wrangler.jsonc)
+//           LOOKUP_KV — same KV storage: saved Realie answers + monthly Realie cap
+// Secret:   REALIE_API_KEY — Realie public-record lookups for counties without a county lookup
 // County lookups: Hillsborough (JSON), Pinellas (county GIS JSON), Pasco (HTML), Manatee (JSON)
 
 // ── Security settings ──────────────────────────────────────────────
@@ -125,12 +127,9 @@ export default {
         } else if (countyNorm.includes('manatee')) {
           result = await lookupManatee(address, city);
         } else {
-          return new Response(JSON.stringify({
-            error: `County "${county}" is not yet supported. Supported counties: Hillsborough, Pinellas, Pasco, Manatee.`
-          }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          // Every other county: Realie public-record lookup, shown to the client as GUIDANCE only
+          // (the current owner's bill — the buyer's will likely differ). Chris, Nov 9, 2026.
+          result = await lookupRealie({ address, unit, county, state }, env);
         }
 
         return new Response(JSON.stringify(result), {
@@ -422,6 +421,96 @@ async function sha256Hex(text) {
 // Calendar date in Eastern time, e.g. 2026-11-09 (site-wide daily cap resets at midnight ET)
 function easternDate(ms) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// REALIE — public-record tax lookup for counties without a county lookup
+// Only tax fields are passed on (no owner, mortgage or equity data).
+// Answers are saved for 30 days; at most REALIE_LIMITS.perMonth paid lookups a month.
+// Anything uncertain (several matches, other county, other unit) is refused, not guessed.
+// ─────────────────────────────────────────────────────────────────
+const REALIE_URL = 'https://app.realie.ai/api/public/property/address/';
+const REALIE_LIMITS = { perMonth: 50, cacheDays: 30 };
+const REALIE_SORRY = 'Public tax records aren\u2019t available for this property right now. If you have the tax bill, enter it with the pencil next to Property Tax.';
+
+async function lookupRealie({ address, unit, county, state }, env) {
+  const kv = env.LOOKUP_KV;
+  if (!env.REALIE_API_KEY || !kv) {
+    console.error('Realie lookup unavailable: ' + (!env.REALIE_API_KEY ? 'REALIE_API_KEY not set' : 'LOOKUP_KV binding missing'));
+    throw new Error(REALIE_SORRY);
+  }
+  const st = String(state || 'FL').trim().toUpperCase().slice(0, 2);
+  const addr = String(address || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+  const unitClean = String(unit || '').trim().replace(/^(?:APT|UNIT|STE|SUITE|#)\.?\s*#?\s*/i, '').toUpperCase().slice(0, 20);
+  const countyKey = (s) => String(s || '').toUpperCase().replace(/COUNTY/g, '').replace(/[^A-Z]/g, '');
+  const wantCounty = countyKey(county);
+
+  const cacheKey = 'realie:' + (await sha256Hex([st, addr.toUpperCase(), unitClean, wantCounty].join('|'))).slice(0, 40);
+  const cached = await kv.get(cacheKey, 'json');
+  if (cached) return { ...cached, cached: true };
+
+  const monthKey = 'realie-month:' + easternDate(Date.now()).slice(0, 7);
+  const used = parseInt(await kv.get(monthKey), 10) || 0;
+  if (used >= REALIE_LIMITS.perMonth) {
+    console.warn('Realie monthly cap reached:', used);
+    throw new Error(REALIE_SORRY);
+  }
+
+  const q = new URLSearchParams({ state: st, address: addr });
+  if (unitClean) q.set('unitNumberStripped', unitClean);
+  let r, body;
+  try {
+    r = await fetch(REALIE_URL + '?' + q.toString(), { headers: { Authorization: env.REALIE_API_KEY }, signal: AbortSignal.timeout(COUNTY_TIMEOUT_MS) });
+    body = await r.json().catch(() => ({}));
+  } catch (e) {
+    console.error('Realie did not respond:', e && e.message);
+    throw new Error(REALIE_SORRY);
+  }
+  if (r.status === 404) throw new Error('We couldn\u2019t find that address in public records. Check the street address (and unit #), or enter the tax bill with the pencil next to Property Tax.');
+  if (!r.ok) {
+    console.error('Realie refused:', r.status, body && (body.code || body.error));
+    throw new Error(REALIE_SORRY);
+  }
+  // A successful answer is billed — count it
+  await kv.put(monthKey, String(used + 1), { expirationTtl: 40 * 86400 });
+
+  const p = body.property || {};
+  const pid = p.propertyIdentification || {};
+  const loc = p.propertyLocation || {};
+  const val = p.valuationInformation || {};
+  const tax = p.taxInformation || {};
+  if (Array.isArray(body.otherResults) && body.otherResults.length) {
+    throw new Error('More than one property matches that address. Add the unit # or check the street name, or enter the tax bill with the pencil.');
+  }
+  const gotCounty = pid.county || loc.countyUSPS || '';
+  if (wantCounty && gotCounty && countyKey(gotCounty) !== wantCounty) {
+    throw new Error(`That address matched a property in ${titleCase(gotCounty)} County, not ${county}. Check the address and county.`);
+  }
+  if (unitClean && loc.unitNumberStripped && String(loc.unitNumberStripped).toUpperCase().replace(/^0+(?=.)/, '') !== unitClean.replace(/^0+(?=.)/, '')) {
+    throw new Error(`Unit ${unitClean} wasn\u2019t found at that address. Please double-check the unit number.`);
+  }
+  if (!(Number(tax.taxAmount) > 0)) {
+    throw new Error('Public records don\u2019t show a tax bill for this property. If you have the bill, enter it with the pencil next to Property Tax.');
+  }
+  const exemptions = Array.isArray(val.exemptions) ? val.exemptions : [];
+  const result = {
+    source: 'realie',
+    guidance_only: true,
+    annual_tax: Math.round(Number(tax.taxAmount) * 100) / 100,
+    tax_year: tax.taxYear || null,
+    assessed_value: Number(val.totalAssessedValue) || null,
+    address_confirmed: loc.addressFull || addr,
+    county: gotCounty ? titleCase(gotCounty) : (county || null),
+    is_homesteaded: exemptions.some((e) => /homestead/i.test(String(e && e.exemptionType || ''))),
+    is_new_construction: false,
+    new_construction_reasons: [],
+  };
+  await kv.put(cacheKey, JSON.stringify(result), { expirationTtl: REALIE_LIMITS.cacheDays * 86400 });
+  return result;
+}
+
+function titleCase(s) {
+  return String(s || '').toLowerCase().replace(/(^|[\s-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
 }
 
 // ─────────────────────────────────────────────────────────────────

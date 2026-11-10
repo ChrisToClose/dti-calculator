@@ -23,6 +23,8 @@
         screen (no payment), and real zeros stay zero
      K. Save Scenario (Q7) sends the Turnstile token, and sends nothing
         when the check can't load. Worker side: tests/worker.test.mjs
+     L. Realie fallback (C6): a public-record bill is guidance only; using it
+        needs a confirm; the 4 county lookups still auto-fill
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -324,6 +326,41 @@ async function readScreen(page, pattern) {
   });
   if (k.blocked.sent !== 0 || !/security check/.test(k.blocked.msg)) failures.push(`Q7: when the human check can't load, Save Scenario must not send (sent ${k.blocked.sent}, message "${k.blocked.msg}")`);
   if (k.token !== 'TOKEN123' || k.total !== 1) failures.push(`Q7: Save Scenario did not pass the human-check token to the Worker (${JSON.stringify(k)})`);
+
+  /* L. Realie fallback (C6): owner's bill is guidance only; "use it" needs a confirm; county lookups unchanged */
+  await client.goto(BASE);
+  const L = await client.evaluate(async () => {
+    const out = {};
+    const sel = document.getElementById('realie-county');
+    out.countyOptions = [...sel.options].filter((o) => o.value).length;
+    const reply = (obj) => async () => ({ ok: true, status: 200, text: async () => JSON.stringify(obj) });
+    const taxShown = () => document.getElementById('client-tax-override').value;
+    document.getElementById('realie-address').value = '1 Test St';
+    // public-record (Realie) answer
+    window.fetch = reply({ source: 'realie', guidance_only: true, annual_tax: 3911.5, tax_year: 2024, county: 'Broward', address_confirmed: '1 TEST ST', is_homesteaded: true });
+    sel.value = 'Broward';
+    await lookupRealieAddress();
+    out.afterGuidance = taxShown();
+    out.guidanceVisible = document.getElementById('realie-guidance').style.display === 'block';
+    document.getElementById('realie-use-btn').click();
+    out.confirmVisible = document.getElementById('realie-use-confirm').style.display === 'block';
+    out.afterAskOnly = taxShown();
+    document.getElementById('realie-use-yes').click();
+    out.afterYes = taxShown();
+    // county lookup answer (Pinellas) still auto-fills
+    document.getElementById('client-tax-override').value = '';
+    window.fetch = reply({ annual_tax: 4468, tax_year: 2025, county: 'Pinellas', address_confirmed: '4900 BRITTANY DR S UNIT 1808' });
+    sel.value = 'Pinellas';
+    await lookupRealieAddress();
+    out.countyFill = taxShown();
+    out.guidanceHiddenForCounty = document.getElementById('realie-guidance').style.display === 'none';
+    return out;
+  });
+  if (L.countyOptions !== 67) failures.push(`C6: tax-lookup county list should have all 67 Florida counties, has ${L.countyOptions}`);
+  if (L.afterGuidance !== '' || !L.guidanceVisible) failures.push(`C6: public-record bill must be guidance only (tax box "${L.afterGuidance}", guidance shown ${L.guidanceVisible})`);
+  if (!L.confirmVisible || L.afterAskOnly !== '') failures.push('C6: "Use this number instead" must ask for confirmation before changing the payment');
+  if (L.afterYes !== '325.96') failures.push(`C6: after confirming, the monthly tax should be 325.96, got "${L.afterYes}"`);
+  if (L.countyFill !== '372.33' || !L.guidanceHiddenForCounty) failures.push(`C6: county lookups must still auto-fill (got "${L.countyFill}") and hide the guidance note`);
 
   await browser.close();
 
