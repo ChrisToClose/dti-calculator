@@ -95,6 +95,11 @@ h1, h2, h3, .help-title { text-wrap: balance; }
 #help-drawer > div:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important; }
 #client-thermo-section.is-sticky { padding-top: env(safe-area-inset-top, 0px); }
 
+/* UX1: skeleton placeholders while something loads */
+.skel-bar { height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(127,140,160,0.16) 25%, rgba(127,140,160,0.30) 50%, rgba(127,140,160,0.16) 75%); background-size: 200% 100%; animation: skel-shimmer 1.2s ease-in-out infinite; }
+@keyframes skel-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel-bar { animation: none; } }
+
 /* Frozen thermometer — navy background in light mode when sticky */
 #client-thermo-section.is-sticky {
   position: fixed !important;
@@ -2077,6 +2082,13 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <!-- LOOKUP STATUS / RESULT -->
           <div id="realie-status" style="display:none;margin-top:10px;font-size:12px;text-align:center;color:var(--text-muted);"></div>
 
+          <!-- UX1: placeholder card while the tax record loads -->
+          <div id="tax-skeleton" aria-hidden="true" style="display:none;margin-top:12px;padding:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);">
+            <div class="skel-bar" style="width:55%;"></div>
+            <div class="skel-bar" style="width:85%;margin-top:10px;"></div>
+            <div style="display:flex;gap:10px;margin-top:14px;"><div class="skel-bar" style="flex:1;height:22px;"></div><div class="skel-bar" style="flex:1;height:22px;"></div><div class="skel-bar" style="flex:1;height:22px;"></div></div>
+          </div>
+
           <!-- Q5: not an exact match → ask before using anything -->
           <div id="tax-confirm-box" style="display:none;margin-top:12px;padding:12px;background:#fff8e1;border:1.5px solid #f59e0b;border-radius:var(--radius-sm);">
             <div style="font-size:13px;font-weight:800;color:#92400e;">⚠️ Is this the right property?</div>
@@ -2284,7 +2296,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.37.0',
+  version: '8.38.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2709,6 +2721,7 @@ async function lookupRealieAddress() {
   realiePendingAnnual = null;
   newConstrWarn.style.display = 'none';
   homesteadInfo.style.display = 'none';
+  document.getElementById('tax-skeleton').style.display = 'block';
 
   try {
     var response = await fetch('https://christoclose-tax.christoclose.workers.dev/realie-lookup', {
@@ -2828,6 +2841,8 @@ async function lookupRealieAddress() {
     btnText.textContent = 'Pull Tax Record';
     btn.disabled = false;
     btn.style.opacity = '1';
+  } finally {
+    document.getElementById('tax-skeleton').style.display = 'none';
   }
 }
 
@@ -2879,6 +2894,10 @@ document.addEventListener('DOMContentLoaded', function(){
     if (q.length < 4) { hideAddrSuggest(); return; }
     addrTimer = setTimeout(async function(){
       var mySeq = ++addrSeq;
+      /* UX1: grey placeholder rows while suggestions load */
+      box.innerHTML = '<div style="padding:10px 12px;"><div class="skel-bar" style="width:60%;"></div><div class="skel-bar" style="width:40%;height:9px;margin-top:7px;"></div></div>'+
+                      '<div style="padding:10px 12px;"><div class="skel-bar" style="width:52%;"></div><div class="skel-bar" style="width:36%;height:9px;margin-top:7px;"></div></div>';
+      box.style.display = 'block';
       if (!addrSession) addrSession = newAddrSession();
       try {
         var d = await addrFetch('/address-suggest', { input: q, sessionToken: addrSession });
@@ -2908,6 +2927,19 @@ document.addEventListener('DOMContentLoaded', function(){
   });
   addrEl.addEventListener('blur', function(){ setTimeout(hideAddrSuggest, 150); });
   addrEl.addEventListener('keydown', function(e){ if (e.key === 'Escape') hideAddrSuggest(); });
+});
+
+/* UX12: the phone's Back button closes an open panel instead of leaving the calculator.
+   Opening a panel adds one history step; closing it by hand removes that step again. */
+var ctcOpenPanel = null;
+function pushPanel(name, closeFn){
+  try { history.pushState({ ctcPanel: name }, ''); ctcOpenPanel = { name: name, close: closeFn }; } catch (e) {}
+}
+function panelClosedByHand(name){
+  if (ctcOpenPanel && ctcOpenPanel.name === name) { ctcOpenPanel = null; try { history.back(); } catch (e) {} }
+}
+window.addEventListener('popstate', function(){
+  if (ctcOpenPanel) { var p = ctcOpenPanel; ctcOpenPanel = null; p.close(true); }
 });
 
 /* Q5: "Is this the right property?" buttons */
@@ -4892,13 +4924,18 @@ function initClientView(p) {
           obStep++;
           showObStep(obStep);
         } else {
-          onboardEl.style.opacity = '0';
-          onboardEl.style.transition = 'opacity 0.3s';
-          setTimeout(function(){ onboardEl.style.display = 'none'; }, 300);
-          try { localStorage.setItem('ctc_onboard_seen', today); } catch(e){}
+          closeWelcome();
         }
       });
     }
+    function closeWelcome(fromBack){
+      if (fromBack !== true) panelClosedByHand('welcome');
+      onboardEl.style.opacity = '0';
+      onboardEl.style.transition = 'opacity 0.3s';
+      setTimeout(function(){ onboardEl.style.display = 'none'; }, 300);
+      try { localStorage.setItem('ctc_onboard_seen', today); } catch(e){}
+    }
+    if (onboardEl.style.display !== 'none') pushPanel('welcome', closeWelcome);
     /* Dot click navigation */
     obDots.forEach(function(d) {
       d.addEventListener('click', function(){
@@ -5119,25 +5156,56 @@ function initClientView(p) {
 
   function openHelp(){
     helpCurrent=0; renderHelpStep();
+    if (!ctcOpenPanel) pushPanel('help', closeHelp);
     helpDrawer.style.boxShadow='-4px 0 24px rgba(0,0,0,0.2)';
     helpDrawer.style.transform='translateX(0)';
     if(helpOverlay){helpOverlay.style.display='block';}
   }
-  function closeHelp(){
+  function closeHelp(fromBack){
+    if (fromBack !== true) panelClosedByHand('help');
+    helpDrawer.style.transition='transform 0.35s cubic-bezier(.4,0,.2,1)';
     helpDrawer.style.transform='translateX(100%)';
     /* drop the shadow once it has slid away — otherwise it shades the right edge of the page */
     setTimeout(function(){ if (helpDrawer.style.transform==='translateX(100%)') helpDrawer.style.boxShadow='none'; }, 380);
     if(helpOverlay){helpOverlay.style.display='none';}
   }
-  document.getElementById('help-close').addEventListener('click', closeHelp);
-  if(helpOverlay) helpOverlay.addEventListener('click', closeHelp);
+  document.getElementById('help-close').addEventListener('click', function(){ closeHelp(); });
+  if(helpOverlay) helpOverlay.addEventListener('click', function(){ closeHelp(); });
+
+  /* UX10: swipe the help guide to the right to close it (follows the finger; let go early and it springs back) */
+  (function(){
+    var startX = null, startY = null, dx = 0, dragging = false;
+    helpDrawer.addEventListener('touchstart', function(e){
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY; dx = 0; dragging = false;
+    }, { passive: true });
+    helpDrawer.addEventListener('touchmove', function(e){
+      if (startX == null) return;
+      var mx = e.touches[0].clientX - startX, my = e.touches[0].clientY - startY;
+      if (!dragging && Math.abs(mx) > 10 && Math.abs(mx) > Math.abs(my) * 1.5 && mx > 0) dragging = true;
+      if (dragging) { dx = Math.max(0, mx); helpDrawer.style.transition = 'none'; helpDrawer.style.transform = 'translateX(' + dx + 'px)'; }
+    }, { passive: true });
+    helpDrawer.addEventListener('touchend', function(){
+      if (startX == null) return;
+      helpDrawer.style.transition = 'transform 0.25s cubic-bezier(.4,0,.2,1)';
+      if (dragging && dx > 80) { closeHelp(); } else { helpDrawer.style.transform = 'translateX(0)'; }
+      startX = null; dragging = false; dx = 0;
+    });
+  })();
 
   /* Help button — will be added to floating buttons */
   var helpBtn = document.getElementById('help-btn');
   /* The "?" button opens the full help guide (it had been switched to reopen the
      3-page welcome on Oct 20, 2026 — Chris wants the full guide back). */
   if(helpBtn) helpBtn.addEventListener('click', function(){
-    if (onboardEl && onboardEl.style.display !== 'none') onboardEl.style.display = 'none';
+    if (onboardEl && onboardEl.style.display !== 'none') {
+      onboardEl.style.display = 'none';
+      /* swap the welcome's Back step for the guide's (no extra history step, no race) */
+      if (ctcOpenPanel && ctcOpenPanel.name === 'welcome') {
+        ctcOpenPanel = { name: 'help', close: closeHelp };
+        try { history.replaceState({ ctcPanel: 'help' }, ''); } catch (e) {}
+      }
+    }
     openHelp();
   });
 

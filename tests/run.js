@@ -30,6 +30,7 @@
      N. ADDR1: typing in the tax lookup shows Google address suggestions;
         picking one fills street, city, county and unit
      O. Help: "?" opens the full help guide (not the welcome popup), no outdated text
+     P. UX: phone Back closes the guide/welcome, swipe closes the guide, skeleton while loading
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -451,6 +452,57 @@ async function readScreen(page, pattern) {
   // Guide v2: pages follow the screen top to bottom (price before down payment before tax before save before share)
   const order = ['Purchase price', 'Down payment', 'Loan term', 'HOA fee', 'Homeowners insurance', 'Property tax', 'Look up the real tax bill', 'Back to My Quote', 'Save your scenario', 'Share with someone'].map((w) => O.text.indexOf(w));
   if (order.some((x) => x < 0) || order.some((x, k) => k > 0 && x < order[k - 1])) failures.push(`Help: guide pages should follow the screen order (${order.join(',')})`);
+
+  /* P. UX Release B: Back button closes the guide/welcome, swipe closes the guide, skeletons show while loading */
+  await client.goto(BASE);
+  await client.evaluate(() => { try { localStorage.removeItem('ctc_onboard_seen'); } catch (e) {} });
+  await client.goto(BASE + '&p=1');
+  const P = {};
+  P.welcomeOpen = await client.evaluate(() => document.getElementById('client-onboard').style.display !== 'none');
+  await client.goBack({ waitUntil: 'commit' }).catch(() => {});
+  await client.waitForTimeout(400);
+  P.welcomeClosedByBack = await client.evaluate(() => document.getElementById('client-onboard').style.display === 'none');
+  P.stillOnCalculator = /p=1/.test(client.url());
+  await client.evaluate(() => document.getElementById('help-btn').click());
+  await client.waitForTimeout(100);
+  P.helpOpen = await client.evaluate(() => document.getElementById('help-drawer').style.transform === 'translateX(0px)' || document.getElementById('help-drawer').style.transform === 'translateX(0)');
+  await client.goBack({ waitUntil: 'commit' }).catch(() => {});
+  await client.waitForTimeout(400);
+  P.helpClosedByBack = await client.evaluate(() => document.getElementById('help-drawer').style.transform === 'translateX(100%)');
+  P.stillOnCalculator2 = /p=1/.test(client.url());
+  // swipe right on the guide
+  const sw = await client.evaluate(async () => {
+    document.getElementById('help-btn').click();
+    const d = document.getElementById('help-drawer');
+    const t = (x) => new Touch({ identifier: 1, target: d, clientX: x, clientY: 300 });
+    d.dispatchEvent(new TouchEvent('touchstart', { touches: [t(60)], bubbles: true }));
+    d.dispatchEvent(new TouchEvent('touchmove', { touches: [t(120)], bubbles: true }));
+    d.dispatchEvent(new TouchEvent('touchmove', { touches: [t(220)], bubbles: true }));
+    d.dispatchEvent(new TouchEvent('touchend', { touches: [], bubbles: true }));
+    await new Promise((r) => setTimeout(r, 50));
+    const closed = d.style.transform === 'translateX(100%)';
+    // a short swipe springs back
+    document.getElementById('help-btn').click();
+    d.dispatchEvent(new TouchEvent('touchstart', { touches: [t(60)], bubbles: true }));
+    d.dispatchEvent(new TouchEvent('touchmove', { touches: [t(100)], bubbles: true }));
+    d.dispatchEvent(new TouchEvent('touchend', { touches: [], bubbles: true }));
+    await new Promise((r) => setTimeout(r, 50));
+    return { closed, sprangBack: d.style.transform === 'translateX(0)' || d.style.transform === 'translateX(0px)' };
+  });
+  // skeletons while loading
+  const sk = await client.evaluate(async () => {
+    let release; window.fetch = () => new Promise((r) => { release = () => r({ ok: true, status: 200, json: async () => ({ suggestions: [] }), text: async () => '{"annual_tax":1200,"county":"Pinellas","address_confirmed":"1 A ST","needs_confirmation":false}' }); });
+    document.getElementById('realie-address').value = '1 A St'; document.getElementById('realie-county').value = 'Pinellas';
+    const pending = lookupRealieAddress();
+    await new Promise((r) => setTimeout(r, 20));
+    const during = document.getElementById('tax-skeleton').style.display === 'block';
+    release(); await pending;
+    return { during, after: document.getElementById('tax-skeleton').style.display === 'none' };
+  });
+  if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);
+  if (!P.helpOpen || !P.helpClosedByBack || !P.stillOnCalculator2) failures.push(`UX12: Back should close the help guide and stay on the calculator (${JSON.stringify(P)})`);
+  if (!sw.closed || !sw.sprangBack) failures.push(`UX10: swiping the guide right should close it; a short swipe should spring back (${JSON.stringify(sw)})`);
+  if (!sk.during || !sk.after) failures.push(`UX1: the tax lookup should show a placeholder card while loading (${JSON.stringify(sk)})`);
 
   await browser.close();
 
