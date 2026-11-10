@@ -33,6 +33,7 @@
      P. UX: phone Back closes the guide/welcome, swipe closes the guide, skeleton while loading
      Q. Q2: Chris's PMI quote scales with the client's price and down payment
      R. Q3: Share link + PDF QR reopen exactly the client's screen
+     S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -582,6 +583,29 @@ async function readScreen(page, pattern) {
   }
   if (!R.county) failures.push('Q3 test setup: could not pick Hillsborough');
   if (R.qrData !== R.url) failures.push(`Q3: the PDF QR code should open the same numbers as Share (QR ${R.qrData}, share ${R.url})`);
+
+  /* S. Bug hunt Nov 10: night-mode amounts readable, no stray tags in the payment card, stale rental line hides */
+  await client.goto(PAGE + '?client=1&pp=350000&lt=FHA&dp=3.5&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43&hoa=300&fld=1&ren=1&grn=2500&pit=1800');
+  await client.waitForFunction(() => typeof calcAll === 'function' && document.getElementById('cbr-mi'));
+  const S2 = await client.evaluate(async () => {
+    applyMode(true); await new Promise((r) => setTimeout(r, 50));
+    const NAVY = 'rgb(27, 58, 107)';
+    const navyText = ['client-hoa-val', 'client-flood-val', 'client-rent-val', 'client-down-pct'].filter((id) => getComputedStyle(document.getElementById(id)).color === NAVY);
+    const save = [...document.querySelectorAll('div')].find((e) => e.children.length === 0 && e.textContent.trim() === 'Save This Scenario');
+    if (save && getComputedStyle(save).color === NAVY) navyText.push('Save This Scenario');
+    const grid = document.getElementById('client-compact-grid');
+    const stray = ['cbr-pmi-badge', 'cbr-ufmip-note', 'cbr-rental-detail-row'].filter((id) => !grid.contains(document.getElementById(id)));
+    const uf = document.getElementById('cbr-ufmip-note'); const ufColor = getComputedStyle(uf).color;
+    const s = document.getElementById('client-rent-slider'); const set = async (v) => { s.value = v; s.dispatchEvent(new Event('input', { bubbles: true })); await new Promise((r) => setTimeout(r, 40)); };
+    await set(0); const shownAt0 = document.getElementById('cbr-rental-detail-row').checkVisibility();
+    await set(3000); const shownAt3000 = document.getElementById('cbr-rental-detail-row').checkVisibility();
+    applyMode(false);
+    return { navyText, stray, ufVisible: uf.checkVisibility(), ufColor, shownAt0, shownAt3000 };
+  });
+  if (S2.navyText.length) failures.push(`Night mode: these are still navy on navy — ${S2.navyText.join(', ')}`);
+  if (S2.stray.length) failures.push(`Payment card: ${S2.stray.join(', ')} should sit inside the breakdown, not loose under the status pill`);
+  if (!S2.ufVisible || !/255, 255, 255/.test(S2.ufColor)) failures.push(`FHA note should be visible light text on the navy card (${JSON.stringify(S2)})`);
+  if (!S2.shownAt0 || S2.shownAt3000) failures.push(`Rental "how the math works" line should show only while there is a shortfall (${JSON.stringify(S2)})`);
 
   if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);
   if (!P.helpOpen || !P.helpClosedByBack || !P.stillOnCalculator2) failures.push(`UX12: Back should close the help guide and stay on the calculator (${JSON.stringify(P)})`);
