@@ -6,6 +6,7 @@
 //           EMAIL_LIMITS_KV — KV storage for Save Scenario send counts (wrangler.jsonc)
 //           LOOKUP_KV — same KV storage: saved Realie answers + monthly Realie cap
 // Secret:   REALIE_API_KEY — Realie public-record lookups for counties without a county lookup
+//           GOOGLE_PLACES_KEY — Google address autocomplete in the tax lookup (Places API (New) only)
 // County lookups: Hillsborough (JSON), Pinellas (county GIS JSON), Pasco (HTML), Manatee (JSON)
 
 // ── Security settings ──────────────────────────────────────────────
@@ -94,6 +95,14 @@ export default {
     }
 
     const url = new URL(request.url);
+
+    // ── /address-suggest + /address-details — Google address autocomplete (ADDR1) ──
+    if (url.pathname === '/address-suggest' && request.method === 'POST') {
+      return handleAddressSuggest(request, env, json);
+    }
+    if (url.pathname === '/address-details' && request.method === 'POST') {
+      return handleAddressDetails(request, env, json);
+    }
 
     // ── /send-scenario route — "Save Scenario" email ───────────────
     if (url.pathname === '/send-scenario' && request.method === 'POST') {
@@ -425,6 +434,94 @@ async function sha256Hex(text) {
 // Calendar date in Eastern time, e.g. 2026-11-09 (site-wide daily cap resets at midnight ET)
 function easternDate(ms) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// GOOGLE ADDRESS AUTOCOMPLETE (ADDR1, Chris Nov 9, 2026)
+// Key: GOOGLE_PLACES_KEY Worker secret (restricted to Places API (New)).
+// At most GOOGLE_LIMITS.perMonth calls a month (Google's free allowance is 5,000);
+// past that, suggestions quietly stop and the box works as plain typing.
+// ─────────────────────────────────────────────────────────────────
+const GOOGLE_LIMITS = { perMonth: 4000 };
+// Rough box around Florida, used to favour Florida addresses (not a hard limit)
+const FLORIDA_BIAS = { rectangle: { low: { latitude: 24.3, longitude: -87.7 }, high: { latitude: 31.1, longitude: -79.8 } } };
+
+async function googleBudgetOk(env) {
+  const kv = env.LOOKUP_KV;
+  if (!env.GOOGLE_PLACES_KEY || !kv) return { ok: false };
+  const key = 'gplaces-month:' + easternDate(Date.now()).slice(0, 7);
+  const used = parseInt(await kv.get(key), 10) || 0;
+  if (used >= GOOGLE_LIMITS.perMonth) return { ok: false, capped: true };
+  await kv.put(key, String(used + 1), { expirationTtl: 40 * 86400 });
+  return { ok: true };
+}
+const cleanToken = (t) => (typeof t === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(t) ? t : undefined);
+
+async function handleAddressSuggest(request, env, json) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ suggestions: [] }, 200); }
+  const input = String((body && body.input) || '').trim().slice(0, 100);
+  if (input.length < 4) return json({ suggestions: [] }, 200);
+  const budget = await googleBudgetOk(env);
+  if (!budget.ok) return json({ suggestions: [], unavailable: true }, 200);
+  try {
+    const r = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': env.GOOGLE_PLACES_KEY },
+      body: JSON.stringify({
+        input,
+        sessionToken: cleanToken(body.sessionToken),
+        includedRegionCodes: ['us'],
+        includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
+        locationBias: FLORIDA_BIAS,
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { console.error('Google autocomplete error:', r.status, d && d.error && d.error.status); return json({ suggestions: [] }, 200); }
+    const suggestions = (d.suggestions || []).map((x) => x.placePrediction).filter(Boolean).slice(0, 5).map((p) => ({
+      placeId: p.placeId,
+      main: (p.structuredFormat && p.structuredFormat.mainText && p.structuredFormat.mainText.text) || (p.text && p.text.text) || '',
+      secondary: (p.structuredFormat && p.structuredFormat.secondaryText && p.structuredFormat.secondaryText.text) || '',
+    })).filter((x) => x.placeId && x.main);
+    return json({ suggestions }, 200);
+  } catch (e) {
+    console.error('Google autocomplete failed:', e && e.message);
+    return json({ suggestions: [] }, 200);
+  }
+}
+
+async function handleAddressDetails(request, env, json) {
+  let body;
+  try { body = await request.json(); } catch (e) { return json({ error: 'Invalid request.' }, 400); }
+  const placeId = String((body && body.placeId) || '');
+  if (!/^[A-Za-z0-9_-]{10,300}$/.test(placeId)) return json({ error: 'Invalid request.' }, 400);
+  const budget = await googleBudgetOk(env);
+  if (!budget.ok) return json({ error: 'unavailable' }, 503);
+  try {
+    const tok = cleanToken(body.sessionToken);
+    const r = await fetch('https://places.googleapis.com/v1/places/' + encodeURIComponent(placeId) + (tok ? '?sessionToken=' + tok : ''), {
+      headers: { 'X-Goog-Api-Key': env.GOOGLE_PLACES_KEY, 'X-Goog-FieldMask': 'addressComponents,formattedAddress' },
+      signal: AbortSignal.timeout(5000),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { console.error('Google details error:', r.status, d && d.error && d.error.status); return json({ error: 'unavailable' }, 502); }
+    const comps = Array.isArray(d.addressComponents) ? d.addressComponents : [];
+    const get = (type, short) => { const c = comps.find((x) => (x.types || []).includes(type)); return c ? (short ? c.shortText : c.longText) || '' : ''; };
+    const street = [get('street_number', true), get('route', true)].filter(Boolean).join(' ');
+    return json({
+      street,
+      unit: get('subpremise', true).replace(/^#/, ''),
+      city: get('locality') || get('sublocality') || get('postal_town'),
+      county: get('administrative_area_level_2').replace(/\s+County$/i, ''),
+      state: get('administrative_area_level_1', true),
+      zip: get('postal_code', true),
+      formatted: d.formattedAddress || '',
+    }, 200);
+  } catch (e) {
+    console.error('Google details failed:', e && e.message);
+    return json({ error: 'unavailable' }, 502);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────

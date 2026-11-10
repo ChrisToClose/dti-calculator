@@ -2003,8 +2003,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Enter the property address to automatically pull the tax bill from county records.</div>
 
           <!-- ADDRESS INPUTS -->
-          <input type="text" id="realie-address" placeholder="Street address (e.g. 123 Main St)"
+          <div style="position:relative;">
+          <input type="text" id="realie-address" placeholder="Start typing the address (e.g. 4900 Brittany)" autocomplete="off"
             style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:4px;box-sizing:border-box;">
+            <!-- ADDR1: Google address suggestions (via the Worker) -->
+            <div id="addr-suggest" role="listbox" style="display:none;position:absolute;left:0;right:0;top:44px;z-index:50;background:var(--surface);border:1.5px solid var(--teal);border-radius:var(--radius-sm);box-shadow:0 6px 20px rgba(0,0,0,0.18);overflow:hidden;"></div>
+          </div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Street address only — for condos, put the unit # in the Unit / Apt box</div>
 
           <div style="display:flex;gap:8px;margin-bottom:8px;">
@@ -2253,7 +2257,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.32.0',
+  version: '8.33.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2800,6 +2804,85 @@ async function lookupRealieAddress() {
   }
 }
 
+/* ADDR1: Google address autocomplete in the tax lookup.
+   Suggestions come through the Worker (the Google key never touches this page). Picking one
+   fills street, city, county and unit; if anything fails, the box just works as plain typing. */
+var addrTimer = null, addrSession = null, addrSeq = 0;
+function newAddrSession(){
+  try { return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)); }
+  catch (e) { return String(Date.now()) + '-x'; }
+}
+function hideAddrSuggest(){ var b = document.getElementById('addr-suggest'); if (b) { b.style.display = 'none'; b.innerHTML = ''; } }
+async function addrFetch(path, body){
+  var r = await fetch(CONFIG.workerUrl + path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  return r.json();
+}
+function pickCountyOption(name){
+  var sel = document.getElementById('realie-county');
+  if (!sel || !name) return false;
+  var want = String(name).toLowerCase().replace(/[^a-z]/g, '');
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value && sel.options[i].value.toLowerCase().replace(/[^a-z]/g, '') === want) { sel.value = sel.options[i].value; return true; }
+  }
+  return false;
+}
+async function chooseAddrSuggestion(placeId, label){
+  hideAddrSuggest();
+  var addrEl = document.getElementById('realie-address');
+  addrEl.value = label;
+  try {
+    var d = await addrFetch('/address-details', { placeId: placeId, sessionToken: addrSession });
+    addrSession = null;   /* a pick ends the Google session */
+    if (!d || d.error) return;
+    if (d.street) addrEl.value = d.street;
+    if (d.city) document.getElementById('realie-city').value = d.city;
+    if (d.state) { var st = document.getElementById('realie-state'); for (var i = 0; i < st.options.length; i++) if (st.options[i].value === d.state) st.value = d.state; }
+    pickCountyOption(d.county);
+    if (d.unit) document.getElementById('realie-unit').value = d.unit;
+    else document.getElementById('realie-unit').focus();
+  } catch (e) { /* plain typing still works */ }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var addrEl = document.getElementById('realie-address');
+  var box = document.getElementById('addr-suggest');
+  if (!addrEl || !box) return;
+  addrEl.addEventListener('input', function(){
+    clearTimeout(addrTimer);
+    var q = addrEl.value.trim();
+    if (q.length < 4) { hideAddrSuggest(); return; }
+    addrTimer = setTimeout(async function(){
+      var mySeq = ++addrSeq;
+      if (!addrSession) addrSession = newAddrSession();
+      try {
+        var d = await addrFetch('/address-suggest', { input: q, sessionToken: addrSession });
+        if (mySeq !== addrSeq) return;   /* an older answer arrived late — ignore it */
+        var list = (d && d.suggestions) || [];
+        if (!list.length) { hideAddrSuggest(); return; }
+        box.innerHTML = '';
+        list.forEach(function(sg){
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'addr-suggest-item';
+          b.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;font-family:inherit;';
+          var m = document.createElement('div'); m.textContent = sg.main; m.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);';
+          var s2 = document.createElement('div'); s2.textContent = sg.secondary; s2.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:2px;';
+          b.appendChild(m); b.appendChild(s2);
+          b.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* keep focus so the tap registers */
+          b.addEventListener('click', function(){ chooseAddrSuggestion(sg.placeId, sg.main); });
+          box.appendChild(b);
+        });
+        var foot = document.createElement('div');
+        foot.textContent = 'Address suggestions by Google';
+        foot.style.cssText = 'font-size:10px;color:var(--text-muted);text-align:right;padding:4px 8px;';
+        box.appendChild(foot);
+        box.style.display = 'block';
+      } catch (e) { hideAddrSuggest(); }
+    }, 350);
+  });
+  addrEl.addEventListener('blur', function(){ setTimeout(hideAddrSuggest, 150); });
+  addrEl.addEventListener('keydown', function(e){ if (e.key === 'Escape') hideAddrSuggest(); });
+});
+
 /* Q5: "Is this the right property?" buttons */
 var taxPendingApply = null;
 document.addEventListener('DOMContentLoaded', function(){
@@ -2873,7 +2956,7 @@ document.addEventListener('DOMContentLoaded', function(){
 document.addEventListener('DOMContentLoaded', function(){
   ['realie-address','realie-city','realie-unit'].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') lookupRealieAddress(); });
+    if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') { hideAddrSuggest(); lookupRealieAddress(); } });
   });
 });
 function updateTaxFlags(){

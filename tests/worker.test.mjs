@@ -26,6 +26,7 @@ let lastEmail = null;
 let turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
 let realieCalls = 0;
 let pinellasParcels = [];
+let googleCalls = 0, lastGoogleBody = null;
 const parcel = (site, legal, taxes) => ({ PARCELID_DSP1: 'P-' + site, STRAP: '1', TAXABLE_VALUE: 200000, HOMESTEAD: 'No', HOMESTEAD_EXEMP: 0, TAXES: taxes || 4000, SITE_ADDRESS: site, SITE_CITY: 'ST PETERSBURG', SITE_ZIP: '33701', LEGAL: legal || 'LOT 1', LAND_VALUE: 50000, IMP_VALUE: 150000, NEW_CONST_VALUE: 0, SALEPRICE1: 0 });
 let realieAnswer = { status: 200, body: { property: {
   propertyIdentification: { county: 'MIAMI-DADE', currentOwner: { ownerName: 'SECRET OWNER' } },
@@ -35,6 +36,14 @@ let realieAnswer = { status: 200, body: { property: {
 globalThis.fetch = async function (url) {
   url = String(url);
   if (url.includes('api.emailjs.com')) { emailsSent++; lastEmail = JSON.parse(arguments[1].body); return new Response('OK', { status: 200 }); }
+  if (url.includes('places.googleapis.com/v1/places:autocomplete')) { googleCalls++; lastGoogleBody = JSON.parse(arguments[1].body); return new Response(JSON.stringify({ suggestions: [
+    { placePrediction: { placeId: 'ChIJ_abcdefghij123', text: { text: '4900 Brittany Dr S, St. Petersburg, FL, USA' }, structuredFormat: { mainText: { text: '4900 Brittany Dr S' }, secondaryText: { text: 'St. Petersburg, FL, USA' } } } },
+    { queryPrediction: { text: { text: 'ignored' } } } ] }), { status: 200 }); }
+  if (url.includes('places.googleapis.com/v1/places/')) { googleCalls++; return new Response(JSON.stringify({ formattedAddress: '4900 Brittany Dr S #1808, St. Petersburg, FL 33715, USA', addressComponents: [
+    { longText: '4900', shortText: '4900', types: ['street_number'] }, { longText: 'Brittany Drive South', shortText: 'Brittany Dr S', types: ['route'] },
+    { longText: '1808', shortText: '1808', types: ['subpremise'] }, { longText: 'St. Petersburg', shortText: 'St. Petersburg', types: ['locality', 'political'] },
+    { longText: 'Pinellas County', shortText: 'Pinellas County', types: ['administrative_area_level_2', 'political'] },
+    { longText: 'Florida', shortText: 'FL', types: ['administrative_area_level_1'] }, { longText: '33715', shortText: '33715', types: ['postal_code'] } ] }), { status: 200 }); }
   if (url.includes('egis.pinellas.gov')) return new Response(JSON.stringify({ features: pinellasParcels.map((a) => ({ attributes: a })) }), { status: 200 });
   if (url.includes('app.realie.ai')) { realieCalls++; return new Response(JSON.stringify(realieAnswer.body), { status: realieAnswer.status }); }
   if (url.includes('turnstile/v0/siteverify')) return new Response(JSON.stringify(turnstileAnswer), { status: 200 });
@@ -63,7 +72,7 @@ async function send(env, p, token) {
   }), env, {});
   return { status: r.status, body: await r.json().catch(() => ({})) };
 }
-const baseEnv = () => ({ REALIE_API_KEY: 'rk', LOOKUP_KV: null, EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_LIMITS_KV: fakeKV(), LOOKUP_LIMITER: okLimiter, EMAIL_LIMITER: okLimiter });
+const baseEnv = () => ({ GOOGLE_PLACES_KEY: 'gk', REALIE_API_KEY: 'rk', LOOKUP_KV: null, EMAILJS_PRIVATE_KEY: 'x', TURNSTILE_SECRET: 's', EMAIL_LIMITS_KV: fakeKV(), LOOKUP_LIMITER: okLimiter, EMAIL_LIMITER: okLimiter });
 
 /* 1. A valid send works and is counted */
 {
@@ -220,6 +229,32 @@ async function lookup(env, body) {
   check('Q5: Hillsborough flags when the county gave no address', /addressVerified: !!countySite/.test(src));
   check('Q5: Pasco flags when the county gave no address', /const addressVerified = !!addrMatch;/.test(src));
   check('Q5: Manatee flags when the county gave no address', /if \(cleaned\) \{ addressConfirmed = cleaned; addressVerified = true; \}/.test(src));
+}
+/* 14. ADDR1 Google address autocomplete */
+async function post(env, path, body) {
+  const r = await worker.fetch(new Request('https://w.example' + path, {
+    method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' }, body: JSON.stringify(body),
+  }), env, {});
+  return { status: r.status, body: await r.json().catch(() => ({})) };
+}
+{
+  const env = baseEnv(); env.LOOKUP_KV = fakeKV(); googleCalls = 0;
+  let r = await post(env, '/address-suggest', { input: '4900 Britt', sessionToken: 'abc12345-6789' });
+  check('autocomplete returns address suggestions', r.status === 200 && r.body.suggestions.length === 1 && r.body.suggestions[0].main === '4900 Brittany Dr S' && r.body.suggestions[0].placeId === 'ChIJ_abcdefghij123', JSON.stringify(r));
+  check('autocomplete asks Google for US addresses, favouring Florida', lastGoogleBody && lastGoogleBody.includedRegionCodes[0] === 'us' && lastGoogleBody.locationBias && lastGoogleBody.sessionToken === 'abc12345-6789');
+  r = await post(env, '/address-suggest', { input: '49' });
+  check('fewer than 4 letters → no Google call', r.body.suggestions.length === 0 && googleCalls === 1);
+  r = await post(env, '/address-details', { placeId: 'ChIJ_abcdefghij123', sessionToken: 'abc12345-6789' });
+  check('picking a suggestion returns street, unit, city, county, state, ZIP', r.body.street === '4900 Brittany Dr S' && r.body.unit === '1808' && r.body.city === 'St. Petersburg' && r.body.county === 'Pinellas' && r.body.state === 'FL' && r.body.zip === '33715', JSON.stringify(r));
+  r = await post(env, '/address-details', { placeId: 'bad id!' });
+  check('bad place id refused', r.status === 400);
+  const monthKey = [...env.LOOKUP_KV.m.keys()].find((k) => k.startsWith('gplaces-month:'));
+  env.LOOKUP_KV.m.set(monthKey, '4000'); googleCalls = 0;
+  r = await post(env, '/address-suggest', { input: '4900 Britt' });
+  check('monthly cap of 4,000 stops Google calls (plain typing after)', r.body.suggestions.length === 0 && r.body.unavailable === true && googleCalls === 0, JSON.stringify(r));
+  const env2 = baseEnv(); delete env2.GOOGLE_PLACES_KEY; env2.LOOKUP_KV = fakeKV(); googleCalls = 0;
+  r = await post(env2, '/address-suggest', { input: '4900 Britt' });
+  check('no Google key → no suggestions, no call', r.body.suggestions.length === 0 && googleCalls === 0);
 }
 /* 10. Missing token: allowed only while TURNSTILE_REQUIRED is false */
 {

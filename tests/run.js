@@ -27,6 +27,8 @@
         uses it, one tap switches back; the 4 county lookups still auto-fill
      M. Q5: a county record that isn't an exact match asks "Is this the right
         property?" and fills nothing until the client says yes
+     N. ADDR1: typing in the tax lookup shows Google address suggestions;
+        picking one fills street, city, county and unit
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -396,6 +398,34 @@ async function readScreen(page, pattern) {
   if (M.afterNo !== '' || !M.askHiddenAfterNo) failures.push(`Q5: "No, I'll fix the address" must not fill anything (${JSON.stringify(M)})`);
   if (M.afterYes !== '400.00') failures.push(`Q5: "Yes, use this property" should fill 400.00/mo, got "${M.afterYes}"`);
   if (M.exactFill !== '400.00' || !M.askHiddenForExact) failures.push(`Q5: an exact match should fill straight away, got "${M.exactFill}"`);
+
+  /* N. ADDR1: typing shows Google suggestions (via the Worker); picking one fills street, city, county, unit */
+  await client.goto(BASE);
+  const N = await client.evaluate(async () => {
+    const calls = [];
+    window.fetch = async (u, o) => {
+      calls.push(String(u));
+      const body = /address-suggest/.test(u)
+        ? { suggestions: [{ placeId: 'ChIJ_abcdefghij123', main: '4900 Brittany Dr S', secondary: 'St. Petersburg, FL, USA' }] }
+        : { street: '4900 Brittany Dr S', unit: '1808', city: 'St. Petersburg', county: 'Pinellas', state: 'FL', zip: '33715' };
+      return { ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) };
+    };
+    const el = document.getElementById('realie-address');
+    el.value = '490'; el.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 450));
+    const shortCalls = calls.length;
+    el.value = '4900 Britt'; el.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 450));
+    const items = [...document.querySelectorAll('#addr-suggest .addr-suggest-item')].map((b) => b.textContent);
+    document.querySelector('#addr-suggest .addr-suggest-item').click();
+    await new Promise((r) => setTimeout(r, 100));
+    return { shortCalls, items, street: el.value, city: document.getElementById('realie-city').value,
+      county: document.getElementById('realie-county').value, unit: document.getElementById('realie-unit').value,
+      listHidden: document.getElementById('addr-suggest').style.display === 'none' };
+  });
+  if (N.shortCalls !== 0) failures.push('ADDR1: fewer than 4 letters must not ask for suggestions');
+  if (N.items.length !== 1 || !/4900 Brittany Dr S/.test(N.items[0])) failures.push(`ADDR1: typing should show the suggestion list (${JSON.stringify(N.items)})`);
+  if (N.street !== '4900 Brittany Dr S' || N.city !== 'St. Petersburg' || N.county !== 'Pinellas' || N.unit !== '1808' || !N.listHidden) failures.push(`ADDR1: picking a suggestion should fill street, city, county and unit (${JSON.stringify(N)})`);
 
   await browser.close();
 
