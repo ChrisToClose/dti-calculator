@@ -2261,7 +2261,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.35.0',
+  version: '8.35.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5018,22 +5018,14 @@ function initClientView(p) {
     {
       title:'5. Homeowners insurance',
       img:'07-insurance.jpg',
-      body:'This starts as an estimate (<strong>EST</strong>). Got a real quote? Tap the <strong>✎ pencil</strong> and type the monthly amount — your payment updates right away.',
+      body:'If Chris already got you an insurance quote, it’s already in here — you’ll see <strong>ACTUAL</strong> instead of <strong>EST</strong>, so you can leave it. Otherwise it’s an estimate. Shopping a different home or got your own quote? Tap the <strong>✎ pencil</strong> and type the monthly amount.',
     },
     {
       title:'6. Property tax',
       img:'09-tax.jpg',
-      body:'Taxes are estimated from your county’s tax rate at this price — for a home you’ll live in, that includes Florida’s <strong>$50,000 homestead exemption</strong>. Looking in a different county? Tap <strong>Edit</strong> under Property Location. Know the bill? Tap the <strong>✎ pencil</strong>.',
-    },
-    {
-      title:'7. Look up the real tax bill',
-      img:'10-lookup.jpg',
-      body:'Have an address? Tap <strong>“Have an address? Look up its actual tax bill.”</strong> Start typing and <strong>pick the address from the list</strong> — city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the record isn’t an exact match we’ll ask <strong>“Is this the right property?”</strong> first. In some counties you’ll see the <strong>current owner’s</strong> bill as a guide — yours will likely be higher after you buy.',
-    },
-    {
-      title:'8. Flood zone & CDD',
-      img:'11-flood-cdd.jpg',
-      body:'If the home is in a flood zone, turn on <strong>Flood Zone</strong> and enter the monthly flood insurance — lenders require it there, and regular homeowners insurance doesn’t cover floods. Newer communities may have a <strong>CDD fee</strong>; turn that on and enter the yearly amount.',
+      body:'Taxes are estimated from your county’s tax rate at this price — for a home you’ll live in, that includes Florida’s <strong>$50,000 homestead exemption</strong>. Know the bill? Tap the <strong>✎ pencil</strong>.',
+      img2:'10-lookup.jpg',
+      body2:'<strong>Have an address? Look up the real tax bill.</strong> Tap the button under Property Tax, start typing, and <strong>pick the address from the list</strong> — city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the record isn’t an exact match we’ll ask <strong>“Is this the right property?”</strong> first. In some counties you’ll see the <strong>current owner’s</strong> bill as a guide — yours will likely be higher after you buy.',
     },
     {
       title:'Changed too much? Start over',
@@ -5057,6 +5049,12 @@ function initClientView(p) {
     },
   ];
 
+  /* Screenshot with one even, rounded gold frame (drawn by the page, not baked into the picture) */
+  function helpImg(file){
+    if (!file) return '';
+    return '<div style="border:3px solid #F5A623;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#fff;line-height:0;">'+
+      '<img src="'+HELP_IMG+file+'" alt="" loading="lazy" style="display:block;width:100%;height:auto;" onerror="this.parentNode.style.display=\'none\'"></div>';
+  }
   var helpCurrent = 0;
   var helpDrawer  = document.getElementById('help-drawer');
   var helpOverlay = document.getElementById('help-overlay');
@@ -5066,8 +5064,10 @@ function initClientView(p) {
     document.getElementById('help-step-label').textContent = 'Step '+(helpCurrent+1)+' of '+helpSteps.length;
     var content = document.getElementById('help-content');
     content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
-      (step.img ? '<img src="'+HELP_IMG+step.img+'" alt="" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--border);margin:0 0 14px;background:#fff;" onerror="this.style.display=\'none\'">' : '')+
+      helpImg(step.img)+
       '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body+'</div>'+
+      (step.img2 ? '<div style="height:18px;"></div>'+helpImg(step.img2) : '')+
+      (step.body2 ? '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body2+'</div>' : '')+
       (step.cta?'<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">'+
         '<a href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
         '<a href="mailto:'+CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1]+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:transparent;border:2px solid var(--teal);color:var(--teal);text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#9993; Email Chris</a>'+

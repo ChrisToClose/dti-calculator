@@ -449,7 +449,7 @@ async function readScreen(page, pattern) {
   if (/Homestead Exemption box|Download PDF/i.test(O.text)) failures.push('Help: guide still mentions things that no longer exist (Homestead box / Download PDF)');
   if (!/Look up the real tax bill/.test(O.text) || !/Reset to Quote/.test(O.text)) failures.push('Help: guide should cover the tax lookup and the Reset to Quote tab');
   // Guide v2: pages follow the screen top to bottom (price before down payment before tax before save before share)
-  const order = ['Purchase price', 'Down payment', 'Loan term', 'HOA fee', 'Homeowners insurance', 'Property tax', 'Look up the real tax bill', 'Save your scenario', 'Share with someone'].map((w) => O.text.indexOf(w));
+  const order = ['Purchase price', 'Down payment', 'Loan term', 'HOA fee', 'Homeowners insurance', 'Property tax', 'Look up the real tax bill', 'Reset to Quote', 'Save your scenario', 'Share with someone'].map((w) => O.text.indexOf(w));
   if (order.some((x) => x < 0) || order.some((x, k) => k > 0 && x < order[k - 1])) failures.push(`Help: guide pages should follow the screen order (${order.join(',')})`);
 
   await browser.close();
