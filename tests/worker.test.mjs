@@ -25,6 +25,8 @@ let emailsSent = 0;
 let lastEmail = null;
 let turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
 let realieCalls = 0;
+let pinellasParcels = [];
+const parcel = (site, legal, taxes) => ({ PARCELID_DSP1: 'P-' + site, STRAP: '1', TAXABLE_VALUE: 200000, HOMESTEAD: 'No', HOMESTEAD_EXEMP: 0, TAXES: taxes || 4000, SITE_ADDRESS: site, SITE_CITY: 'ST PETERSBURG', SITE_ZIP: '33701', LEGAL: legal || 'LOT 1', LAND_VALUE: 50000, IMP_VALUE: 150000, NEW_CONST_VALUE: 0, SALEPRICE1: 0 });
 let realieAnswer = { status: 200, body: { property: {
   propertyIdentification: { county: 'MIAMI-DADE', currentOwner: { ownerName: 'SECRET OWNER' } },
   propertyLocation: { addressFull: '1 TEST ST APT 5, MIAMI, FL 33101', unitNumberStripped: '5' },
@@ -33,6 +35,7 @@ let realieAnswer = { status: 200, body: { property: {
 globalThis.fetch = async function (url) {
   url = String(url);
   if (url.includes('api.emailjs.com')) { emailsSent++; lastEmail = JSON.parse(arguments[1].body); return new Response('OK', { status: 200 }); }
+  if (url.includes('egis.pinellas.gov')) return new Response(JSON.stringify({ features: pinellasParcels.map((a) => ({ attributes: a })) }), { status: 200 });
   if (url.includes('app.realie.ai')) { realieCalls++; return new Response(JSON.stringify(realieAnswer.body), { status: realieAnswer.status }); }
   if (url.includes('turnstile/v0/siteverify')) return new Response(JSON.stringify(turnstileAnswer), { status: 200 });
   throw new Error('unexpected outside call: ' + url);
@@ -189,6 +192,34 @@ async function lookup(env, body) {
   const env2 = baseEnv(); delete env2.REALIE_API_KEY; env2.LOOKUP_KV = fakeKV(); realieCalls = 0;
   const r5 = await lookup(env2, { address: '1 Test St', state: 'FL', county: 'Miami-Dade' });
   check('no Realie key = friendly refusal, no call', r5.status === 500 && realieCalls === 0, JSON.stringify(r5));
+}
+/* 12. Q5 wrong-property guard (Pinellas) — never auto-use a property that isn't an exact match */
+{
+  const env = baseEnv(); env.LOOKUP_KV = fakeKV();
+  const ask = async (address, unit) => (await lookup(env, { address, unit: unit || '', state: 'FL', county: 'Pinellas', city: 'St Petersburg' })).body;
+  pinellasParcels = [parcel('100 MAIN AVE')];
+  let r = await ask('100 Main St');
+  check('Q5: typed Main St, only Main Ave exists → asks to confirm', r.needs_confirmation === true && /100 MAIN AVE/.test(r.address_confirmed || ''), JSON.stringify(r));
+  pinellasParcels = [parcel('100 S MAIN ST')];
+  r = await ask('100 N Main St');
+  check('Q5: typed N Main, only S Main exists → asks to confirm', r.needs_confirmation === true, JSON.stringify(r));
+  pinellasParcels = [parcel('100 MAIN ST'), parcel('100 MAIN AVE')];
+  r = await ask('100 Main St');
+  check('Q5: exact match → used without asking', r.needs_confirmation === false && /^100 MAIN ST/.test(r.address_confirmed || ''), JSON.stringify(r));
+  r = await ask('100 Main Street');
+  check('Q5: "Street" spelled out still counts as an exact match', r.needs_confirmation === false, JSON.stringify(r));
+  pinellasParcels = [parcel('200 OCEAN DR', 'OCEAN CONDO')];
+  r = await ask('200 Ocean Dr', '5');
+  check('Q5: unit typed but not on the county record → asks to confirm', r.needs_confirmation === true && /unit 5/i.test(r.confirm_reason || ''), JSON.stringify(r));
+  pinellasParcels = [parcel('200 OCEAN DR', 'OCEAN CONDO UNIT 5'), parcel('200 OCEAN DR', 'OCEAN CONDO UNIT 6')];
+  r = await ask('200 Ocean Dr', '5');
+  check('Q5: unit found on the county record → used without asking', r.needs_confirmation === false, JSON.stringify(r));
+}
+/* 13. Q5 — the 3 scraper counties report whether the address came from the county (no echoing the typed one) */
+{
+  check('Q5: Hillsborough flags when the county gave no address', /addressVerified: !!countySite/.test(src));
+  check('Q5: Pasco flags when the county gave no address', /const addressVerified = !!addrMatch;/.test(src));
+  check('Q5: Manatee flags when the county gave no address', /if \(cleaned\) \{ addressConfirmed = cleaned; addressVerified = true; \}/.test(src));
 }
 /* 10. Missing token: allowed only while TURNSTILE_REQUIRED is false */
 {

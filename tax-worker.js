@@ -117,7 +117,7 @@ export default {
 
         const countyNorm = (county || '').toLowerCase().trim();
 
-        let result;
+        let result = null;
         if (countyNorm.includes('hillsborough')) {
           result = await lookupHillsborough(address, city);
         } else if (countyNorm.includes('pinellas')) {
@@ -130,6 +130,10 @@ export default {
           // Every other county: Realie public-record lookup, shown to the client as GUIDANCE only
           // (the current owner's bill — the buyer's will likely differ). Chris, Nov 9, 2026.
           result = await lookupRealie({ address, unit, county, state }, env);
+        }
+        if (result && result.source !== 'realie') {
+          // Q5: the county record must match what was typed exactly, or the client is asked to confirm
+          result = checkAddressMatch(result, address, unit);
         }
 
         return new Response(JSON.stringify(result), {
@@ -509,6 +513,38 @@ async function lookupRealie({ address, unit, county, state }, env) {
   return result;
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Q5 — wrong-property guard for the 4 county lookups.
+// The street the county record shows must match what was typed exactly
+// (house number, street name, St/Ave/Dr type, N/S/E/W direction) and the unit
+// must be confirmed. Anything less → needs_confirmation: the page asks
+// "Is this the right property?" instead of filling in the tax bill.
+// ─────────────────────────────────────────────────────────────────
+function splitStreetAndUnit(text) {
+  let street = String(text || '').split(',')[0].trim();
+  let unit = '';
+  const m = street.match(/\s+(?:UNIT|APT|STE|SUITE|#)\.?\s*#?\s*([A-Z0-9-]+)\s*$/i);
+  if (m) { unit = m[1]; street = street.slice(0, m.index).trim(); }
+  return { street: pinNormalizeTokens(street).join(' '), unit: unit.toUpperCase().replace(/^0+(?=.)/, '') };
+}
+
+function checkAddressMatch(result, typedAddress, typedUnit) {
+  const typed = splitStreetAndUnit(typedAddress);
+  const unitWanted = String(typedUnit || typed.unit || '').trim().toUpperCase()
+    .replace(/^(?:APT|UNIT|STE|SUITE|#)\.?\s*#?\s*/, '').replace(/^0+(?=.)/, '');
+  const found = splitStreetAndUnit(result.address_confirmed);
+  let reason = '';
+  if (result.address_verified === false) {
+    reason = 'The county record didn\u2019t show a street address we could check against yours.';
+  } else if (!found.street || found.street !== typed.street) {
+    reason = 'The street on the county record doesn\u2019t exactly match what you typed (check St/Ave/Dr and N/S/E/W).';
+  } else if (unitWanted && (result.unit_verified === false || (found.unit && found.unit !== unitWanted))) {
+    reason = `We couldn\u2019t confirm unit ${unitWanted} on the county record.`;
+  }
+  if (!reason) return { ...result, needs_confirmation: false };
+  return { ...result, needs_confirmation: true, confirm_reason: reason };
+}
+
 function titleCase(s) {
   return String(s || '').toLowerCase().replace(/(^|[\s-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
 }
@@ -600,12 +636,14 @@ async function lookupHillsborough(address, city) {
     }
   }
 
-  const siteAddress = pc.siteAddress || parcel.siteAddress || detail.siteAddress || address;
+  const countySite = pc.siteAddress || parcel.siteAddress || detail.siteAddress || '';
+  const siteAddress = countySite || address;
   const taxYear = pc.taxYear || detail.taxYear || currentYear - 1;
 
   return buildResponse({
     annualTax, taxYear, assessedVal, marketVal, taxableVal,
     addressConfirmed: siteAddress,
+    addressVerified: !!countySite,
     county: 'Hillsborough',
     taxRecordLink: `https://www.hcpafl.org/property-search/parcel?pin=${pin}`,
     isNewConstruction, newConstructionReasons,
@@ -671,6 +709,7 @@ async function lookupPinellas(address, city, unit) {
   }
   unitNum = unitNum.replace(/^(?:APT|UNIT|STE|SUITE|#)\.?\s*#?\s*/i, '').trim().toUpperCase();
 
+  let unitVerified = !unitNum;   // true once the typed unit is found in the county's legal description
   const tokens = pinNormalizeTokens(rawAddr);
   if (tokens.length < 2 || !/^\d+[A-Z]?$/.test(tokens[0])) {
     throw new Error('Could not read that Pinellas address — please enter it like "123 Main St".');
@@ -727,6 +766,7 @@ async function lookupPinellas(address, city, unit) {
     const byUnit = candidates.filter(c => unitRe.test(c.LEGAL || ''));
     if (byUnit.length > 0) {
       candidates = byUnit;
+      unitVerified = true;
     } else if (candidates.length > 1) {
       throw new Error(`Unit ${unitNum} was not found at ${remainingAddrs[0]}. Please double-check the unit number.`);
     }
@@ -810,6 +850,7 @@ async function lookupPinellas(address, city, unit) {
     marketVal,
     taxableVal,
     addressConfirmed,
+    unitVerified,
     county: 'Pinellas',
     taxRecordLink: p.STRAP ? `https://www.pcpao.gov/property-details?s=${encodeURIComponent(p.STRAP)}` : 'https://www.pcpao.gov/quick-search?qu=1',
     isNewConstruction,
@@ -905,6 +946,7 @@ async function lookupPasco(address, city) {
   let addressConfirmed = address;
   const addrMatch = html.match(/(?:site|property|situs)\s*address[^:]*:?\s*([^\n<]{5,60})/i);
   if (addrMatch) addressConfirmed = addrMatch[1].trim();
+  const addressVerified = !!addrMatch;
 
   const currentYear = new Date().getFullYear();
   let isNewConstruction = false, newConstructionReasons = [];
@@ -928,6 +970,7 @@ async function lookupPasco(address, city) {
   return buildResponse({
     annualTax, taxYear, assessedVal: assessedValue, marketVal: justValue, taxableVal: taxableValue,
     addressConfirmed,
+    addressVerified,
     county: 'Pasco',
     taxRecordLink: detailUrl,
     isNewConstruction, newConstructionReasons,
@@ -1094,16 +1137,19 @@ async function lookupManatee(address, city) {
   }
 
   let addressConfirmed = address;
+  let addressVerified = false;
   if (firstRow && firstRow.length > 1) {
     const addrCell = firstRow[1];
     if (typeof addrCell === 'string' && addrCell.length > 5) {
-      addressConfirmed = addrCell.replace(/<[^>]+>/g, '').trim() || address;
+      const cleaned = addrCell.replace(/<[^>]+>/g, '').trim();
+      if (cleaned) { addressConfirmed = cleaned; addressVerified = true; }
     }
   }
 
   return buildResponse({
     annualTax, taxYear, assessedVal: assessedValue, marketVal: justValue, taxableVal: taxableValue,
     addressConfirmed,
+    addressVerified,
     county: 'Manatee',
     taxRecordLink: `https://www.manateepao.gov/parcel/?parid=${parid}`,
     isNewConstruction, newConstructionReasons,
@@ -1121,7 +1167,7 @@ async function lookupManatee(address, city) {
 // ─────────────────────────────────────────────────────────────────
 function buildResponse({
   annualTax, taxYear, assessedVal, marketVal, taxableVal,
-  addressConfirmed, county, taxRecordLink,
+  addressConfirmed, addressVerified = true, unitVerified = true, county, taxRecordLink,
   isNewConstruction, newConstructionReasons,
   isHomesteaded, homesteadValue, allExemptions,
   year2Estimate, year2Basis, millageRate, millagePerThousand,
@@ -1135,6 +1181,8 @@ function buildResponse({
     just_value: marketVal,
     taxable_value: taxableVal,
     address_confirmed: addressConfirmed,
+    address_verified: addressVerified,
+    unit_verified: unitVerified,
     county: county,
     tax_record_link: taxRecordLink,
     is_new_construction: isNewConstruction,

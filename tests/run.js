@@ -25,6 +25,8 @@
         when the check can't load. Worker side: tests/worker.test.mjs
      L. Realie fallback (C6): a public-record bill is guidance only; one tap
         uses it, one tap switches back; the 4 county lookups still auto-fill
+     M. Q5: a county record that isn't an exact match asks "Is this the right
+        property?" and fills nothing until the client says yes
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -362,6 +364,38 @@ async function readScreen(page, pattern) {
   if (L.afterUse !== '325.96' || L.btnAfterUse !== 'Switch back to my estimate') failures.push(`C6: one tap on "Use this number instead" should set 325.96/mo and offer "Switch back" (got "${L.afterUse}", button "${L.btnAfterUse}")`);
   if (L.afterSwitchBack !== '' || L.btnAfterBack !== 'Use this number instead') failures.push(`C6: "Switch back to my estimate" should clear the owner's bill (got "${L.afterSwitchBack}", button "${L.btnAfterBack}")`);
   if (L.countyFill !== '372.33' || !L.guidanceHiddenForCounty) failures.push(`C6: county lookups must still auto-fill (got "${L.countyFill}") and hide the guidance note`);
+
+  /* M. Q5: a county record that isn't an exact match is never used without the client's OK */
+  await client.goto(BASE);
+  const M = await client.evaluate(async () => {
+    const out = {};
+    const reply = (obj) => async () => ({ ok: true, status: 200, text: async () => JSON.stringify(obj) });
+    const tax = () => document.getElementById('client-tax-override').value;
+    document.getElementById('realie-address').value = '100 Main St';
+    document.getElementById('realie-county').value = 'Pinellas';
+    const near = { annual_tax: 4800, tax_year: 2025, county: 'Pinellas', address_confirmed: '100 MAIN AVE, ST PETERSBURG, FL', needs_confirmation: true, confirm_reason: 'street differs' };
+    window.fetch = reply(near);
+    await lookupRealieAddress();
+    out.askShown = document.getElementById('tax-confirm-box').style.display === 'block';
+    out.foundText = document.getElementById('tax-confirm-found').textContent;
+    out.beforeYes = tax();
+    document.getElementById('tax-confirm-no').click();
+    out.afterNo = tax();
+    out.askHiddenAfterNo = document.getElementById('tax-confirm-box').style.display === 'none';
+    await lookupRealieAddress();
+    document.getElementById('tax-confirm-yes').click();
+    out.afterYes = tax();
+    document.getElementById('client-tax-override').value = '';
+    window.fetch = reply({ ...near, address_confirmed: '100 MAIN ST, ST PETERSBURG, FL', needs_confirmation: false });
+    await lookupRealieAddress();
+    out.exactFill = tax();
+    out.askHiddenForExact = document.getElementById('tax-confirm-box').style.display === 'none';
+    return out;
+  });
+  if (!M.askShown || !/100 MAIN AVE/.test(M.foundText) || M.beforeYes !== '') failures.push(`Q5: a near match must ask "Is this the right property?" without filling the tax (${JSON.stringify(M)})`);
+  if (M.afterNo !== '' || !M.askHiddenAfterNo) failures.push(`Q5: "No, I'll fix the address" must not fill anything (${JSON.stringify(M)})`);
+  if (M.afterYes !== '400.00') failures.push(`Q5: "Yes, use this property" should fill 400.00/mo, got "${M.afterYes}"`);
+  if (M.exactFill !== '400.00' || !M.askHiddenForExact) failures.push(`Q5: an exact match should fill straight away, got "${M.exactFill}"`);
 
   await browser.close();
 
