@@ -12,7 +12,7 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://christoclose.github.io/dti-calculator/og-image-1200x630-3.png">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ChrisToClose Home Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,6 +74,26 @@ body.dark-mode .onboarding-body strong { color:var(--yellow); }
 }
 .onboarding-dot.active { background:var(--navy); width:20px; border-radius:4px; }
 body.dark-mode .onboarding-dot.active { background:var(--yellow); }
+
+/* ============================================================
+   UX FOUNDATION — Release A (Chris, Nov 9 2026)
+   ============================================================ */
+/* UX16: steady numbers — digits all the same width so totals and % don't jiggle while dragging */
+body { font-variant-numeric: tabular-nums; }
+/* UX17: balanced headlines — no single word stranded on the last line */
+h1, h2, h3, .help-title { text-wrap: balance; }
+/* UX13: bigger tap areas without changing the look (invisible padding around small buttons) */
+.info-btn, .pencil-btn { position: relative; }
+.info-btn::after { content: ''; position: absolute; inset: -10px -13px; }
+.pencil-btn::after { content: ''; position: absolute; inset: -8px; }
+#help-close { position: relative; }
+#help-close::after { content: ''; position: absolute; inset: -6px; }
+/* UX14: keep floating buttons clear of the iPhone notch and home bar */
+#mode-toggle { bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important; right: calc(16px + env(safe-area-inset-right, 0px)) !important; }
+#help-btn { bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important; right: calc(16px + env(safe-area-inset-right, 0px)) !important; }
+#client-reset-btn { left: env(safe-area-inset-left, 0px) !important; }
+#help-drawer > div:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important; }
+#client-thermo-section.is-sticky { padding-top: env(safe-area-inset-top, 0px); }
 
 /* Frozen thermometer — navy background in light mode when sticky */
 #client-thermo-section.is-sticky {
@@ -2264,7 +2284,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.36.1',
+  version: '8.37.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5053,10 +5073,13 @@ function initClientView(p) {
   ];
 
   /* Screenshot with one even, rounded gold frame (drawn by the page, not baked into the picture) */
+  /* UX8: picture sizes are known up front, so the space is reserved and the page doesn't jump while it loads */
+  var HELP_IMG_SIZE = {"01-based-on.jpg": [836, 396], "02-payment-bar.jpg": [836, 354], "03-price.jpg": [836, 282], "04-down.jpg": [836, 276], "05-term.jpg": [836, 266], "06-hoa.jpg": [836, 276], "07-insurance.jpg": [836, 392], "09-tax.jpg": [836, 368], "10-lookup.jpg": [772, 700], "12-reset.jpg": [780, 975], "13-save.jpg": [836, 972], "14-share.jpg": [772, 164]};
   function helpImg(file){
     if (!file) return '';
-    return '<div style="border:3px solid #F5A623;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#fff;line-height:0;">'+
-      '<img src="'+HELP_IMG+file+'" alt="" loading="lazy" style="display:block;width:100%;height:auto;" onerror="this.parentNode.style.display=\'none\'"></div>';
+    var wh = HELP_IMG_SIZE[file] || [780, 300];
+    return '<div style="border:3px solid #F5A623;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#eef1f6;line-height:0;">'+
+      '<img src="'+HELP_IMG+file+'" alt="" loading="lazy" width="'+wh[0]+'" height="'+wh[1]+'" style="display:block;width:100%;height:auto;aspect-ratio:'+wh[0]+' / '+wh[1]+';" onerror="this.parentNode.style.display=\'none\'"></div>';
   }
   var helpCurrent = 0;
   var helpDrawer  = document.getElementById('help-drawer');
@@ -5066,7 +5089,7 @@ function initClientView(p) {
     var step = helpSteps[helpCurrent];
     document.getElementById('help-step-label').textContent = 'Step '+(helpCurrent+1)+' of '+helpSteps.length;
     var content = document.getElementById('help-content');
-    content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
+    content.innerHTML = '<div class="help-title" style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
       helpImg(step.img)+
       '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body+'</div>'+
       (step.img2 ? '<div style="height:18px;"></div>'+helpImg(step.img2) : '')+
