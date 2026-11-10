@@ -35,6 +35,7 @@
      R. Q3: Share link + PDF QR reopen exactly the client's screen
      S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
+     U. Fonts load only from this site (no Google / outside font servers)
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -639,6 +640,20 @@ async function readScreen(page, pattern) {
     if (!T.top.shown.includes('help-btn') && !T.top.headerQ) failures.push(`${w}x${h}: no ? button anywhere at the top of the page`);
     if (T.opened === false) failures.push(`${w}x${h}: the header ? did not open the help guide`);
     await pg.close();
+  }
+
+  /* U. Fonts come only from this site — no visitor request to Google or any other font server */
+  {
+    const html = fs.readFileSync(path.resolve(ROOT, PAGE_FILE), 'utf8');
+    const outside = html.match(/https?:\/\/[^"'\s)]*(fonts\.googleapis|fonts\.gstatic|typekit|use\.fontawesome|fonts\.bunny|fontshare|cloud\.typography|fast\.fonts)[^"'\s)]*/gi) || [];
+    if (outside.length) failures.push(`Fonts: still loading from an outside server — ${[...new Set(outside)].join(', ')}`);
+    const urls = [...html.matchAll(/@font-face\s*{[^}]*?url\(([^)]+)\)/g)].map((m) => m[1].replace(/['"]/g, ''));
+    if (!urls.length) failures.push('Fonts: no @font-face rules found (headings would fall back to plain fonts)');
+    for (const u of urls) {
+      if (!u.startsWith('/dti-calculator/fonts/')) { failures.push(`Fonts: ${u} is not on this site`); continue; }
+      const local = path.join(ROOT, u.replace('/dti-calculator/', ''));
+      if (!fs.existsSync(local)) failures.push(`Fonts: ${u} is missing from the fonts folder`);
+    }
   }
 
   if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);
