@@ -108,6 +108,10 @@ body.dark-mode .client-val-text { color: #fff !important; }
 body.dark-mode .chip-val { color: #fff !important; }
 /* B11: down-payment % was navy on navy in dark mode */
 body.dark-mode #client-down-pct { color: #fff !important; }
+/* Tax lookup result card + public-record guidance (C6) — readable in dark mode */
+body.dark-mode #realie-result-tax { color: #fff !important; }
+body.dark-mode #realie-result-title { color: var(--yellow) !important; }
+body.dark-mode #realie-use-btn { color: var(--yellow) !important; border-color: var(--yellow) !important; }
 /* B10: PMI popup 'Got It' was navy on the navy popup card in dark mode */
 body.dark-mode #pmi-drift-close { background: var(--yellow) !important; color: var(--navy) !important; }
 body.dark-mode #btn-save-scenario { background:#fff !important; color:var(--navy) !important; border:2px solid #fff !important; outline:2px solid var(--navy) !important; }
@@ -2244,7 +2248,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.31.0',
+  version: '8.31.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
