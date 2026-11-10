@@ -395,7 +395,14 @@ body.dark-mode #tax-lookup-toggle { color: #fff; }
 #tax-lookup-toggle:not(.open) {
   animation: tax-btn-pulse 2.2s ease-in-out infinite;
 }
-body.dark-mode #tax-lookup-toggle { color: #ffffff; }
+/* Night mode: white text + brighter outline (the button's own inline colour used to win — hence !important) */
+body.dark-mode #tax-lookup-toggle { color: #ffffff !important; border-color: #5DB4D8 !important; }
+body.dark-mode #tax-lookup-toggle.open { background: var(--teal) !important; }
+/* Help guide: readable "Next" button in night mode */
+body.dark-mode #help-next { background: var(--yellow) !important; color: #1B3A6B !important; }
+/* Help guide last page: Call / Email Chris buttons readable in night mode */
+body.dark-mode .help-cta-call { background: var(--yellow) !important; color: #1B3A6B !important; }
+body.dark-mode .help-cta-email { border-color: #ffffff !important; color: #ffffff !important; }
 
 /* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
 body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
@@ -1742,15 +1749,15 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   </div>
 
   <!-- FLOATING RESET BUTTON — appears when price/down drifts from originally quoted values -->
-  <div id="client-reset-btn" title="Return to my quoted scenario" style="display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:900;background:var(--navy);color:var(--yellow);border:none;border-radius:0 8px 8px 0;padding:10px 8px 10px 6px;cursor:pointer;box-shadow:3px 0 12px rgba(27,58,107,0.35);writing-mode:vertical-rl;text-orientation:mixed;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;align-items:center;gap:6px;flex-direction:column;font-family:inherit;">
+  <div id="client-reset-btn" title="Go back to the numbers Chris quoted you" style="display:none;position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:900;background:var(--navy);color:var(--yellow);border:none;border-radius:0 8px 8px 0;padding:10px 8px 10px 6px;cursor:pointer;box-shadow:3px 0 12px rgba(27,58,107,0.35);writing-mode:vertical-rl;text-orientation:mixed;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;align-items:center;gap:6px;flex-direction:column;font-family:inherit;">
     <span style="font-size:16px;writing-mode:horizontal-tb;">🏠</span>
-    <span style="writing-mode:vertical-rl;text-orientation:mixed;">Reset to Quote</span>
+    <span style="writing-mode:vertical-rl;text-orientation:mixed;">Back to My Quote</span>
   </div>
 
 
   <!-- HELP DRAWER -->
   <div id="help-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:850;"></div>
-  <div id="help-drawer" style="position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);background:var(--surface);z-index:900;transform:translateX(100%);transition:transform 0.35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,0.2);">
+  <div id="help-drawer" style="position:fixed;top:0;right:0;bottom:0;width:min(360px,100vw);background:var(--surface);z-index:900;transform:translateX(100%);transition:transform 0.35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:none;">
     <div style="background:var(--navy);padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;">
       <div>
         <div style="font-size:13px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:0.07em;">Help Guide</div>
@@ -1759,7 +1766,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <button id="help-close" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
     </div>
     <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:12px;color:var(--text-muted);" id="help-step-label">Step 1 of 8</span>
+      <span style="font-size:12px;color:var(--text-muted);" id="help-step-label"></span>
       <div style="display:flex;gap:4px;" id="help-dots"></div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:24px 20px;" id="help-content"></div>
@@ -2003,8 +2010,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Enter the property address to automatically pull the tax bill from county records.</div>
 
           <!-- ADDRESS INPUTS -->
-          <input type="text" id="realie-address" placeholder="Street address (e.g. 123 Main St)"
+          <div style="position:relative;">
+          <input type="text" id="realie-address" placeholder="Start typing the address (e.g. 4900 Brittany)" autocomplete="off"
             style="width:100%;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;background:var(--surface);color:var(--text);font-size:14px;margin-bottom:4px;box-sizing:border-box;">
+            <!-- ADDR1: Google address suggestions (via the Worker) -->
+            <div id="addr-suggest" role="listbox" style="display:none;position:absolute;left:0;right:0;top:44px;z-index:50;background:var(--surface);border:1.5px solid var(--teal);border-radius:var(--radius-sm);box-shadow:0 6px 20px rgba(0,0,0,0.18);overflow:hidden;"></div>
+          </div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Street address only — for condos, put the unit # in the Unit / Apt box</div>
 
           <div style="display:flex;gap:8px;margin-bottom:8px;">
@@ -2253,7 +2264,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.32.0',
+  version: '8.36.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2800,6 +2811,85 @@ async function lookupRealieAddress() {
   }
 }
 
+/* ADDR1: Google address autocomplete in the tax lookup.
+   Suggestions come through the Worker (the Google key never touches this page). Picking one
+   fills street, city, county and unit; if anything fails, the box just works as plain typing. */
+var addrTimer = null, addrSession = null, addrSeq = 0;
+function newAddrSession(){
+  try { return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)); }
+  catch (e) { return String(Date.now()) + '-x'; }
+}
+function hideAddrSuggest(){ var b = document.getElementById('addr-suggest'); if (b) { b.style.display = 'none'; b.innerHTML = ''; } }
+async function addrFetch(path, body){
+  var r = await fetch(CONFIG.workerUrl + path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  return r.json();
+}
+function pickCountyOption(name){
+  var sel = document.getElementById('realie-county');
+  if (!sel || !name) return false;
+  var want = String(name).toLowerCase().replace(/[^a-z]/g, '');
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value && sel.options[i].value.toLowerCase().replace(/[^a-z]/g, '') === want) { sel.value = sel.options[i].value; return true; }
+  }
+  return false;
+}
+async function chooseAddrSuggestion(placeId, label){
+  hideAddrSuggest();
+  var addrEl = document.getElementById('realie-address');
+  addrEl.value = label;
+  try {
+    var d = await addrFetch('/address-details', { placeId: placeId, sessionToken: addrSession });
+    addrSession = null;   /* a pick ends the Google session */
+    if (!d || d.error) return;
+    if (d.street) addrEl.value = d.street;
+    if (d.city) document.getElementById('realie-city').value = d.city;
+    if (d.state) { var st = document.getElementById('realie-state'); for (var i = 0; i < st.options.length; i++) if (st.options[i].value === d.state) st.value = d.state; }
+    pickCountyOption(d.county);
+    if (d.unit) document.getElementById('realie-unit').value = d.unit;
+    else document.getElementById('realie-unit').focus();
+  } catch (e) { /* plain typing still works */ }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var addrEl = document.getElementById('realie-address');
+  var box = document.getElementById('addr-suggest');
+  if (!addrEl || !box) return;
+  addrEl.addEventListener('input', function(){
+    clearTimeout(addrTimer);
+    var q = addrEl.value.trim();
+    if (q.length < 4) { hideAddrSuggest(); return; }
+    addrTimer = setTimeout(async function(){
+      var mySeq = ++addrSeq;
+      if (!addrSession) addrSession = newAddrSession();
+      try {
+        var d = await addrFetch('/address-suggest', { input: q, sessionToken: addrSession });
+        if (mySeq !== addrSeq) return;   /* an older answer arrived late — ignore it */
+        var list = (d && d.suggestions) || [];
+        if (!list.length) { hideAddrSuggest(); return; }
+        box.innerHTML = '';
+        list.forEach(function(sg){
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'addr-suggest-item';
+          b.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 12px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;font-family:inherit;';
+          var m = document.createElement('div'); m.textContent = sg.main; m.style.cssText = 'font-size:14px;font-weight:700;color:var(--text);';
+          var s2 = document.createElement('div'); s2.textContent = sg.secondary; s2.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:2px;';
+          b.appendChild(m); b.appendChild(s2);
+          b.addEventListener('mousedown', function(e){ e.preventDefault(); });   /* keep focus so the tap registers */
+          b.addEventListener('click', function(){ chooseAddrSuggestion(sg.placeId, sg.main); });
+          box.appendChild(b);
+        });
+        var foot = document.createElement('div');
+        foot.textContent = 'Address suggestions by Google';
+        foot.style.cssText = 'font-size:10px;color:var(--text-muted);text-align:right;padding:4px 8px;';
+        box.appendChild(foot);
+        box.style.display = 'block';
+      } catch (e) { hideAddrSuggest(); }
+    }, 350);
+  });
+  addrEl.addEventListener('blur', function(){ setTimeout(hideAddrSuggest, 150); });
+  addrEl.addEventListener('keydown', function(e){ if (e.key === 'Escape') hideAddrSuggest(); });
+});
+
 /* Q5: "Is this the right property?" buttons */
 var taxPendingApply = null;
 document.addEventListener('DOMContentLoaded', function(){
@@ -2873,7 +2963,7 @@ document.addEventListener('DOMContentLoaded', function(){
 document.addEventListener('DOMContentLoaded', function(){
   ['realie-address','realie-city','realie-unit'].forEach(function(id){
     var el = document.getElementById(id);
-    if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') lookupRealieAddress(); });
+    if(el) el.addEventListener('keydown', function(e){ if(e.key==='Enter') { hideAddrSuggest(); lookupRealieAddress(); } });
   });
 });
 function updateTaxFlags(){
@@ -4893,42 +4983,67 @@ function initClientView(p) {
   /* ============================================================
      CLIENT: HELP DRAWER
      ============================================================ */
+  /* Help guide v2 (Chris, Nov 9 2026): in the order a client works down the screen,
+     with a highlighted screenshot of each part. Old text: docs/help-guide-v1-set-aside.md
+     Screenshots live in /help-img/ (shared by the preview and live pages). */
+  var HELP_IMG = 'https://christoclose.github.io/dti-calculator/help-img/';
   var helpSteps = [
     {
-      title:'Start with your location',
-      body:'Enter your ZIP code or Florida county. This unlocks everything else and gives you an accurate property tax estimate for that area. Without a county, the tax number would just be a guess.',
+      title:'Your numbers are already loaded',
+      img:'01-based-on.jpg',
+      body:'Chris set this up for you from your pre-approval — your income and monthly debts are already in. You don’t need to change those. Everything below is about <strong>the home</strong>: try any house you’re looking at and see what it means for you.',
     },
     {
-      title:'Property tax & homestead exemption',
-      body:'Your property tax estimate is based on the county you entered. If this will be your <strong>primary residence</strong>, check the Homestead Exemption box — Florida homeowners can save hundreds per year with this exemption. It automatically lowers your estimated tax bill.',
+      title:'Your payment, live',
+      img:'02-payment-bar.jpg',
+      body:'This box shows your <strong>total monthly payment</strong> and what’s in it. The bar is your <strong>debt-to-income</strong> — <strong>green</strong> is comfortable, <strong>yellow</strong> is getting close, <strong>red</strong> means the numbers need to change. It stays pinned at the top as you scroll, so you can watch it move.',
     },
     {
-      title:'Watch the bar at the top',
-      body:'That colored bar is your DTI \u2014 Debt-to-Income ratio. It shows how much of your monthly income goes toward housing and debt. <strong>Green</strong> means you\'re in good shape. <strong>Yellow</strong> means you\'re getting close. <strong>Red</strong> means the numbers need adjustment.',
+      title:'1. Purchase price',
+      img:'03-price.jpg',
+      body:'Drag the slider to the price of the home you’re looking at. Want an exact number? Tap the <strong>✎ pencil</strong> and type it in.',
     },
     {
-      title:'Try different purchase prices',
-      body:'Slide the purchase price up or down. Watch how your monthly payment and the bar change in real time. This is how you find your comfortable range \u2014 not just your maximum.',
+      title:'2. Down payment',
+      img:'04-down.jpg',
+      body:'More down means a smaller loan and a lower payment. On a conventional loan, once you reach <strong>20%</strong> the mortgage insurance (PMI) goes away — watch the payment drop.',
     },
     {
-      title:'Adjust your down payment',
-      body:'A larger down payment means a smaller loan and lower payment. Once you hit 20% or more, PMI disappears entirely. Watch what happens when you cross that line.',
+      title:'3. Loan term',
+      img:'05-term.jpg',
+      body:'Tap 30, 25, 20 or 15 years. Shorter terms pay the home off faster but raise the monthly payment.',
     },
     {
-      title:'Add your HOA if applicable',
-      body:'If the property has an HOA fee, slide it here. A high HOA on a condo can change your numbers significantly \u2014 even on a less expensive home. Always confirm the exact fee before making an offer.',
+      title:'4. HOA fee',
+      img:'06-hoa.jpg',
+      body:'If the home has an HOA, slide it to the monthly fee from the listing. Condo HOAs can change your numbers a lot — always confirm the exact fee before making an offer.',
     },
     {
-      title:'Check flood zone if applicable',
-      body:'If the property is in a FEMA flood zone, check that box. Flood insurance is required by your lender \u2014 it\'s not optional and not covered by standard homeowners insurance.',
+      title:'5. Homeowners insurance',
+      img:'07-insurance.jpg',
+      body:'If Chris already got you an insurance quote, it’s already in here — you’ll see <strong>ACTUAL</strong> instead of <strong>EST</strong>, so you can leave it (if you change the price, it switches back to an estimate). Otherwise it’s an estimate. Shopping a different home or got your own quote? Tap the <strong>✎ pencil</strong> and type the monthly amount.',
+    },
+    {
+      title:'6. Property tax',
+      img:'09-tax.jpg',
+      body:'Taxes are estimated from your county’s tax rate at this price — for a home you’ll live in, that includes Florida’s <strong>$50,000 homestead exemption</strong>. Know the bill? Tap the <strong>✎ pencil</strong>.',
+      img2:'10-lookup.jpg',
+      body2:'<strong>Have an address? Look up the real tax bill.</strong> Tap the button under Property Tax, start typing, and <strong>pick the address from the list</strong> — city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the record isn’t an exact match we’ll ask <strong>“Is this the right property?”</strong> first. In some counties you’ll see the <strong>current owner’s</strong> bill as a guide — yours will likely be higher after you buy.',
+    },
+    {
+      title:'Want to go back to Chris’s numbers?',
+      img:'12-reset.jpg',
+      body:'Playing with the price or down payment? Go for it — you can’t break anything. As soon as you move one, a small tab pops up on the <strong>left side of your screen</strong> that says <strong>Back to My Quote</strong>. Tap it and everything goes right back to the numbers Chris quoted you.',
     },
     {
       title:'Save your scenario',
-      body:'Found numbers that feel right? Scroll down, enter your email and the property address, and tap <strong>Save Scenario</strong>. You\'ll get a summary sent to your email. You can also tap <strong>Download PDF</strong> to save a clean, printable version of your numbers.',
+      img:'13-save.jpg',
+      body:'Found numbers you like? Enter your email, give it a name (like “123 Main St”), add the property address, and tap <strong>Save Scenario</strong>. A <strong>PDF</strong> opens to save or print, and a summary is emailed to you — Chris gets a copy too.',
     },
     {
-      title:'Share these numbers',
-      body:'Want to share the calculator with someone? Tap <strong>Share These Numbers</strong> to generate a personal link. Anyone you send it to will see the same income, debts, and setup you configured — no login required.',
+      title:'Share with someone',
+      img:'14-share.jpg',
+      body:'Want a spouse, partner or agent to see this exact scenario? Tap <strong>Share These Numbers</strong>. <strong>Heads up:</strong> the link includes your income and debts — only share it with people you trust.',
     },
     {
       title:'Still have questions?',
@@ -4937,6 +5052,12 @@ function initClientView(p) {
     },
   ];
 
+  /* Screenshot with one even, rounded gold frame (drawn by the page, not baked into the picture) */
+  function helpImg(file){
+    if (!file) return '';
+    return '<div style="border:3px solid #F5A623;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#fff;line-height:0;">'+
+      '<img src="'+HELP_IMG+file+'" alt="" loading="lazy" style="display:block;width:100%;height:auto;" onerror="this.parentNode.style.display=\'none\'"></div>';
+  }
   var helpCurrent = 0;
   var helpDrawer  = document.getElementById('help-drawer');
   var helpOverlay = document.getElementById('help-overlay');
@@ -4945,17 +5066,20 @@ function initClientView(p) {
     var step = helpSteps[helpCurrent];
     document.getElementById('help-step-label').textContent = 'Step '+(helpCurrent+1)+' of '+helpSteps.length;
     var content = document.getElementById('help-content');
-    content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:12px;">'+step.title+'</div>'+
+    content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
+      helpImg(step.img)+
       '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body+'</div>'+
+      (step.img2 ? '<div style="height:18px;"></div>'+helpImg(step.img2) : '')+
+      (step.body2 ? '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body2+'</div>' : '')+
       (step.cta?'<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">'+
-        '<a href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
-        '<a href="mailto:'+CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1]+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:transparent;border:2px solid var(--teal);color:var(--teal);text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#9993; Email Chris</a>'+
+        '<a class="help-cta-call" href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
+        '<a class="help-cta-email" href="mailto:'+CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1]+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:transparent;border:2px solid var(--teal);color:var(--teal);text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#9993; Email Chris</a>'+
         '</div>':'');
 
     /* Dots */
     var dots = document.getElementById('help-dots');
     dots.innerHTML = helpSteps.map(function(_,i){
-      return '<div style="width:'+(i===helpCurrent?16:6)+'px;height:6px;border-radius:3px;background:'+(i===helpCurrent?'var(--navy)':'var(--border)')+';transition:all 0.3s;"></div>';
+      return '<div style="width:'+(i===helpCurrent?16:6)+'px;height:6px;border-radius:3px;background:'+(i===helpCurrent?'var(--teal)':'var(--border)')+';transition:all 0.3s;"></div>';
     }).join('');
 
     /* Nav */
@@ -4972,11 +5096,14 @@ function initClientView(p) {
 
   function openHelp(){
     helpCurrent=0; renderHelpStep();
+    helpDrawer.style.boxShadow='-4px 0 24px rgba(0,0,0,0.2)';
     helpDrawer.style.transform='translateX(0)';
     if(helpOverlay){helpOverlay.style.display='block';}
   }
   function closeHelp(){
     helpDrawer.style.transform='translateX(100%)';
+    /* drop the shadow once it has slid away — otherwise it shades the right edge of the page */
+    setTimeout(function(){ if (helpDrawer.style.transform==='translateX(100%)') helpDrawer.style.boxShadow='none'; }, 380);
     if(helpOverlay){helpOverlay.style.display='none';}
   }
   document.getElementById('help-close').addEventListener('click', closeHelp);
@@ -4984,13 +5111,11 @@ function initClientView(p) {
 
   /* Help button — will be added to floating buttons */
   var helpBtn = document.getElementById('help-btn');
+  /* The "?" button opens the full help guide (it had been switched to reopen the
+     3-page welcome on Oct 20, 2026 — Chris wants the full guide back). */
   if(helpBtn) helpBtn.addEventListener('click', function(){
-    /* First time in session: show onboarding; after that: open help drawer */
-    if (onboardEl && onboardEl.style.display !== 'none') {
-      /* already visible */
-    } else {
-      reopenOnboarding();
-    }
+    if (onboardEl && onboardEl.style.display !== 'none') onboardEl.style.display = 'none';
+    openHelp();
   });
 
   /* ============================================================
