@@ -395,7 +395,9 @@ body.dark-mode #tax-lookup-toggle { color: #fff; }
 #tax-lookup-toggle:not(.open) {
   animation: tax-btn-pulse 2.2s ease-in-out infinite;
 }
-body.dark-mode #tax-lookup-toggle { color: #ffffff; }
+/* Night mode: white text + brighter outline (the button's own inline colour used to win — hence !important) */
+body.dark-mode #tax-lookup-toggle { color: #ffffff !important; border-color: #5DB4D8 !important; }
+body.dark-mode #tax-lookup-toggle.open { background: var(--teal) !important; }
 
 /* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
 body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
@@ -2257,7 +2259,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.33.0',
+  version: '8.33.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
