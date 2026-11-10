@@ -398,6 +398,8 @@ body.dark-mode #tax-lookup-toggle { color: #fff; }
 /* Night mode: white text + brighter outline (the button's own inline colour used to win — hence !important) */
 body.dark-mode #tax-lookup-toggle { color: #ffffff !important; border-color: #5DB4D8 !important; }
 body.dark-mode #tax-lookup-toggle.open { background: var(--teal) !important; }
+/* Help guide: readable "Next" button in night mode */
+body.dark-mode #help-next { background: var(--yellow) !important; color: #1B3A6B !important; }
 
 /* Dark mode: thermometer track — swap white-on-navy to dark-on-white */
 body.dark-mode #mini-thermo-track { background: rgba(0,0,0,0.1) !important; }
@@ -1761,7 +1763,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <button id="help-close" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
     </div>
     <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:12px;color:var(--text-muted);" id="help-step-label">Step 1 of 8</span>
+      <span style="font-size:12px;color:var(--text-muted);" id="help-step-label"></span>
       <div style="display:flex;gap:4px;" id="help-dots"></div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:24px 20px;" id="help-content"></div>
@@ -2259,7 +2261,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.33.1',
+  version: '8.34.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -4984,8 +4986,12 @@ function initClientView(p) {
       body:'Enter your ZIP code or Florida county. This unlocks everything else and gives you an accurate property tax estimate for that area. Without a county, the tax number would just be a guess.',
     },
     {
-      title:'Property tax & homestead exemption',
-      body:'Your property tax estimate is based on the county you entered. If this will be your <strong>primary residence</strong>, check the Homestead Exemption box — Florida homeowners can save hundreds per year with this exemption. It automatically lowers your estimated tax bill.',
+      title:'Your property tax estimate',
+      body:'Property tax is estimated from the county\u2019s tax rate at the price you\u2019re looking at \u2014 for a home you\u2019ll live in, that includes Florida\u2019s <strong>$50,000 homestead exemption</strong>. Tap the yellow <strong>i</strong> next to Property Tax anytime for more detail.',
+    },
+    {
+      title:'Have an address? Look up the real tax bill',
+      body:'Under Property Tax, tap <strong>\u201cHave an address? Look up its actual tax bill.\u201d</strong> Start typing the address and <strong>pick it from the suggestions</strong> \u2014 the city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the county record isn\u2019t an exact match, we\u2019ll ask <strong>\u201cIs this the right property?\u201d</strong> before using it. In some counties you\u2019ll see the <strong>current owner\u2019s</strong> bill as a guide \u2014 your bill after buying will likely be higher.',
     },
     {
       title:'Watch the bar at the top',
@@ -5008,12 +5014,16 @@ function initClientView(p) {
       body:'If the property is in a FEMA flood zone, check that box. Flood insurance is required by your lender \u2014 it\'s not optional and not covered by standard homeowners insurance.',
     },
     {
+      title:'Back to Chris\u2019s numbers',
+      body:'Once you change the price or down payment, a <strong>Reset to Quote</strong> tab appears on the <strong>left edge</strong> of the screen. Tap it anytime to snap back to the numbers Chris set up for you.',
+    },
+    {
       title:'Save your scenario',
-      body:'Found numbers that feel right? Scroll down, enter your email and the property address, and tap <strong>Save Scenario</strong>. You\'ll get a summary sent to your email. You can also tap <strong>Download PDF</strong> to save a clean, printable version of your numbers.',
+      body:'Found numbers that feel right? Scroll down, enter your email, a name for this scenario, and the property address, then tap <strong>Save Scenario</strong>. A <strong>PDF</strong> of your numbers opens to save or print, and a summary is emailed to you (Chris gets a copy too).',
     },
     {
       title:'Share these numbers',
-      body:'Want to share the calculator with someone? Tap <strong>Share These Numbers</strong> to generate a personal link. Anyone you send it to will see the same income, debts, and setup you configured — no login required.',
+      body:'Want a spouse, partner or agent to see this exact scenario? Tap <strong>Share These Numbers</strong> to send a link. <strong>Heads up:</strong> the link includes your income and debts \u2014 only share it with people you trust.',
     },
     {
       title:'Still have questions?',
@@ -5030,7 +5040,7 @@ function initClientView(p) {
     var step = helpSteps[helpCurrent];
     document.getElementById('help-step-label').textContent = 'Step '+(helpCurrent+1)+' of '+helpSteps.length;
     var content = document.getElementById('help-content');
-    content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:12px;">'+step.title+'</div>'+
+    content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
       '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body+'</div>'+
       (step.cta?'<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">'+
         '<a href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
@@ -5040,7 +5050,7 @@ function initClientView(p) {
     /* Dots */
     var dots = document.getElementById('help-dots');
     dots.innerHTML = helpSteps.map(function(_,i){
-      return '<div style="width:'+(i===helpCurrent?16:6)+'px;height:6px;border-radius:3px;background:'+(i===helpCurrent?'var(--navy)':'var(--border)')+';transition:all 0.3s;"></div>';
+      return '<div style="width:'+(i===helpCurrent?16:6)+'px;height:6px;border-radius:3px;background:'+(i===helpCurrent?'var(--teal)':'var(--border)')+';transition:all 0.3s;"></div>';
     }).join('');
 
     /* Nav */
@@ -5069,13 +5079,11 @@ function initClientView(p) {
 
   /* Help button — will be added to floating buttons */
   var helpBtn = document.getElementById('help-btn');
+  /* The "?" button opens the full help guide (it had been switched to reopen the
+     3-page welcome on Oct 20, 2026 — Chris wants the full guide back). */
   if(helpBtn) helpBtn.addEventListener('click', function(){
-    /* First time in session: show onboarding; after that: open help drawer */
-    if (onboardEl && onboardEl.style.display !== 'none') {
-      /* already visible */
-    } else {
-      reopenOnboarding();
-    }
+    if (onboardEl && onboardEl.style.display !== 'none') onboardEl.style.display = 'none';
+    openHelp();
   });
 
   /* ============================================================

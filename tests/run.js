@@ -29,6 +29,7 @@
         property?" and fills nothing until the client says yes
      N. ADDR1: typing in the tax lookup shows Google address suggestions;
         picking one fills street, city, county and unit
+     O. Help: "?" opens the full help guide (not the welcome popup), no outdated text
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -426,6 +427,27 @@ async function readScreen(page, pattern) {
   if (N.shortCalls !== 0) failures.push('ADDR1: fewer than 4 letters must not ask for suggestions');
   if (N.items.length !== 1 || !/4900 Brittany Dr S/.test(N.items[0])) failures.push(`ADDR1: typing should show the suggestion list (${JSON.stringify(N.items)})`);
   if (N.street !== '4900 Brittany Dr S' || N.city !== 'St. Petersburg' || N.county !== 'Pinellas' || N.unit !== '1808' || !N.listHidden) failures.push(`ADDR1: picking a suggestion should fill street, city, county and unit (${JSON.stringify(N)})`);
+
+  /* O. Help: the "?" button opens the full help guide (not the 3-page welcome), with no outdated text */
+  await client.goto(BASE);
+  const O = await client.evaluate(async () => {
+    const ob = document.getElementById('client-onboard'); if (ob) ob.style.display = 'none';
+    document.getElementById('help-btn').click();
+    await new Promise((r) => setTimeout(r, 50));
+    const pages = [];
+    const label = document.getElementById('help-step-label').textContent;
+    const total = parseInt((label.match(/of (\d+)/) || [])[1], 10) || 0;
+    for (let i = 0; i < total; i++) {
+      pages.push(document.getElementById('help-content').textContent);
+      if (i < total - 1) document.getElementById('help-next').click();
+    }
+    return { open: document.getElementById('help-drawer').style.transform === 'translateX(0px)' || document.getElementById('help-drawer').style.transform === 'translateX(0)',
+      welcomeShown: ob && ob.style.display !== 'none', label, total, text: pages.join(' | ') };
+  });
+  if (!O.open || O.welcomeShown) failures.push(`Help: "?" must open the full help guide, not the welcome popup (${JSON.stringify({ open: O.open, welcome: O.welcomeShown })})`);
+  if (O.total < 10) failures.push(`Help: the guide should have at least 10 pages, has ${O.total} ("${O.label}")`);
+  if (/Homestead Exemption box|Download PDF/i.test(O.text)) failures.push('Help: guide still mentions things that no longer exist (Homestead box / Download PDF)');
+  if (!/Look up the real tax bill/.test(O.text) || !/Reset to Quote/.test(O.text)) failures.push('Help: guide should cover the tax lookup and the Reset to Quote tab');
 
   await browser.close();
 
