@@ -34,6 +34,7 @@
      Q. Q2: Chris's PMI quote scales with the client's price and down payment
      R. Q3: Share link + PDF QR reopen exactly the client's screen
      S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
+     T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -606,6 +607,39 @@ async function readScreen(page, pattern) {
   if (S2.stray.length) failures.push(`Payment card: ${S2.stray.join(', ')} should sit inside the breakdown, not loose under the status pill`);
   if (!S2.ufVisible || !/255, 255, 255/.test(S2.ufColor)) failures.push(`FHA note should be visible light text on the navy card (${JSON.stringify(S2)})`);
   if (!S2.shownAt0 || S2.shownAt3000) failures.push(`Rental "how the math works" line should show only while there is a shortfall (${JSON.stringify(S2)})`);
+
+  /* T. The floating ? and night/day buttons never cover the payment card (small phones use the header ?) */
+  for (const [w, h] of [[375, 548], [360, 640], [390, 664], [1280, 720]]) {
+    const pg = await context.newPage();
+    pg.on('pageerror', (e) => pageErrors.push(`floating buttons ${w}x${h}: ` + e.message));
+    await pg.setViewportSize({ width: w, height: h });
+    await pg.goto(PAGE + '?client=1&pp=400000&dp=10&pmi=120&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43');
+    await pg.waitForFunction(() => typeof calcAll === 'function' && document.getElementById('cbr-mi'));
+    const T = await pg.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      document.getElementById('client-onboard').style.display = 'none';
+      const bar = [...document.querySelectorAll('body > *')].find((e) => /PREVIEW COPY/.test(e.textContent) && e.offsetHeight < 120);
+      if (bar) bar.style.display = 'none';
+      const ov = (a, b) => !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+      const look = () => {
+        const card = document.getElementById('client-thermo-section').getBoundingClientRect();
+        const shown = ['help-btn', 'mode-toggle'].filter((id) => +getComputedStyle(document.getElementById(id)).opacity > 0.5);
+        return { shown, covering: shown.filter((id) => ov(document.getElementById(id).getBoundingClientRect(), card)), headerQ: !!(document.getElementById('help-btn-top') && document.getElementById('help-btn-top').checkVisibility()) };
+      };
+      scrollTo(0, 0); window.dispatchEvent(new Event('scroll')); await wait(350);
+      const top = look();
+      const covered = [];
+      for (const y of [150, 300, 600, 1500]) { scrollTo(0, y); window.dispatchEvent(new Event('scroll')); await wait(300); const l = look(); if (l.covering.length) covered.push(y + ':' + l.covering.join('+')); }
+      scrollTo(0, 0); window.dispatchEvent(new Event('scroll')); await wait(300);
+      let opened = null;
+      if (document.getElementById('help-btn-top') && document.getElementById('help-btn-top').checkVisibility()) { document.getElementById('help-btn-top').click(); await wait(100); opened = /translateX\(0/.test(document.getElementById('help-drawer').style.transform); }
+      return { top, covered, opened };
+    });
+    if (T.top.covering.length || T.covered.length) failures.push(`${w}x${h}: floating buttons cover the payment card (${JSON.stringify(T)})`);
+    if (!T.top.shown.includes('help-btn') && !T.top.headerQ) failures.push(`${w}x${h}: no ? button anywhere at the top of the page`);
+    if (T.opened === false) failures.push(`${w}x${h}: the header ? did not open the help guide`);
+    await pg.close();
+  }
 
   if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);
   if (!P.helpOpen || !P.helpClosedByBack || !P.stillOnCalculator2) failures.push(`UX12: Back should close the help guide and stay on the calculator (${JSON.stringify(P)})`);
