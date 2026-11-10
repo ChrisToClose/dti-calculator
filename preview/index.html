@@ -2261,7 +2261,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.34.0',
+  version: '8.35.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -4980,50 +4980,75 @@ function initClientView(p) {
   /* ============================================================
      CLIENT: HELP DRAWER
      ============================================================ */
+  /* Help guide v2 (Chris, Nov 9 2026): in the order a client works down the screen,
+     with a highlighted screenshot of each part. Old text: docs/help-guide-v1-set-aside.md
+     Screenshots live in /help-img/ (shared by the preview and live pages). */
+  var HELP_IMG = 'https://christoclose.github.io/dti-calculator/help-img/';
   var helpSteps = [
     {
-      title:'Start with your location',
-      body:'Enter your ZIP code or Florida county. This unlocks everything else and gives you an accurate property tax estimate for that area. Without a county, the tax number would just be a guess.',
+      title:'Your numbers are already loaded',
+      img:'01-based-on.jpg',
+      body:'Chris set this up for you from your pre-approval — your income and monthly debts are already in. You don’t need to change those. Everything below is about <strong>the home</strong>: try any house you’re looking at and see what it means for you.',
     },
     {
-      title:'Your property tax estimate',
-      body:'Property tax is estimated from the county\u2019s tax rate at the price you\u2019re looking at \u2014 for a home you\u2019ll live in, that includes Florida\u2019s <strong>$50,000 homestead exemption</strong>. Tap the yellow <strong>i</strong> next to Property Tax anytime for more detail.',
+      title:'Your payment, live',
+      img:'02-payment-bar.jpg',
+      body:'This box shows your <strong>total monthly payment</strong> and what’s in it. The bar is your <strong>debt-to-income</strong> — <strong>green</strong> is comfortable, <strong>yellow</strong> is getting close, <strong>red</strong> means the numbers need to change. It stays pinned at the top as you scroll, so you can watch it move.',
     },
     {
-      title:'Have an address? Look up the real tax bill',
-      body:'Under Property Tax, tap <strong>\u201cHave an address? Look up its actual tax bill.\u201d</strong> Start typing the address and <strong>pick it from the suggestions</strong> \u2014 the city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the county record isn\u2019t an exact match, we\u2019ll ask <strong>\u201cIs this the right property?\u201d</strong> before using it. In some counties you\u2019ll see the <strong>current owner\u2019s</strong> bill as a guide \u2014 your bill after buying will likely be higher.',
+      title:'1. Purchase price',
+      img:'03-price.jpg',
+      body:'Drag the slider to the price of the home you’re looking at. Want an exact number? Tap the <strong>✎ pencil</strong> and type it in.',
     },
     {
-      title:'Watch the bar at the top',
-      body:'That colored bar is your DTI \u2014 Debt-to-Income ratio. It shows how much of your monthly income goes toward housing and debt. <strong>Green</strong> means you\'re in good shape. <strong>Yellow</strong> means you\'re getting close. <strong>Red</strong> means the numbers need adjustment.',
+      title:'2. Down payment',
+      img:'04-down.jpg',
+      body:'More down means a smaller loan and a lower payment. On a conventional loan, once you reach <strong>20%</strong> the mortgage insurance (PMI) goes away — watch the payment drop.',
     },
     {
-      title:'Try different purchase prices',
-      body:'Slide the purchase price up or down. Watch how your monthly payment and the bar change in real time. This is how you find your comfortable range \u2014 not just your maximum.',
+      title:'3. Loan term',
+      img:'05-term.jpg',
+      body:'Tap 30, 25, 20 or 15 years. Shorter terms pay the home off faster but raise the monthly payment.',
     },
     {
-      title:'Adjust your down payment',
-      body:'A larger down payment means a smaller loan and lower payment. Once you hit 20% or more, PMI disappears entirely. Watch what happens when you cross that line.',
+      title:'4. HOA fee',
+      img:'06-hoa.jpg',
+      body:'If the home has an HOA, slide it to the monthly fee from the listing. Condo HOAs can change your numbers a lot — always confirm the exact fee before making an offer.',
     },
     {
-      title:'Add your HOA if applicable',
-      body:'If the property has an HOA fee, slide it here. A high HOA on a condo can change your numbers significantly \u2014 even on a less expensive home. Always confirm the exact fee before making an offer.',
+      title:'5. Homeowners insurance',
+      img:'07-insurance.jpg',
+      body:'This starts as an estimate (<strong>EST</strong>). Got a real quote? Tap the <strong>✎ pencil</strong> and type the monthly amount — your payment updates right away.',
     },
     {
-      title:'Check flood zone if applicable',
-      body:'If the property is in a FEMA flood zone, check that box. Flood insurance is required by your lender \u2014 it\'s not optional and not covered by standard homeowners insurance.',
+      title:'6. Property tax',
+      img:'09-tax.jpg',
+      body:'Taxes are estimated from your county’s tax rate at this price — for a home you’ll live in, that includes Florida’s <strong>$50,000 homestead exemption</strong>. Looking in a different county? Tap <strong>Edit</strong> under Property Location. Know the bill? Tap the <strong>✎ pencil</strong>.',
     },
     {
-      title:'Back to Chris\u2019s numbers',
-      body:'Once you change the price or down payment, a <strong>Reset to Quote</strong> tab appears on the <strong>left edge</strong> of the screen. Tap it anytime to snap back to the numbers Chris set up for you.',
+      title:'7. Look up the real tax bill',
+      img:'10-lookup.jpg',
+      body:'Have an address? Tap <strong>“Have an address? Look up its actual tax bill.”</strong> Start typing and <strong>pick the address from the list</strong> — city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the record isn’t an exact match we’ll ask <strong>“Is this the right property?”</strong> first. In some counties you’ll see the <strong>current owner’s</strong> bill as a guide — yours will likely be higher after you buy.',
+    },
+    {
+      title:'8. Flood zone & CDD',
+      img:'11-flood-cdd.jpg',
+      body:'If the home is in a flood zone, turn on <strong>Flood Zone</strong> and enter the monthly flood insurance — lenders require it there, and regular homeowners insurance doesn’t cover floods. Newer communities may have a <strong>CDD fee</strong>; turn that on and enter the yearly amount.',
+    },
+    {
+      title:'Changed too much? Start over',
+      img:'12-reset.jpg',
+      body:'Once you change the price or down payment, a <strong>Reset to Quote</strong> tab appears on the <strong>left edge</strong> of your screen. Tap it to snap back to the numbers Chris set up for you.',
     },
     {
       title:'Save your scenario',
-      body:'Found numbers that feel right? Scroll down, enter your email, a name for this scenario, and the property address, then tap <strong>Save Scenario</strong>. A <strong>PDF</strong> of your numbers opens to save or print, and a summary is emailed to you (Chris gets a copy too).',
+      img:'13-save.jpg',
+      body:'Found numbers you like? Enter your email, give it a name (like “123 Main St”), add the property address, and tap <strong>Save Scenario</strong>. A <strong>PDF</strong> opens to save or print, and a summary is emailed to you — Chris gets a copy too.',
     },
     {
-      title:'Share these numbers',
-      body:'Want a spouse, partner or agent to see this exact scenario? Tap <strong>Share These Numbers</strong> to send a link. <strong>Heads up:</strong> the link includes your income and debts \u2014 only share it with people you trust.',
+      title:'Share with someone',
+      img:'14-share.jpg',
+      body:'Want a spouse, partner or agent to see this exact scenario? Tap <strong>Share These Numbers</strong>. <strong>Heads up:</strong> the link includes your income and debts — only share it with people you trust.',
     },
     {
       title:'Still have questions?',
@@ -5041,6 +5066,7 @@ function initClientView(p) {
     document.getElementById('help-step-label').textContent = 'Step '+(helpCurrent+1)+' of '+helpSteps.length;
     var content = document.getElementById('help-content');
     content.innerHTML = '<div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:12px;">'+step.title+'</div>'+
+      (step.img ? '<img src="'+HELP_IMG+step.img+'" alt="" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--border);margin:0 0 14px;background:#fff;" onerror="this.style.display=\'none\'">' : '')+
       '<div style="font-size:14px;color:var(--text-muted);line-height:1.8;">'+step.body+'</div>'+
       (step.cta?'<div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;">'+
         '<a href="tel:'+CONFIG.lender.phone+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:var(--navy);color:#fff;text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#128222; Call Chris</a>'+
