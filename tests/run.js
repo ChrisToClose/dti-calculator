@@ -36,6 +36,7 @@
      S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
      U. Fonts load only from this site (no Google / outside font servers)
+     W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -660,6 +661,98 @@ async function readScreen(page, pattern) {
       const local = path.join(ROOT, u.replace('/dti-calculator/', ''));
       if (!fs.existsSync(local)) failures.push(`Fonts: ${u} is missing from the fonts folder`);
     }
+  }
+
+  /* W. S5 short links, tested as the REAL site (christoclose.github.io) with a stand-in Worker */
+  {
+    const SITE = 'https://christoclose.github.io/dti-calculator/' + (PAGE_FILE.startsWith('preview') ? 'preview/' : '');
+    const pageHtml = fs.readFileSync(path.resolve(ROOT, PAGE_FILE), 'utf8');
+    const store = new Map(); const calls = [];
+    const wctx = await browser.newContext({ timezoneId: 'America/New_York', locale: 'en-US' });
+    await wctx.route('**/*', async (r) => {
+      const req = r.request(); const u = new URL(req.url());
+      if (u.host === 'christoclose.github.io') {
+        if (u.pathname.includes('/fonts/')) { const fp = path.join(ROOT, 'fonts', path.basename(u.pathname)); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); }
+        return r.fulfill({ status: 200, contentType: 'text/html', body: pageHtml });
+      }
+      if (u.host.includes('workers.dev')) {
+        const cors = { 'access-control-allow-origin': 'https://christoclose.github.io', 'access-control-allow-headers': 'Content-Type', 'access-control-allow-methods': 'POST, OPTIONS' };
+        if (req.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: cors });
+        const b = JSON.parse(req.postData() || '{}'); calls.push(u.pathname);
+        const reply = (st, obj) => r.fulfill({ status: st, headers: cors, contentType: 'application/json', body: JSON.stringify(obj) });
+        if (u.pathname === '/link-create') {
+          if (b.pin !== undefined && b.pin !== 'right-pin') return reply(401, { error: 'That PIN isn’t right.', pin: false });
+          if (b.pin === undefined && !b.turnstileToken) return reply(403, { error: 'robot' });
+          const id = 'Test' + String(store.size).padStart(6, '0'); store.set(id, b.params); return reply(200, { ok: true, id });
+        }
+        if (u.pathname === '/link-get') return store.has(b.id) ? reply(200, { ok: true, params: store.get(b.id) }) : reply(404, { error: 'expired' });
+        if (u.pathname === '/send-scenario') { if (b.linkId && b.linkParams && !store.has(b.linkId)) store.set(b.linkId, b.linkParams); return reply(200, { ok: true }); }
+        return reply(404, { error: 'unknown' });
+      }
+      return r.abort();
+    });
+    const pg = await wctx.newPage(); pg.on('pageerror', (e) => pageErrors.push('short links: ' + e.message));
+    const SCREEN = /^(cbr-|client-back-dti|client-front-dti|client-price-val|client-down-pct|client-county-result)/;
+    const LONG = 'pp=400000&dp=10&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43&hoa=250&fld=1&fi=175&pmi=120&nm=Sam';
+    const settle = async () => { await pg.waitForTimeout(400); };
+
+    // 1. an old long link on the real site is retired
+    await pg.goto(SITE + '?client=1&' + LONG); await settle();
+    const longKind = await pg.evaluate(() => { const b = document.getElementById('link-problem'); return b && b.getAttribute('data-kind'); });
+    if (longKind !== 'expired') failures.push(`Short links: an old long link on the real site should show "expired" (got ${longKind})`);
+
+    // 2. Chris makes a link with his PIN (wrong PIN first)
+    await pg.goto(SITE); await settle();
+    const made = pg.evaluate((long) => { const o = Object.fromEntries(new URLSearchParams(long)); return makeLenderLink(o).then((u) => u, (e) => 'ERR ' + e.message); }, LONG);
+    await pg.waitForSelector('#lender-pin-input'); await pg.fill('#lender-pin-input', 'wrong'); await pg.click('#lender-pin-ok');
+    await pg.waitForSelector('#lender-pin-input'); const retryNote = await pg.textContent('#lender-pin-box');
+    await pg.fill('#lender-pin-input', 'right-pin'); await pg.click('#lender-pin-ok');
+    const lenderUrl = await made;
+    if (!/\?s=Test\d{6}$/.test(lenderUrl) || /pp=|inc=/.test(lenderUrl)) failures.push(`Short links: lender link should be short with no numbers (got ${lenderUrl})`);
+    if (!/didn.t match/.test(retryNote)) failures.push('Short links: a wrong PIN should ask again with "didn’t match"');
+    const remembered = await pg.evaluate(() => getLenderPin());
+    if (remembered !== 'right-pin') failures.push('Short links: the device should remember the right PIN');
+
+    // 3. the short link opens the same screen as the long link does on a test computer
+    await pg.goto(lenderUrl); await pg.waitForFunction(() => document.getElementById('cbr-mi') && document.getElementById('client-back-dti').textContent.trim()); await settle();
+    await pg.evaluate(() => { const o = document.getElementById('client-onboard'); if (o) o.style.display = 'none'; });
+    const shortScreen = await readScreen(pg, SCREEN);
+    const ref = await context.newPage(); await ref.goto(PAGE + '?client=1&' + LONG); await ref.waitForTimeout(400);
+    const longScreen = await readScreen(ref, SCREEN); await ref.close();
+    const d1 = Object.keys({ ...shortScreen, ...longScreen }).filter((k) => shortScreen[k] !== longScreen[k]);
+    if (!Object.keys(shortScreen).length || d1.length) failures.push(`Short links: short link screen differs from the same numbers as a long link — ${d1.map((k) => `${k}: ${shortScreen[k]} vs ${longScreen[k]}`).join('; ') || 'empty screen'}`);
+    if (/pp=|inc=/.test(pg.url())) failures.push('Short links: numbers appeared in the address bar');
+
+    // 4. client changes numbers, Share makes a new short link that reopens the same screen; Save's QR does too
+    const W = await pg.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms || 80));
+      const set = async (id, v) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); await wait(); };
+      await set('client-price', 520000); document.getElementById('pmi-drift-modal').style.display = 'none';
+      await set('client-down', 15);
+      CONFIG.turnstileSiteKey = 'test-site-key'; tsLoadFailed = false; tsWidgetId = 1;
+      window.turnstile = { reset() {}, execute() { setTimeout(() => { const p = tsPending; tsPending = null; if (p) p.resolve('T'); }, 10); } };
+      let shared = null; navigator.share = (d) => { shared = d; return Promise.resolve(); };
+      document.getElementById('btn-share-scenario').click(); await wait(600);
+      let qr = null; window.qrcode = () => ({ addData: (d) => { qr = d; }, make() {}, getModuleCount: () => 21, isDark: () => false });
+      const fakeDoc = new Proxy({}, { get: (t, k) => k === 'internal' ? { pageSize: { getWidth: () => 215.9, getHeight: () => 279.4, width: 215.9, height: 279.4 }, getNumberOfPages: () => 1 } : k === 'splitTextToSize' ? (x) => [String(x)] : (k === 'getTextWidth' || k === 'getStringUnitWidth') ? () => 10 : k === 'getNumberOfPages' ? () => 1 : k === 'then' ? undefined : () => fakeDoc });
+      window.jspdf = { jsPDF: function () { return fakeDoc; } };
+      document.getElementById('save-email').value = 'a@example.com'; document.getElementById('save-label').value = 'x'; document.getElementById('save-address').value = '1 Main St';
+      const b = document.getElementById('btn-save-scenario'); b.disabled = false; b.style.display = ''; b.click(); await wait(800);
+      return { share: shared && shared.url, qr };
+    });
+    const before = await readScreen(pg, SCREEN);
+    for (const [name, url] of [['Share', W.share], ['PDF QR', W.qr]]) {
+      if (!url || !/\?s=[A-Za-z0-9]{10}$/.test(url)) { failures.push(`Short links: ${name} should give a short link (got ${url})`); continue; }
+      const p2 = await wctx.newPage(); await p2.goto(url); await p2.waitForFunction(() => document.getElementById('cbr-mi') && document.getElementById('client-back-dti').textContent.trim()); await p2.waitForTimeout(400);
+      const after = await readScreen(p2, SCREEN); await p2.close();
+      const d = Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]);
+      if (d.length) failures.push(`Short links: ${name} link reopens different numbers — ${d.map((k) => `${k}: ${before[k]} → ${after[k]}`).join('; ')}`);
+    }
+    // 5. an unknown / expired short link
+    await pg.goto(SITE + '?s=Nope123456'); await settle();
+    const expKind = await pg.evaluate(() => { const b = document.getElementById('link-problem'); return b && b.getAttribute('data-kind'); });
+    if (expKind !== 'expired') failures.push(`Short links: an unknown link should say "expired" (got ${expKind})`);
+    await wctx.close();
   }
 
   if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);

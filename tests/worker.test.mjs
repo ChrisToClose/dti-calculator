@@ -266,6 +266,55 @@ async function post(env, path, body) {
   console.log('Turnstile required: ' + (required ? 'YES' : 'NO (transition — turn on after the page is published)'));
 }
 
+/* 15. Short client links (S5): lender PIN or human check, 90-day storage, refusals */
+{
+  const env = baseEnv(); env.LOOKUP_KV = fakeKV(); env.LENDER_PIN = 'correct horse 42';
+  const P = { pp: '400000', dp: '10', inc: '11000', dbt: '800', rt: '7', cn: 'Pinellas', mr: '17.43', nm: 'Sam', evil: '<script>' };
+  let r = await post(env, '/link-create', { params: P, pin: 'correct horse 42' });
+  check('lender with the right PIN gets a 10-character link id', r.status === 200 && /^[A-Za-z0-9]{10}$/.test(r.body.id), JSON.stringify(r));
+  const id = r.body.id;
+  const rec = JSON.parse(env.LOOKUP_KV.m.get('link:' + id));
+  check('only known link fields are stored (junk dropped)', rec.p.pp === '400000' && rec.p.nm === 'Sam' && rec.p.evil === undefined && rec.by === 'lender', JSON.stringify(rec));
+  r = await post(env, '/link-get', { id });
+  check('reading a link returns its numbers', r.status === 200 && r.body.params.inc === '11000', JSON.stringify(r));
+  r = await post(env, '/link-get', { id: 'Nope123456' });
+  check('unknown/expired link → "expired"', r.status === 404 && r.body.error === 'expired');
+  r = await post(env, '/link-get', { id: '../../etc' });
+  check('malformed link id refused without a storage read', r.status === 404);
+  r = await post(env, '/link-create', { params: P, pin: 'wrong' });
+  check('wrong PIN refused', r.status === 401 && r.body.pin === false, JSON.stringify(r));
+  for (let i = 0; i < 12; i++) r = await post(env, '/link-create', { params: P, pin: 'guess' + i });
+  check('too many wrong PINs → locked for the hour (even the right one)', r.status === 429 && (await post(env, '/link-create', { params: P, pin: 'correct horse 42' })).status === 429, JSON.stringify(r));
+  const env2 = baseEnv(); env2.LOOKUP_KV = fakeKV(); env2.LENDER_PIN = 'pin';
+  turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+  r = await post(env2, '/link-create', { params: P, turnstileToken: 'tok' });
+  check('client Share with a human check gets a link', r.status === 200 && JSON.parse(env2.LOOKUP_KV.m.get('link:' + r.body.id)).by === 'client', JSON.stringify(r));
+  r = await post(env2, '/link-create', { params: P });
+  check('no PIN and no human check → refused', r.status === 403);
+  turnstileAnswer = { success: false };
+  r = await post(env2, '/link-create', { params: P, turnstileToken: 'bad' });
+  check('failed human check → refused', r.status === 403);
+  turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+  r = await post(env2, '/link-create', { params: { pp: '400000' }, turnstileToken: 'tok' });
+  check('missing income/rate → refused', r.status === 400);
+  const dayKey = [...env2.LOOKUP_KV.m.keys()].find((k) => k.startsWith('linkday:'));
+  env2.LOOKUP_KV.m.set(dayKey, '300');
+  r = await post(env2, '/link-create', { params: P, turnstileToken: 'tok' });
+  check('client links capped at 300/day', r.status === 429);
+  r = await post(env2, '/link-create', { params: P, pin: 'pin' });
+  check('lender links are not affected by the client cap', r.status === 200);
+  const big = await worker.fetch(new Request('https://w.example/link-create', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '9.9.9.9' }, body: JSON.stringify({ params: P, pin: 'x'.repeat(9000) }) }), env2, {});
+  check('oversized request refused', big.status === 400);
+  /* Save Scenario stores the PDF QR link under the id the page picked, only after a good send */
+  const env3 = baseEnv(); env3.LOOKUP_KV = fakeKV(); emailsSent = 0;
+  const sr = await worker.fetch(new Request('https://w.example/send-scenario', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
+    body: JSON.stringify({ params: params('qr@example.com'), turnstileToken: 'tok', linkId: 'QrLink2345', linkParams: P }) }), env3, {});
+  check('Save Scenario stores the PDF QR link after sending', sr.status === 200 && emailsSent === 1 && JSON.parse(env3.LOOKUP_KV.m.get('link:QrLink2345') || '{}').by === 'save');
+  const sr2 = await worker.fetch(new Request('https://w.example/send-scenario', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
+    body: JSON.stringify({ params: params('qr2@example.com'), turnstileToken: 'tok', linkId: 'QrLink2345', linkParams: { ...P, inc: '1' } }) }), env3, {});
+  check('a Save can never overwrite an existing link', sr2.status === 200 && JSON.parse(env3.LOOKUP_KV.m.get('link:QrLink2345')).p.inc === '11000');
+}
+
 if (failures.length) {
   console.log(`\nWORKER TESTS FAILED — ${failures.length}:`);
   failures.forEach((f) => console.log('  ✗ ' + f));

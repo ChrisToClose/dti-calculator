@@ -2390,7 +2390,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.41.2',
+  version: '8.42.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -4000,13 +4000,97 @@ function buildIntroMessage(url) {
   return greeting+' I built a Housing Payment Calculator just for you \u2014 I\u2019ve already loaded in your income and debts so everything is factored in. Explore different home prices and down payment options and let me know if you have any questions!\n\n'+url;
 }
 
+/* ============================================================
+   SECTION: SHORT CLIENT LINKS (S5, Nov 10)
+   Client numbers are stored on the Worker for 90 days; the link only
+   carries a random id (?s=…). Chris makes links with his private PIN
+   (kept on his own device); clients make them via the human check.
+   Old long links (numbers in the address) are retired on the real site
+   and only work when the page is opened from a test computer.
+   ============================================================ */
+var LOCAL_TEST = /^(file:|https?:\/\/(localhost|127\.0\.0\.1)(:|\/))/.test(window.location.href);
+var LENDER_PIN_KEY = 'cc-lender-pin';
+function pageBase(){ return window.location.href.split('?')[0].split('#')[0]; }
+function shortLinkUrl(id){ return pageBase() + '?s=' + id; }
+function newLinkId(){
+  var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  var bytes = new Uint8Array(10); window.crypto.getRandomValues(bytes);
+  var id = ''; for (var i = 0; i < bytes.length; i++) id += abc[bytes[i] % abc.length];
+  return id;
+}
+function linkCall(path, body){
+  return fetch(CONFIG.workerUrl + path, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) })
+    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ return { status:r.status, body:d }; }); });
+}
+function getLenderPin(){ try { return localStorage.getItem(LENDER_PIN_KEY) || ''; } catch(e){ return ''; } }
+function setLenderPin(v){ try { if (v) localStorage.setItem(LENDER_PIN_KEY, v); else localStorage.removeItem(LENDER_PIN_KEY); } catch(e){} }
+
+/* Small PIN box for Chris (once per device). Resolves with the PIN, or null if cancelled. */
+function askLenderPin(note){
+  return new Promise(function(resolve){
+    var wrap = document.createElement('div');
+    wrap.id = 'lender-pin-box';
+    wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface);color:var(--text);border-radius:12px;padding:22px 20px;max-width:340px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,0.35);font-family:inherit;';
+    var h = document.createElement('div'); h.style.cssText = 'font-size:17px;font-weight:800;margin-bottom:6px;'; h.textContent = 'Enter your link PIN';
+    var t = document.createElement('div'); t.style.cssText = 'font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:12px;';
+    t.textContent = note || 'Only you can make client links. This device remembers it after the first time.';
+    var inp = document.createElement('input'); inp.type = 'password'; inp.id = 'lender-pin-input'; inp.autocomplete = 'current-password';
+    inp.style.cssText = 'width:100%;box-sizing:border-box;padding:11px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:16px;background:var(--surface);color:var(--text);';
+    var row = document.createElement('div'); row.style.cssText = 'display:flex;gap:10px;margin-top:14px;';
+    var cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Cancel';
+    cancel.style.cssText = 'flex:1;padding:11px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-weight:700;cursor:pointer;';
+    var ok = document.createElement('button'); ok.type = 'button'; ok.id = 'lender-pin-ok'; ok.textContent = 'Unlock';
+    ok.style.cssText = 'flex:1;padding:11px;border-radius:8px;border:none;background:var(--yellow);color:#1B3A6B;font-weight:800;cursor:pointer;';
+    function done(v){ wrap.remove(); resolve(v); }
+    cancel.onclick = function(){ done(null); };
+    ok.onclick = function(){ var v = inp.value.trim(); if (v) done(v); };
+    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') ok.click(); });
+    row.appendChild(cancel); row.appendChild(ok);
+    card.appendChild(h); card.appendChild(t); card.appendChild(inp); card.appendChild(row);
+    wrap.appendChild(card); document.body.appendChild(wrap);
+    setTimeout(function(){ inp.focus(); }, 30);
+  });
+}
+
+/* Lender: store this scenario on the Worker and hand back the short link. */
+function makeLenderLink(params, retried){
+  var pin = getLenderPin();
+  var ready = pin ? Promise.resolve(pin) : askLenderPin(retried ? 'That PIN didn\u2019t match. Try again.' : null);
+  return ready.then(function(p){
+    if (!p) throw new Error('cancelled');
+    return linkCall('/link-create', { params: params, pin: p }).then(function(res){
+      if (res.status === 200 && res.body.ok && res.body.id) { setLenderPin(p); return shortLinkUrl(res.body.id); }
+      if (res.status === 401) { setLenderPin(''); if (!retried) return makeLenderLink(params, true); }
+      throw new Error(res.body.error || 'Couldn\u2019t make the link. Please try again.');
+    });
+  });
+}
+
+/* The long-link fields as an object (also used by tests through buildClientUrl). */
+function buildClientParams(){
+  return Object.fromEntries(new URL(buildClientUrl()).searchParams.entries());
+}
+
 document.getElementById('btn-copy-link').addEventListener('click',function(){
   if (!validateSetup()) return;
-  var url=buildClientUrl();
+  var btn = this, label = btn.innerHTML;
+  btn.disabled = true; btn.textContent = 'Making a private link\u2026';
+  var params = buildClientParams(); delete params.client;
+  makeLenderLink(params).then(function(url){
+    btn.disabled = false; btn.innerHTML = label;
+    copyLenderLink(url);
+  }).catch(function(err){
+    btn.disabled = false; btn.innerHTML = label;
+    if (err && err.message !== 'cancelled') alert(err.message);
+  });
+});
+function copyLenderLink(url){
   var includeIntro = document.getElementById('include-intro-msg').checked;
   var copyText = includeIntro ? buildIntroMessage(url) : url;
   var now=new Date();
-  var stamp='Link generated '+now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var stamp='Link generated '+now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' \u00b7 works 90 days';
   navigator.clipboard.writeText(copyText).then(function(){
     var el=document.getElementById('copy-confirm');
     el.textContent = includeIntro ? '\u2713 Message + link copied! Paste into iMessage or email.' : '\u2713 Link copied! Paste into a text or email to your client.';
@@ -4017,10 +4101,13 @@ document.getElementById('btn-copy-link').addEventListener('click',function(){
   }).catch(function(){
     prompt('Copy this link:',copyText);
   });
-});
+}
 document.getElementById('btn-open-client').addEventListener('click',function(){
   if (!validateSetup()) return;
-  window.location.href=buildClientUrl();
+  if (LOCAL_TEST) { window.location.href = buildClientUrl(); return; }
+  var params = buildClientParams(); delete params.client;
+  makeLenderLink(params).then(function(url){ window.location.href = url; })
+    .catch(function(err){ if (err && err.message !== 'cancelled') alert(err.message); });
 });
 
 
@@ -4134,7 +4221,7 @@ function readClientLink(p) {
 
 /* Shown instead of the calculator when a client link has a problem.
    Built with textContent only — nothing from the link is shown. */
-function showLinkProblem(problems) {
+function showLinkProblem(problems, kind) {
   applyMode(!isDayTime());
   var cp = document.getElementById('client-page');
   if (cp) cp.style.display = 'none';
@@ -4145,17 +4232,22 @@ function showLinkProblem(problems) {
   box.style.cssText = 'max-width:440px;margin:60px auto;padding:28px 24px;background:var(--surface);border:2px solid var(--amber);border-radius:12px;text-align:center;font-family:inherit;color:var(--text);';
   var h = document.createElement('h2');
   h.style.cssText = 'font-size:20px;font-weight:800;margin:0 0 12px;color:var(--text);';
-  h.textContent = 'This link has a problem';
+  h.textContent = kind === 'expired' ? 'This link has expired' : kind === 'offline' ? 'We couldn\u2019t load your numbers' : 'This link has a problem';
   var t = document.createElement('p');
   t.style.cssText = 'font-size:14px;line-height:1.6;margin:0 0 18px;color:var(--text-muted);';
-  t.textContent = 'Some of the numbers in this link are missing or don’t look right, so we can’t show an accurate payment. Please contact ' +
-    CONFIG.lender.name.split(' ')[0] + ' for a fresh link.';
+  var first = CONFIG.lender.name.split(' ')[0];
+  t.textContent = kind === 'expired'
+    ? 'For your privacy, client links stop working after 90 days (or after we upgrade them). Please contact ' + first + ' for a fresh link.'
+    : kind === 'offline'
+    ? 'Please check your connection and reload the page. If it keeps happening, contact ' + first + '.'
+    : 'Some of the numbers in this link are missing or don’t look right, so we can’t show an accurate payment. Please contact ' + first + ' for a fresh link.';
   var a = document.createElement('a');
   a.href = 'tel:' + CONFIG.lender.phone;
   a.textContent = 'Call ' + CONFIG.lender.phoneDisplay;
   a.style.cssText = 'display:inline-block;padding:12px 22px;border-radius:8px;background:var(--yellow);color:#1B3A6B;font-weight:800;text-decoration:none;';
   box.appendChild(h); box.appendChild(t); box.appendChild(a);
   box.setAttribute('data-problems', problems.length);
+  box.setAttribute('data-kind', kind || 'problem');
   document.body.appendChild(box);
 }
 
@@ -4164,17 +4256,41 @@ function showLinkProblem(problems) {
    ============================================================ */
 (function(){
   var p=new URLSearchParams(window.location.search);
-  if(p.get('client')==='1'){
+  function hideLender(){
     document.getElementById('setup-page').style.display='none';
     var sph = document.getElementById('setup-page-header');
     if(sph) sph.style.display='none';
+  }
+  function startClient(q){
+    window.CLIENT_QS = q;          /* the client's numbers, wherever they came from */
+    hideLender();
     document.getElementById('client-page').style.display='block';
-    /* Show help button on client view */
     var hb=document.getElementById('help-btn');
-    var linkCheck = readClientLink(p);
+    var linkCheck = readClientLink(q);
     if (linkCheck.problems.length) { showLinkProblem(linkCheck.problems); return; }
     if(hb) hb.style.display='flex';
-    initClientView(p);
+    initClientView(q);
+  }
+  /* S5: short link — fetch the stored numbers */
+  if (p.get('s')) {
+    hideLender();
+    var wait = document.createElement('div');
+    wait.id = 'link-loading';
+    wait.style.cssText = 'max-width:440px;margin:80px auto;text-align:center;font-size:15px;color:var(--text-muted);font-family:inherit;';
+    wait.textContent = 'Loading your numbers\u2026';
+    document.body.appendChild(wait);
+    linkCall('/link-get', { id: p.get('s') }).then(function(res){
+      wait.remove();
+      if (res.status !== 200 || !res.body.ok || !res.body.params) { showLinkProblem([], res.status === 404 ? 'expired' : 'offline'); return; }
+      var q = new URLSearchParams(res.body.params); q.set('client','1');
+      startClient(q);
+    }).catch(function(){ wait.remove(); showLinkProblem([], 'offline'); });
+    return;
+  }
+  if(p.get('client')==='1'){
+    /* S5: long links (numbers in the address) are retired on the real site */
+    if (!LOCAL_TEST) { hideLender(); showLinkProblem([], 'expired'); return; }
+    startClient(p);
     return;
   }
   setParamsLocked(true);
@@ -4234,9 +4350,9 @@ function initClientView(p) {
 
   /* Q3: ONE link for whatever is on the client's screen right now.
      Used by Share and by the PDF's QR code. */
-  function buildClientShareUrl(){
-    var base = window.location.href.split('?')[0].split('#')[0];
-    var p = new URLSearchParams(window.location.search);
+  function buildClientShareParams(){
+    var p = new URLSearchParams(window.CLIENT_QS || window.location.search);
+    p.delete('client'); p.delete('s'); p.delete('nc');
     function put(k, on, v){ if (on) p.set(k, v); else p.delete(k); }
     p.set('pp', CS.purchasePrice);
     p.set('dp', CS.downPct);
@@ -4253,8 +4369,14 @@ function initClientView(p) {
     put('grn', CP.rentalActive && CS.grossRent > 0, CS.grossRent);
     put('pqp', CP.pmiOverride != null && PQ.price !== CS.purchasePrice, PQ.price);
     put('pqd', CP.pmiOverride != null && PQ.down !== CS.downPct, PQ.down);
-    return base + '?' + p.toString();
+    return Object.fromEntries(p.entries());
   }
+  /* Long form, used only on test computers (LOCAL_TEST) */
+  function buildClientShareUrl(){
+    return pageBase() + '?client=1&' + new URLSearchParams(buildClientShareParams()).toString();
+  }
+
+  var saveQrUrl = null;   /* set when Save Scenario is tapped */
 
   /* PMI drift modal: show once per session */
   var pmiDriftShown = false;
@@ -5475,6 +5597,11 @@ function initClientView(p) {
     var btn=document.getElementById('btn-save-scenario');
     btn.textContent='Sending\u2026'; btn.disabled=true;
 
+    /* S5: pick the PDF QR code's short link now; the Worker stores it with the send */
+    var saveLinkId = newLinkId();
+    var saveLinkParams = buildClientShareParams();
+    saveQrUrl = LOCAL_TEST && !window.FORCE_SHORT_LINKS ? buildClientShareUrl() : shortLinkUrl(saveLinkId);
+
     /* Open print window immediately on user tap — before async send,
        so mobile browsers don't block it as a popup */
     triggerClientPrint(result, templateParams);
@@ -5488,7 +5615,7 @@ function initClientView(p) {
         return fetch(CONFIG.workerUrl + '/send-scenario', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ params: templateParams, turnstileToken: token })
+          body: JSON.stringify({ params: templateParams, turnstileToken: token, linkId: saveLinkId, linkParams: saveLinkParams })
         });
       })
       .then(function(r){
@@ -5513,6 +5640,7 @@ function initClientView(p) {
   /* ============================================================
      CLIENT: SHARE BUTTON — native share sheet with dynamic message
      ============================================================ */
+  var shareCache = { key: null, url: null };
   document.getElementById('btn-share-scenario').addEventListener('click', function(){
     var result = calcAll({
       income:CS.income, otherDebts:CS.otherDebts, rate:CS.rate, loanType:CS.loanType,
@@ -5524,8 +5652,28 @@ function initClientView(p) {
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
 
-    /* Q3: same link builder as the PDF QR code — everything on screen */
-    var shareUrl = buildClientShareUrl();
+    var shareBtn = this;
+    var shareParams = buildClientShareParams();
+    var shareKey = JSON.stringify(shareParams);
+    if (LOCAL_TEST && !window.FORCE_SHORT_LINKS) { doShare(buildClientShareUrl()); return; }
+    if (shareCache.key === shareKey) { doShare(shareCache.url); return; }
+    var shareLabel = shareBtn.innerHTML;
+    shareBtn.disabled = true; shareBtn.textContent = 'Making your private link\u2026';
+    getHumanToken()
+      .then(function(token){ return linkCall('/link-create', { params: shareParams, turnstileToken: token }); })
+      .then(function(res){
+        shareBtn.disabled = false; shareBtn.innerHTML = shareLabel;
+        if (res.status !== 200 || !res.body.ok) throw new Error(res.body.error || 'Couldn\u2019t make a link right now. Please try again.');
+        shareCache = { key: shareKey, url: shortLinkUrl(res.body.id) };
+        doShare(shareCache.url, true);
+      })
+      .catch(function(err){
+        shareBtn.disabled = false; shareBtn.innerHTML = shareLabel;
+        alert((err && err.message) || 'Couldn\u2019t make a link right now. Please try again.');
+      });
+    return;
+
+    function doShare(shareUrl, afterWait){
 
     /* Build dynamic message */
     var payment = result && !result.error ? '$'+Math.round(result.housingPayment).toLocaleString()+'/mo' : 'your estimated payment';
@@ -5539,13 +5687,17 @@ function initClientView(p) {
     var inclStr = includes.slice(0,-1).join(', ') + (includes.length > 1 ? ' & ' : '') + includes[includes.length-1];
     var message = 'Hey, check out what our monthly payment looks like on the '+price+' home'+county+' \u2014 comes out to '+payment+' (including '+inclStr+'). You can adjust the numbers yourself. Chris set this up for us:\n\n'+shareUrl;
 
-    /* Native share sheet (iOS/Android) — fallback to clipboard */
+    /* Native share sheet (iOS/Android) — fallback to clipboard.
+       After waiting for the link, some phones need one more tap to open the share sheet. */
     if (navigator.share) {
       navigator.share({
         title: 'ChrisToClose\u2019s Housing Payment Calculator',
         text: message,
         url: shareUrl,
-      }).catch(function(err){ console.log('Share cancelled', err); });
+      }).catch(function(err){
+        console.log('Share cancelled', err);
+        if (afterWait && err && err.name === 'NotAllowedError') { shareBtn.textContent = '\u2713 Link ready \u2014 tap to share'; }
+      });
     } else {
       navigator.clipboard.writeText(message).then(function(){
         var btn = document.getElementById('btn-share-scenario');
@@ -5555,6 +5707,7 @@ function initClientView(p) {
       }).catch(function(){
         prompt('Copy and share:', message);
       });
+    }
     }
   });
 
@@ -5797,7 +5950,7 @@ function initClientView(p) {
     try {
       if (typeof qrcode === 'function') {
         var qr = qrcode(0, 'M');               /* 0 = pick size automatically, M = medium error correction */
-        qr.addData(buildClientShareUrl());   /* Q3: the numbers they saved, not the original link */
+        qr.addData(saveQrUrl || shortLinkUrl(newLinkId()));   /* Q3 + S5: short link to the numbers they saved */
         qr.make();
         var n = qr.getModuleCount(), quiet = 2, px = 8, size = (n + quiet * 2) * px;
         var qrCanvas = document.createElement('canvas');

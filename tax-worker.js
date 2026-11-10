@@ -4,6 +4,8 @@
 //           TURNSTILE_SECRET (Cloudflare Turnstile secret key — the "I'm human" check on Save Scenario)
 // Bindings: LOOKUP_LIMITER, EMAIL_LIMITER — Cloudflare rate limiters, configured in wrangler.jsonc
 //           EMAIL_LIMITS_KV — KV storage for Save Scenario send counts (wrangler.jsonc)
+//           LOOKUP_KV — same storage; also holds short client links (link:<id>, 90 days)
+// Secrets:  LENDER_PIN — Chris's private PIN for making client links from the lender screen
 //           LOOKUP_KV — same KV storage: saved Realie answers + monthly Realie cap
 // Secret:   REALIE_API_KEY — Realie public-record lookups for counties without a county lookup
 //           GOOGLE_PLACES_KEY — Google address autocomplete in the tax lookup (Places API (New) only)
@@ -59,6 +61,19 @@ const SCENARIO_NUMBER_FIELDS = ['bar_ok', 'bar_warn', 'bar_over', 'bar_pos', 'dt
 // Colour of the status badge / DTI figures, chosen here from the status text (not from the browser).
 const STATUS_COLORS = { 'Looks Good': '#27AE60', 'Approaching Limit': '#E8A317', 'OVER LIMIT': '#E74C3C' };
 
+// ── Short client links (S5, Chris Nov 10) ──
+// Client numbers live here (90 days, then Cloudflare deletes them) instead of in the link.
+// Links are made by Chris (lender PIN, secret LENDER_PIN) or by a client who passed the
+// "I'm human" check (Share / Save Scenario). Old long links are retired on the page.
+const LINK_LIMITS = {
+  ttlDays: 90,
+  clientPerDay: 300,        // client-made links (Share + Save), whole site, per day (Eastern)
+  pinTriesPerHour: 10,      // wrong-PIN attempts per visitor per hour
+};
+const LINK_FIELDS = ['pp', 'dp', 'lt', 'tm', 'inc', 'dbt', 'rt', 'rr', 'cn', 'mr', 'tax', 'ins', 'hoa', 'hs',
+  'fld', 'fi', 'cdd', 'ca', 'ren', 'grn', 'pit', 'pmi', 'pqp', 'pqd', 'fco', 'nm', 'ts'];
+const LINK_ID_RE = /^[A-Za-z0-9]{10}$/;
+
 export default {
   async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
@@ -102,6 +117,17 @@ export default {
     }
     if (url.pathname === '/address-details' && request.method === 'POST') {
       return handleAddressDetails(request, env, json);
+    }
+
+    // ── Short client links (S5) ──
+    if (url.pathname === '/link-create' && request.method === 'POST') {
+      return handleLinkCreate(request, env, json);
+    }
+    if (url.pathname === '/link-get' && request.method === 'POST') {
+      return handleLinkGet(request, env, json);
+    }
+    if (url.pathname === '/pin-check' && request.method === 'POST') {
+      return handlePinCheck(request, env, json);
     }
 
     // ── /send-scenario route — "Save Scenario" email ───────────────
@@ -403,7 +429,124 @@ async function handleSendScenario(request, env, json) {
   } catch (e) {
     console.error('Limit storage write failed (email was sent):', e && e.message);
   }
+  // S5: the PDF's QR code points at a short link the page picked; store it now that the
+  // send went through (never fails the email if storing the link doesn't work).
+  if (body.linkId !== undefined || body.linkParams !== undefined) {
+    try {
+      const stored = await storeClientLink(env, String(body.linkId || ''), body.linkParams, 'save');
+      if (!stored.ok) console.warn('Save Scenario link not stored:', stored.error);
+    } catch (e) { console.error('Save Scenario link error:', e && e.message); }
+  }
   return json({ ok: true }, 200);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SHORT CLIENT LINKS (S5)
+// ─────────────────────────────────────────────────────────────────
+function cleanLinkParams(incoming) {
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return null;
+  const out = {};
+  for (const key of LINK_FIELDS) {
+    const v = incoming[key];
+    if (v === undefined || v === null || v === '') continue;
+    out[key] = String(v).slice(0, key === 'nm' ? 40 : 60);
+  }
+  if (!out.pp || !out.inc || !out.rt) return null;   // the page reader checks every value again
+  return out;
+}
+
+function newLinkId() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  let id = '';
+  for (const b of bytes) id += abc[b % abc.length];
+  return id;
+}
+
+async function storeClientLink(env, id, incoming, by) {
+  const kv = env.LOOKUP_KV;
+  if (!kv) return { ok: false, error: 'storage missing' };
+  const p = cleanLinkParams(incoming);
+  if (!p) return { ok: false, error: 'bad numbers' };
+  if (!LINK_ID_RE.test(id)) return { ok: false, error: 'bad id' };
+  if (by !== 'lender') {
+    const dayKey = 'linkday:' + easternDate(Date.now());
+    const used = parseInt((await kv.get(dayKey)) || '0', 10);
+    if (used >= LINK_LIMITS.clientPerDay) return { ok: false, error: 'daily limit' };
+    await kv.put(dayKey, String(used + 1), { expirationTtl: 2 * 86400 });
+  }
+  if (await kv.get('link:' + id)) return { ok: false, error: 'id taken' };
+  const now = Date.now();
+  await kv.put('link:' + id, JSON.stringify({ p, by, created: now }), { expirationTtl: LINK_LIMITS.ttlDays * 86400 });
+  return { ok: true, id, expires: new Date(now + LINK_LIMITS.ttlDays * 86400000).toISOString() };
+}
+
+// true / false, or 'locked' after too many wrong tries from this visitor this hour
+async function checkLenderPin(env, pin, ip) {
+  if (!env.LENDER_PIN || !env.LOOKUP_KV) return false;
+  const triesKey = 'pinfail:' + (await sha256Hex(ip || 'unknown')).slice(0, 16) + ':' + new Date().toISOString().slice(0, 13);
+  const tries = parseInt((await env.LOOKUP_KV.get(triesKey)) || '0', 10);
+  if (tries >= LINK_LIMITS.pinTriesPerHour) return 'locked';
+  const a = await sha256Hex('pin:' + String(pin || ''));
+  const b = await sha256Hex('pin:' + env.LENDER_PIN);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  if (diff === 0 && String(pin || '').length > 0) return true;
+  await env.LOOKUP_KV.put(triesKey, String(tries + 1), { expirationTtl: 7200 });
+  return false;
+}
+
+async function readJson(request) {
+  const text = await request.text();
+  if (text.length > 8000) return null;               // links are tiny; refuse anything big
+  try { return JSON.parse(text); } catch (e) { return null; }
+}
+
+async function handlePinCheck(request, env, json) {
+  const body = await readJson(request);
+  if (!body) return json({ error: 'Invalid request.' }, 400);
+  const ok = await checkLenderPin(env, body.pin, request.headers.get('CF-Connecting-IP'));
+  if (ok === 'locked') return json({ error: 'Too many wrong PINs. Try again in an hour.' }, 429);
+  return ok ? json({ ok: true }, 200) : json({ error: 'That PIN isn\u2019t right.' }, 401);
+}
+
+async function handleLinkCreate(request, env, json) {
+  const body = await readJson(request);
+  if (!body) return json({ error: 'Invalid request.' }, 400);
+  let by;
+  if (body.pin !== undefined) {
+    const ok = await checkLenderPin(env, body.pin, request.headers.get('CF-Connecting-IP'));
+    if (ok === 'locked') return json({ error: 'Too many wrong PINs. Try again in an hour.' }, 429);
+    if (!ok) return json({ error: 'That PIN isn\u2019t right.', pin: false }, 401);
+    by = 'lender';
+  } else {
+    const token = typeof body.turnstileToken === 'string' ? body.turnstileToken.slice(0, 2048) : '';
+    if (!token || !env.TURNSTILE_SECRET || !(await verifyTurnstile(token, env.TURNSTILE_SECRET, request.headers.get('CF-Connecting-IP')))) {
+      return json({ error: 'We couldn\u2019t confirm you\u2019re not a robot. Please refresh the page and try again.' }, 403);
+    }
+    by = 'client';
+  }
+  let stored = { ok: false, error: 'id taken' };
+  for (let i = 0; i < 3 && !stored.ok && stored.error === 'id taken'; i++) {
+    stored = await storeClientLink(env, newLinkId(), body.params, by);
+  }
+  if (!stored.ok) {
+    if (stored.error === 'bad numbers') return json({ error: 'Those numbers don\u2019t look right.' }, 400);
+    if (stored.error === 'daily limit') return json({ error: 'Too many links today. Please contact Chris directly.' }, 429);
+    return json({ error: 'Couldn\u2019t make a link right now. Please try again.' }, 503);
+  }
+  return json({ ok: true, id: stored.id, expires: stored.expires }, 200);
+}
+
+async function handleLinkGet(request, env, json) {
+  const body = await readJson(request);
+  const id = body && typeof body.id === 'string' ? body.id : '';
+  if (!LINK_ID_RE.test(id)) return json({ error: 'expired' }, 404);
+  if (!env.LOOKUP_KV) return json({ error: 'Not available right now.' }, 503);
+  const raw = await env.LOOKUP_KV.get('link:' + id);
+  if (!raw) return json({ error: 'expired' }, 404);
+  let rec; try { rec = JSON.parse(raw); } catch (e) { return json({ error: 'expired' }, 404); }
+  return json({ ok: true, params: rec.p, created: rec.created }, 200);
 }
 
 // Asks Cloudflare whether the Turnstile token is real, unused, and from our site.
