@@ -2296,7 +2296,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.39.0',
+  version: '8.40.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -4027,6 +4027,8 @@ function readClientLink(p) {
     cddAnnual:     num('ca',  'CDD',              0,    0, BIG),
     ficoVal:       fco,
     pmiOverride:   num('pmi', 'PMI',              null, 0, BIG),
+    pmiQuotePrice: num('pqp', 'PMI quote price',  null, 1, BIG),
+    pmiQuoteDown:  num('pqd', 'PMI quote down payment', null, 0, 100, { below: 100 }),
     rentalActive:  p.get('ren') === '1',
     grossRent:     num('grn', 'Rental income',    0,    0, BIG),
     departingPitia:num('pit', 'Departing payment',0,    0, BIG),
@@ -4121,14 +4123,43 @@ function initClientView(p) {
 
   /* Q2: the PMI the client sees. At Chris's numbers it is his quote; after a
      price or down-payment change it is his quote scaled to the new numbers. */
+  /* Q3: a shared link remembers the price/down payment Chris's quote was made at */
+  var PQ = {
+    price: CP.pmiQuotePrice != null ? CP.pmiQuotePrice : CP.purchasePrice,
+    down:  CP.pmiQuoteDown  != null ? CP.pmiQuoteDown  : CP.downPct
+  };
   function pmiQuoteDrifted(){
-    return CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
+    return CS.purchasePrice !== PQ.price || CS.downPct !== PQ.down;
   }
   function clientPmi(){
     if (CP.pmiOverride == null) return null;
     if (!pmiQuoteDrifted()) return CP.pmiOverride;
-    return scalePmiQuote(CP.pmiOverride, CP.purchasePrice, CP.downPct,
+    return scalePmiQuote(CP.pmiOverride, PQ.price, PQ.down,
                          CS.purchasePrice, CS.downPct, CS.ficoVal);
+  }
+
+  /* Q3: ONE link for whatever is on the client's screen right now.
+     Used by Share and by the PDF's QR code. */
+  function buildClientShareUrl(){
+    var base = window.location.href.split('?')[0].split('#')[0];
+    var p = new URLSearchParams(window.location.search);
+    function put(k, on, v){ if (on) p.set(k, v); else p.delete(k); }
+    p.set('pp', CS.purchasePrice);
+    p.set('dp', CS.downPct);
+    put('tm',  CS.termYears !== 30, CS.termYears);
+    put('hoa', CS.hoa > 0, CS.hoa);
+    put('cn',  !!CS.countyName, CS.countyName);
+    put('mr',  CS.countyMillRate != null, CS.countyMillRate);
+    put('tax', CS.taxOverride != null, CS.taxOverride);
+    put('ins', CS.insOverride != null, CS.insOverride);
+    put('fld', CS.floodActive, '1');
+    put('fi',  CS.floodActive && CS.floodIns !== 100, CS.floodIns);
+    put('cdd', CS.cddActive, '1');
+    put('ca',  CS.cddActive && CS.cddAnnual > 0, CS.cddAnnual);
+    put('grn', CP.rentalActive && CS.grossRent > 0, CS.grossRent);
+    put('pqp', CP.pmiOverride != null && PQ.price !== CS.purchasePrice, PQ.price);
+    put('pqd', CP.pmiOverride != null && PQ.down !== CS.downPct, PQ.down);
+    return base + '?' + p.toString();
   }
 
   /* PMI drift modal: show once per session */
@@ -4138,7 +4169,7 @@ function initClientView(p) {
     if(pmiDriftShown) return;
     if(CS.loanType !== 'CONV') return;
     if(CP.pmiOverride == null) return;
-    var hasDrift = CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
+    var hasDrift = pmiQuoteDrifted();
     if(!hasDrift) return;
     pmiDriftShown = true;
 
@@ -4148,10 +4179,10 @@ function initClientView(p) {
     var closeBtn = document.getElementById('pmi-drift-close');
     if(!modal||!msg||!ackBox||!closeBtn) return;
 
-    var origLtv = Math.round((1-(CP.downPct/100))*100);
+    var origLtv = Math.round((1-(PQ.down/100))*100);
     var newLtv = Math.round((1-(CS.downPct/100))*100);
-    msg.textContent = 'Your PMI was quoted at $'+CP.purchasePrice.toLocaleString()+
-      ' with '+CP.downPct+'% down ('+origLtv+'% LTV). '+
+    msg.textContent = 'Your PMI was quoted at $'+PQ.price.toLocaleString()+
+      ' with '+PQ.down+'% down ('+origLtv+'% LTV). '+
       'You\'re now exploring $'+CS.purchasePrice.toLocaleString()+
       ' with '+CS.downPct+'% down ('+newLtv+'% LTV). '+
       'The PMI shown is now an estimate: Chris\'s quote, adjusted to your new numbers.';
@@ -4791,7 +4822,7 @@ function initClientView(p) {
       /* PMI badge: show QUOTED vs EST for CONV with pmiOverride */
       var pmiBadge = document.getElementById('cbr-pmi-badge');
       if(pmiBadge && CS.loanType==='CONV' && CP.pmiOverride!=null){
-        var hasDrift = CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
+        var hasDrift = pmiQuoteDrifted();
         pmiBadge.style.display = '';
         if(hasDrift){
           pmiBadge.textContent = 'EST';
@@ -5378,19 +5409,8 @@ function initClientView(p) {
       taxOverride:CS.taxOverride, insOverride:CS.insOverride, homestead:CS.homestead,
     });
 
-    /* Build snapshot URL with current slider state */
-    var base = window.location.href.split('?')[0];
-    var p = new URLSearchParams(window.location.search);
-    /* Update mutable params with current CS values */
-    p.set('pp', CS.purchasePrice);
-    p.set('dp', CS.downPct);
-    if (CS.termYears !== 30) p.set('tm', CS.termYears); else p.delete('tm');
-    if (CS.hoa > 0) p.set('hoa', CS.hoa); else p.delete('hoa');
-    if (CS.floodActive) p.set('fld','1'); else p.delete('fld');
-    if (CS.cddActive) p.set('cdd','1'); else p.delete('cdd');
-    if (CS.taxOverride != null) p.set('tax', CS.taxOverride); else p.delete('tax');
-    if (CS.insOverride != null) p.set('ins', CS.insOverride); else p.delete('ins');
-    var shareUrl = base + '?' + p.toString();
+    /* Q3: same link builder as the PDF QR code — everything on screen */
+    var shareUrl = buildClientShareUrl();
 
     /* Build dynamic message */
     var payment = result && !result.error ? '$'+Math.round(result.housingPayment).toLocaleString()+'/mo' : 'your estimated payment';
@@ -5662,7 +5682,7 @@ function initClientView(p) {
     try {
       if (typeof qrcode === 'function') {
         var qr = qrcode(0, 'M');               /* 0 = pick size automatically, M = medium error correction */
-        qr.addData(window.location.href);
+        qr.addData(buildClientShareUrl());   /* Q3: the numbers they saved, not the original link */
         qr.make();
         var n = qr.getModuleCount(), quiet = 2, px = 8, size = (n + quiet * 2) * px;
         var qrCanvas = document.createElement('canvas');

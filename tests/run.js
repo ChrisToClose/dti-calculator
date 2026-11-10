@@ -32,6 +32,7 @@
      O. Help: "?" opens the full help guide (not the welcome popup), no outdated text
      P. UX: phone Back closes the guide/welcome, swipe closes the guide, skeleton while loading
      Q. Q2: Chris's PMI quote scales with the client's price and down payment
+     R. Q3: Share link + PDF QR reopen exactly the client's screen
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -520,6 +521,67 @@ async function readScreen(page, pattern) {
   if (Q.price600.mi !== '$150' || Q.price600.badge !== 'EST') failures.push(`Q2: $100 quote at $400K should become $150 at $600K, marked EST (${JSON.stringify(Q.price600)})`);
   if (Q.math.same !== 150 || Q.math.tier !== 47) failures.push(`Q2: PMI scaling math is off (${JSON.stringify(Q.math)})`);
   if (Q.down10.mi !== '$' + Q.math.tier) failures.push(`Q2: moving to 10% down should use the scaled quote, $${Q.math.tier} (${JSON.stringify(Q.down10)})`);
+
+  /* R. Q3: Share + PDF QR rebuild exactly what is on the client's screen */
+  await client.goto(PAGE + '?client=1&pp=400000&dp=5&inc=15000&dbt=500&rt=7&cn=Pinellas&mr=17.43&pmi=100&fld=1&cdd=1&ca=1200&ren=1&grn=2000&pit=1500&nm=Test');
+  await client.waitForFunction(() => typeof calcAll === 'function' && document.getElementById('cbr-mi'));
+  const R = await client.evaluate(async () => {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms || 60));
+    const set = async (id, v, ev) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event(ev || 'input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); await wait(); };
+    const hide = () => { document.getElementById('pmi-drift-modal').style.display = 'none'; };
+    await set('client-price', 560000); hide();
+    await set('client-down', 10); hide();
+    document.querySelector('.client-term-btn[data-cterm="25"]').click(); await wait();
+    await set('client-hoa', 250);
+    await set('client-ins-slider', 300);
+    await set('client-flood-slider', 175);
+    await set('client-cdd-annual', 1800, 'input'); await set('client-cdd-annual', 1800, 'blur');
+    await set('client-rent-slider', 2600);
+    // pick a different county
+    const cs = document.getElementById('client-county-search'); cs.value = 'Hillsb'; cs.dispatchEvent(new Event('input', { bubbles: true })); await wait();
+    const opt = [...document.querySelectorAll('#client-county-dropdown *')].find((e) => e.children.length === 0 && /Hillsborough/.test(e.textContent));
+    if (opt) opt.click(); await wait(150);
+    let shared = null;
+    navigator.share = (d) => { shared = d; return Promise.resolve(); };
+    document.getElementById('btn-share-scenario').click(); await wait();
+    // QR: capture what the PDF encodes when the client saves
+    // (outside libraries are blocked in tests, so stand-ins for jsPDF + the QR maker record what would be drawn)
+    let qrData = null;
+    window.qrcode = () => ({ addData: (d) => { qrData = d; }, make() {}, getModuleCount: () => 21, isDark: () => false });
+    const fakeDoc = new Proxy({}, { get: (t, k) => {
+      if (k === 'internal') return { pageSize: { getWidth: () => 215.9, getHeight: () => 279.4, width: 215.9, height: 279.4 }, getNumberOfPages: () => 1 };
+      if (k === 'splitTextToSize') return (txt) => [String(txt)];
+      if (k === 'getTextWidth' || k === 'getStringUnitWidth') return () => 10;
+      if (k === 'getNumberOfPages') return () => 1;
+      if (k === 'output') return () => 'blob:x';
+      if (k === 'then') return undefined;
+      return () => fakeDoc;
+    } });
+    window.jspdf = { jsPDF: function () { return fakeDoc; } };
+    window.fetch = async () => ({ ok: true, json: async () => ({ ok: true }) });
+    CONFIG.turnstileSiteKey = 'test-site-key'; tsLoadFailed = false; tsWidgetId = 1;
+    window.turnstile = { reset() {}, execute() { setTimeout(() => { const p = tsPending; tsPending = null; p.resolve('T'); }, 10); } };
+    document.getElementById('save-email').value = 'a@example.com';
+    document.getElementById('save-label').value = 'x';
+    document.getElementById('save-address').value = '1 Main St';
+    const b = document.getElementById('btn-save-scenario'); b.disabled = false; b.style.display = ''; b.click();
+    await wait(1500);
+    return { url: shared && shared.url, qrData, county: opt ? opt.textContent.trim() : null };
+  });
+  const CLIENT_SCREEN = /^(cbr-|client-back-dti|client-front-dti|client-price-val|client-down-pct|client-down-amt|client-hoa-val|client-flood|client-cdd|client-rent|client-county-result|client-ins)/;
+  const before = await readScreen(client, CLIENT_SCREEN);
+  if (!R.url) failures.push('Q3: Share did not produce a link');
+  else {
+    await client.goto(R.url.replace(/^.*\?/, PAGE + '?'));
+    await client.waitForFunction(() => typeof calcAll === 'function' && document.getElementById('cbr-mi'));
+    await client.waitForTimeout(150);
+    const after = await readScreen(client, CLIENT_SCREEN);
+    const diffs = Object.keys(Object.assign({}, before, after)).filter((k) => before[k] !== after[k]).map((k) => `${k}: "${before[k]}" → "${after[k]}"`);
+    if (diffs.length) failures.push(`Q3: the shared link reopens different numbers — ${diffs.join('; ')}`);
+    if (!before['cbr-mi'] || before['cbr-pmi-badge'] !== 'EST') failures.push(`Q3 test setup: expected an estimated PMI (${JSON.stringify(before)})`);
+  }
+  if (!R.county) failures.push('Q3 test setup: could not pick Hillsborough');
+  if (R.qrData !== R.url) failures.push(`Q3: the PDF QR code should open the same numbers as Share (QR ${R.qrData}, share ${R.url})`);
 
   if (!P.welcomeOpen || !P.welcomeClosedByBack || !P.stillOnCalculator) failures.push(`UX12: Back should close the welcome popup and stay on the calculator (${JSON.stringify(P)})`);
   if (!P.helpOpen || !P.helpClosedByBack || !P.stillOnCalculator2) failures.push(`UX12: Back should close the help guide and stay on the calculator (${JSON.stringify(P)})`);
