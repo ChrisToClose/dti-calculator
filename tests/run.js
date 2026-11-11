@@ -36,7 +36,8 @@
      S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
      U. Fonts load only from this site (no Google / outside font servers)
-     W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired
+     W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
+        lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
@@ -685,6 +686,7 @@ async function readScreen(page, pattern) {
           if (b.pin === undefined && !b.turnstileToken) return reply(403, { error: 'robot' });
           const id = 'Test' + String(store.size).padStart(6, '0'); store.set(id, b.params); return reply(200, { ok: true, id });
         }
+        if (u.pathname === '/pin-check') return b.pin === 'right-pin' ? reply(200, { ok: true }) : reply(401, { error: 'That PIN isn’t right.' });
         if (u.pathname === '/link-get') return store.has(b.id) ? reply(200, { ok: true, params: store.get(b.id) }) : reply(404, { error: 'expired' });
         if (u.pathname === '/send-scenario') { if (b.linkId && b.linkParams && !store.has(b.linkId)) store.set(b.linkId, b.linkParams); return reply(200, { ok: true }); }
         return reply(404, { error: 'unknown' });
@@ -700,6 +702,31 @@ async function readScreen(page, pattern) {
     await pg.goto(SITE + '?client=1&' + LONG); await settle();
     const longKind = await pg.evaluate(() => { const b = document.getElementById('link-problem'); return b && b.getAttribute('data-kind'); });
     if (longKind !== 'expired') failures.push(`Short links: an old long link on the real site should show "expired" (got ${longKind})`);
+
+    // 1b. Lender lock: a plain visit with no PIN on this device shows the lock screen, not the setup
+    await pg.goto(SITE); await settle();
+    const lock1 = await pg.evaluate(() => {
+      const vis = (id) => { const el = document.getElementById(id); return !!el && el.offsetParent !== null; };
+      const txt = document.body.innerText;
+      return { gate: vis('lender-gate'), setup: vis('setup-page'), rateWord: /show rate to client/i.test(txt), income: /gross monthly income/i.test(txt) };
+    });
+    if (!lock1.gate || lock1.setup || lock1.rateWord || lock1.income) failures.push(`Lender lock: a visitor without the PIN must see only the lock screen (${JSON.stringify(lock1)})`);
+    if (lock1.gate) {
+    await pg.fill('#gate-pin', 'wrong'); await pg.click('#gate-unlock'); await pg.waitForFunction(() => document.getElementById('gate-msg').textContent.trim());
+    const lockMsg = await pg.textContent('#gate-msg');
+    const stillLocked = await pg.evaluate(() => document.getElementById('setup-page').offsetParent === null);
+    if (!/isn.t right/.test(lockMsg) || !stillLocked) failures.push(`Lender lock: a wrong PIN must keep it locked (msg "${lockMsg}")`);
+    await pg.fill('#gate-pin', 'right-pin'); await pg.click('#gate-unlock');
+    await pg.waitForFunction(() => document.getElementById('setup-page').offsetParent !== null && !document.getElementById('lender-gate'));
+    if ((await pg.evaluate(() => getLenderPin())) !== 'right-pin') failures.push('Lender lock: unlocking should remember the PIN on this device');
+    await pg.reload(); await settle();
+    const lock2 = await pg.evaluate(() => ({ gate: !!document.getElementById('lender-gate'), setup: document.getElementById('setup-page').offsetParent !== null }));
+    if (lock2.gate || !lock2.setup) failures.push(`Lender lock: a device with the PIN should go straight to the setup (${JSON.stringify(lock2)})`);
+    await pg.evaluate(() => setLenderPin('old-pin')); await pg.reload(); await pg.waitForSelector('#lender-gate'); await settle();
+    const lock3 = await pg.evaluate(() => ({ setup: document.getElementById('setup-page').offsetParent !== null, pin: getLenderPin() }));
+    if (lock3.setup || lock3.pin) failures.push(`Lender lock: a remembered PIN that no longer works must lock again and be forgotten (${JSON.stringify(lock3)})`);
+    }
+    await pg.evaluate(() => setLenderPin(''));
 
     // 2. Chris makes a link with his PIN (wrong PIN first)
     await pg.goto(SITE); await settle();
@@ -722,6 +749,7 @@ async function readScreen(page, pattern) {
     const d1 = Object.keys({ ...shortScreen, ...longScreen }).filter((k) => shortScreen[k] !== longScreen[k]);
     if (!Object.keys(shortScreen).length || d1.length) failures.push(`Short links: short link screen differs from the same numbers as a long link — ${d1.map((k) => `${k}: ${shortScreen[k]} vs ${longScreen[k]}`).join('; ') || 'empty screen'}`);
     if (/pp=|inc=/.test(pg.url())) failures.push('Short links: numbers appeared in the address bar');
+    if (await pg.evaluate(() => !!document.getElementById('lender-gate') || document.documentElement.classList.contains('lender-locked'))) failures.push('Lender lock: a client link must never show the lock screen');
 
     // 4. client changes numbers, Share makes a new short link that reopens the same screen; Save's QR does too
     const W = await pg.evaluate(async () => {
