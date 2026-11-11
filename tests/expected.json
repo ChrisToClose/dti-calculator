@@ -1123,6 +1123,7 @@
       "cbr-ins": "$208",
       "cbr-mi-label": "Mortgage Ins.",
       "cbr-mi": "$71",
+      "cbr-rental-detail-row": "Extra rent covers that home’s payment — it isn’t counted as extra income.",
       "client-housing-label": "Total Monthly Housing Payment",
       "client-housing-total": "$3,889",
       "client-status-badge": "Debt-to-Income looks great!",

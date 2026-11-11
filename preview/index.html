@@ -2410,7 +2410,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.43.1',
+  version: '8.43.2',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -3299,6 +3299,12 @@ function renderBreakdown(result) {
       'Gross Rent: '+fmt(result.grossRent)+'/mo \u2192 75%: '+fmt(result.usableRent)+
       '/mo | Expenses: '+fmt(result.departingPitia)+'/mo | Net: '+
       (result.netRental>=0?'+':'-')+fmt(Math.abs(result.netRental))+'/mo';
+  } else if(S.rentalActive&&result.netRental>0){
+    /* BH6: extra rent only offsets the departing payment (agency rule) — say so in plain words */
+    sr.style.display='none'; rdr.style.display='';
+    document.getElementById('br-rental-detail').textContent=
+      'Gross Rent: '+fmt(result.grossRent)+'/mo \u2192 75%: '+fmt(result.usableRent)+
+      '/mo | Expenses: '+fmt(result.departingPitia)+'/mo | Net: +'+fmt(result.netRental)+'/mo. Extra rent covers that home\u2019s payment \u2014 it isn\u2019t counted as extra income.';
   } else {sr.style.display='none';rdr.style.display='none';}
 
   document.getElementById('br-total').textContent=fmt(result.housingPayment+result.otherDebts+result.rentalShortfall);
@@ -5153,6 +5159,10 @@ function initClientView(p) {
           ' | Expenses: '+fmt(result.departingPitia)+
           ' | Net: '+(result.netRental>=0?'+':'-')+fmt(Math.abs(result.netRental));
       }
+    } else if(CP.rentalActive&&result.netRental>0&&drow0){
+      /* BH6: plain-words note when rent is more than the departing payment */
+      drow0.style.display='';
+      drow0.textContent='Extra rent covers that home\u2019s payment \u2014 it isn\u2019t counted as extra income.';
     }
 
     s('cbr-total', fmt(result.housingPayment+result.otherDebts+result.rentalShortfall));
