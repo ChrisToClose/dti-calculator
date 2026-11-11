@@ -1,15 +1,18 @@
-# One-off helper (branch zip-data only): builds the Florida ZIP -> county list from the Census file.
+# One-off helper (branch zip-data only): builds the Florida ZIP -> county list from the Census file
+# and commits it to this branch.
 name: Build ZIP data
 on:
   push:
     branches: [zip-data]
+    paths: ['tools/build-zip-county.py', '.github/workflows/build-zip-data.yml']
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 tools/build-zip-county.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zip-county-fl
-          path: zip-county-fl.json
+      - run: python3 tools/build-zip-county.py && mv zip-county-fl.json tools/
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git add tools/zip-county-fl.json && git commit -m "data: Florida ZIP -> county (Census 2020)" && git push
