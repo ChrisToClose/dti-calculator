@@ -71,11 +71,12 @@ const meta = (html, key) => { const m = head(html).match(new RegExp('<meta (?:pr
 {
   const r = await call('/?s=AbCdEfGhJk');
   const html = await r.text();
-  check('caption title', meta(html, 'og:title') === 'Sarah’s Home Payment Estimate', meta(html, 'og:title'));
+  check('caption title (two lines)', meta(html, 'og:title') === 'Sarah’s Home Payment Estimate&#10;$400K home · Pinellas · Nov 10', meta(html, 'og:title'));
   check('caption description', meta(html, 'og:description') === '$400K home · Pinellas · Nov 10', meta(html, 'og:description'));
   check('caption og:url keeps link', meta(html, 'og:url') === 'https://calc.christoclose.com/?s=AbCdEfGhJk');
   check('caption image stays', meta(html, 'og:image') === GH + '/og-image-1200x630-3.png');
-  check('caption <title>', head(html).includes('<title>Sarah’s Home Payment Estimate</title>'));
+  check('caption <title>', head(html).includes('<title>Sarah’s Home Payment Estimate · $400K home · Pinellas · Nov 10</title>'));
+  check('twitter title matches', meta(html, 'twitter:title') === meta(html, 'og:title'));
   check('last name never shown', !head(html).includes('Jones') && !head(html).includes('jones'));
   const said = meta(html, 'og:title') + ' ' + meta(html, 'og:description');
   check('income/debts never in preview', !/9000|9,000|\b800\b|6\.5/.test(said), said);
@@ -87,13 +88,13 @@ const meta = (html, key) => { const m = head(html).match(new RegExp('<meta (?:pr
   const r = await call('/preview/?s=AbCdEfGhJk');
   const html = await r.text();
   check('preview fetched', lastFetch.url === GH + '/preview/');
-  check('preview caption', meta(html, 'og:title') === 'Sarah’s Home Payment Estimate');
+  check('preview caption', meta(html, 'og:title').startsWith('Sarah’s Home Payment Estimate&#10;$400K home'));
   check('preview og:url', meta(html, 'og:url') === 'https://calc.christoclose.com/preview/?s=AbCdEfGhJk');
 }
 // 5. No name / big price
 {
   const html = await (await call('/?s=NoNameLink')).text();
-  check('no-name title', meta(html, 'og:title') === 'Your Home Payment Estimate', meta(html, 'og:title'));
+  check('no-name title', meta(html, 'og:title') === 'Your Home Payment Estimate&#10;$1.25M home · Hillsborough · Dec 2', meta(html, 'og:title'));
   check('millions price', meta(html, 'og:description') === '$1.25M home · Hillsborough · Dec 2', meta(html, 'og:description'));
 }
 // 6. Junk in the link can't break the page
@@ -126,7 +127,12 @@ const meta = (html, key) => { const m = head(html).match(new RegExp('<meta (?:pr
   check('outside redirect refused', e.status === 404);
   check('missing file 404', (await call('/nothing-here.txt')).status === 404);
 }
-// 10. Little helpers
+// 10. Name only (no price/county/date) → just the headline
+{
+  const c = mod.buildCaption({ nm: 'leo' });
+  check('headline only when no details', c.title === 'Leo\u2019s Home Payment Estimate' && !c.title.includes('\n'), JSON.stringify(c));
+}
+// 11. Little helpers
 {
   check('firstName trims', mod.firstName('  maria  lopez ') === 'Maria');
   check('firstName empty', mod.firstName('123') === '');

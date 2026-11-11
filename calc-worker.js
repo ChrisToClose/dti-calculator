@@ -15,6 +15,9 @@ const GITHUB = 'https://christoclose.github.io/dti-calculator';
 const SITE = 'https://calc.christoclose.com';
 const LINK_ID_RE = /^[A-Za-z0-9]{10}$/;
 const DEFAULT_IMAGE = GITHUB + '/og-image-1200x630-3.png';
+// iMessage shows only the preview TITLE, so the details go into the title too.
+// '\n' tries a real second line; if iMessage flattens it, switch to ' \u00b7 '.
+const TITLE_JOIN = '\n';
 
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
@@ -107,12 +110,13 @@ function buildCaption(p) {
   if (county) parts.push(county);
   const date = String(p.ts || '').replace(/,?\s*\d{4}\s*$/, '').replace(/[^A-Za-z0-9 ]/g, '').trim().slice(0, 12);
   if (/^[A-Z][a-z]{2} \d{1,2}$/.test(date)) parts.push(date);
-  const description = parts.length ? parts.join(' \u00b7 ') : 'Your personalized Housing Payment Calculator from Chris Greenidge at American Pacific Mortgage.';
-  return { title, description };
+  const details = parts.join(' \u00b7 ');
+  const description = details || 'Your personalized Housing Payment Calculator from Chris Greenidge at American Pacific Mortgage.';
+  return { headline: title, title: details ? title + TITLE_JOIN + details : title, pageTitle: details ? title + ' \u00b7 ' + details : title, description };
 }
 
 function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\r?\n/g, '&#10;');
 }
 
 function setMeta(html, attr, key, value) {
@@ -130,6 +134,6 @@ function rewriteMeta(html, caption, pageUrl) {
   html = setMeta(html, 'property', 'og:image', DEFAULT_IMAGE);
   html = setMeta(html, 'name', 'twitter:title', caption.title);
   html = setMeta(html, 'name', 'twitter:description', caption.description);
-  html = html.replace(/<title>[^<]*<\/title>/i, () => '<title>' + esc(caption.title) + '</title>');
+  html = html.replace(/<title>[^<]*<\/title>/i, () => '<title>' + esc(caption.pageTitle) + '</title>');
   return html;
 }
