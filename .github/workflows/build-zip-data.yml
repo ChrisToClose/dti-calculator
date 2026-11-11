@@ -1,0 +1,15 @@
+# One-off helper (branch zip-data only): builds the Florida ZIP -> county list from the Census file.
+name: Build ZIP data
+on:
+  push:
+    branches: [zip-data]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/build-zip-county.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zip-county-fl
+          path: zip-county-fl.json
