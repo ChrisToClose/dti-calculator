@@ -2410,7 +2410,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.43.1',
+  version: '8.43.3',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -3860,7 +3860,9 @@ function updateFm0132(){
   if(shortfall>0)
     html+='<span style="color:#c0392b;font-weight:700;">&#9888; Shortfall: '+fmt(shortfall)+'/mo added to back-end DTI</span>';
   else
-    html+='<span style="color:#27ae60;font-weight:700;">&#10003; Property carries itself \u2014 no DTI impact</span>';
+    html+= net>0
+      ? '<span style="color:#27ae60;font-weight:700;">&#10003; Rent covers this home\u2019s payment \u2014 no DTI impact.</span> Extra rent isn\u2019t counted as extra income.'   /* BH6 */
+      : '<span style="color:#27ae60;font-weight:700;">&#10003; Property carries itself \u2014 no DTI impact</span>';
   document.getElementById('fm0132-text').innerHTML=html;
 }
 
@@ -4952,7 +4954,9 @@ function initClientView(p) {
     if(shortfall>0)
       html+='<span style="color:var(--red);font-weight:700;">Shortfall: '+fmt(shortfall)+'/mo added to back-end DTI</span>';
     else
-      html+='<span style="color:var(--green);font-weight:700;">&#10003; Property carries itself</span>';
+      html+= net>0
+        ? '<span style="color:var(--green);font-weight:700;">&#10003; Rent covers this home\u2019s payment.</span> Extra rent isn\u2019t counted as extra income.'   /* BH6 */
+        : '<span style="color:var(--green);font-weight:700;">&#10003; Property carries itself</span>';
     document.getElementById('client-fm0132-text').innerHTML = html;
   }
   if (CP.rentalActive) updateClientFm0132();
