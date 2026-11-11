@@ -534,15 +534,22 @@ async function readScreen(page, pattern) {
       await client.goto(PAGE + q); await client.waitForFunction(() => document.getElementById('client-back-dti') && document.getElementById('client-back-dti').textContent.trim());
       await client.waitForTimeout(300);
       return client.evaluate(() => { const d = document.getElementById('cbr-rental-detail-row'); const sh = document.getElementById('cbr-shortfall-row');
-        return { back: document.getElementById('client-back-dti').textContent.trim(), note: d && d.style.display !== 'none' ? d.textContent : '', shortfall: !!sh && sh.style.display !== 'none' }; });
+        return { back: document.getElementById('client-back-dti').textContent.trim(), note: document.getElementById('client-fm0132-text').textContent, card: d && d.style.display !== 'none' ? d.textContent : '', shortfall: !!sh && sh.style.display !== 'none' }; });
     };
     const plain = await read(base);
     const extra = await read(base + '&ren=1&grn=3000&pit=1500');   // 75% of 3000 = 2250 > 1500
     const short = await read(base + '&ren=1&grn=1000&pit=1500');   // 750 < 1500 → shortfall
     if (extra.back !== plain.back) failures.push(`BH6: extra rent must not lower DTI (with rental ${extra.back} vs without ${plain.back})`);
-    if (!/covers that home.s payment/.test(extra.note) || !/isn.t counted as extra income/.test(extra.note) || extra.shortfall) failures.push(`BH6: client should see the plain-words extra-rent note (got "${extra.note}")`);
+    if (!/Rent covers this home.s payment/.test(extra.note) || !/isn.t counted as extra income/.test(extra.note) || extra.shortfall) failures.push(`BH6: client should see the plain-words extra-rent note in How the math works (got "${extra.note}")`);
+    if (/extra income/.test(extra.card)) failures.push('BH6: the extra-rent note belongs under the rent slider, not on the payment card');
     if (/isn.t counted as extra income/.test(short.note) || !short.shortfall) failures.push(`BH6: a shortfall should show the shortfall, not the extra-rent note (${JSON.stringify(short)})`);
     if (/Fannie|Freddie/i.test(extra.note)) failures.push('BH6: the client note must not use agency names');
+    const lp = await context.newPage(); await lp.goto(PAGE); await lp.waitForFunction(() => typeof updateFm0132 === 'function');
+    const lnote = await lp.evaluate(() => { S.rentalActive = true; S.grossRent = 3000; S.departingPitia = 1500; updateFm0132(); const a = document.getElementById('fm0132-text').textContent;
+      S.grossRent = 1000; updateFm0132(); const b = document.getElementById('fm0132-text').textContent; return { a, b }; });
+    await lp.close();
+    if (!/Rent covers this home.s payment/.test(lnote.a) || !/isn.t counted as extra income/.test(lnote.a)) failures.push(`BH6: lender How the math works should show the extra-rent note (got "${lnote.a}")`);
+    if (/extra income/.test(lnote.b) || !/Shortfall/.test(lnote.b)) failures.push(`BH6: lender shortfall should not show the extra-rent note (got "${lnote.b}")`);
   }
 
   /* R. Q3: Share + PDF QR rebuild exactly what is on the client's screen */
@@ -620,7 +627,7 @@ async function readScreen(page, pattern) {
     const uf = document.getElementById('cbr-ufmip-note'); const ufColor = getComputedStyle(uf).color;
     const s = document.getElementById('client-rent-slider'); const set = async (v) => { s.value = v; s.dispatchEvent(new Event('input', { bubbles: true })); await new Promise((r) => setTimeout(r, 40)); };
     await set(0); const shownAt0 = document.getElementById('cbr-rental-detail-row').checkVisibility();
-    await set(3000); const r3 = document.getElementById('cbr-rental-detail-row'); const shownAt3000 = r3.checkVisibility() && /Gross Rent|Net:/.test(r3.textContent); const noteAt3000 = r3.checkVisibility() && /isn.t counted as extra income/.test(r3.textContent);
+    await set(3000); const shownAt3000 = document.getElementById('cbr-rental-detail-row').checkVisibility(); const box3 = document.getElementById('client-fm0132-text').textContent; const noteAt3000 = /Rent covers this home.s payment/.test(box3) && /isn.t counted as extra income/.test(box3);
     applyMode(false);
     return { navyText, stray, ufVisible: uf.checkVisibility(), ufColor, shownAt0, shownAt3000, noteAt3000 };
   });
@@ -628,7 +635,7 @@ async function readScreen(page, pattern) {
   if (S2.stray.length) failures.push(`Payment card: ${S2.stray.join(', ')} should sit inside the breakdown, not loose under the status pill`);
   if (!S2.ufVisible || !/255, 255, 255/.test(S2.ufColor)) failures.push(`FHA note should be visible light text on the navy card (${JSON.stringify(S2)})`);
   if (!S2.shownAt0 || S2.shownAt3000) failures.push(`Rental "how the math works" line should show only while there is a shortfall (${JSON.stringify(S2)})`);
-  if (!S2.noteAt3000) failures.push(`BH6: when rent is more than the payment, the math line should be replaced by the plain-words extra-rent note (${JSON.stringify(S2)})`);
+  if (!S2.noteAt3000) failures.push(`BH6: dragging the rent above the payment should show the plain-words note in How the math works (${JSON.stringify(S2)})`);
 
   /* T. The floating ? and night/day buttons never cover the payment card (small phones use the header ?) */
   for (const [w, h] of [[375, 548], [360, 640], [390, 664], [1280, 720]]) {
