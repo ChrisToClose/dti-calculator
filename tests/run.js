@@ -35,6 +35,7 @@
      R. Q3: Share link + PDF QR reopen exactly the client's screen
      S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
+     B7. Every Florida ZIP finds its county (Census list); county-line ZIPs ask which county
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
      W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
         lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
@@ -550,6 +551,48 @@ async function readScreen(page, pattern) {
     await lp.close();
     if (!/Rent covers this home.s payment/.test(lnote.a) || !/isn.t counted as extra income/.test(lnote.a)) failures.push(`BH6: lender How the math works should show the extra-rent note (got "${lnote.a}")`);
     if (/extra income/.test(lnote.b) || !/Shortfall/.test(lnote.b)) failures.push(`BH6: lender shortfall should not show the extra-rent note (got "${lnote.b}")`);
+  }
+
+  /* B7: every Florida ZIP finds its county; ZIPs on a county line ask which county */
+  {
+    const zp = await context.newPage(); await zp.goto(PAGE); await zp.waitForFunction(() => typeof ZIP_TO_COUNTY === 'object');
+    const Z = await zp.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms || 60));
+      if (typeof zipCounties !== 'function') window.zipCounties = (z) => { const v = ZIP_TO_COUNTY[z]; return v ? [].concat(v) : []; };
+      const keys = Object.keys(ZIP_TO_COUNTY);
+      const bad = keys.filter((z) => !/^\d{5}$/.test(z) || zipCounties(z).length === 0 || zipCounties(z).length !== (Array.isArray(ZIP_TO_COUNTY[z]) ? ZIP_TO_COUNTY[z].length : 1));
+      const one = (z) => { const l = zipCounties(z); return l.length === 1 ? l[0] : l.join('/'); };
+      const spot = {}; for (const z of ['33511', '33578', '33579', '33594', '33572', '33707', '33601', '32746', '33841', '34638']) spot[z] = one(z);
+      const type = async (id, v) => { const el = document.getElementById(id); el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); await wait(); };
+      await type('zip-input', '33558');
+      const btns = [...document.querySelectorAll('#zip-result .zip-county-btn')].map((b) => b.textContent);
+      const pasco = [...document.querySelectorAll('#zip-result .zip-county-btn')].find((b) => /Pasco/.test(b.textContent)); if (pasco) pasco.click(); await wait();
+      const picked = { county: S.countyName, text: document.getElementById('zip-result').textContent };
+      await type('zip-input', '33511'); const brandon = { county: S.countyName, btns: document.querySelectorAll('#zip-result .zip-county-btn').length };
+      await type('zip-input', '99999'); const nf = document.getElementById('zip-result').textContent;
+      return { count: keys.length, bad, spot, btns, picked, brandon, nf };
+    });
+    await zp.close();
+    if (Z.count < 1000) failures.push(`B7: ZIP list should cover every Florida ZIP (has ${Z.count})`);
+    if (Z.bad.length) failures.push(`B7: ZIPs pointing at unknown counties — ${Z.bad.slice(0, 10).join(', ')}`);
+    const want = { '33511': 'Hillsborough', '33578': 'Hillsborough', '33579': 'Hillsborough', '33594': 'Hillsborough', '33572': 'Hillsborough', '33707': 'Pinellas', '33601': 'Hillsborough', '32746': 'Seminole', '33841': 'Polk', '34638': 'Pasco' };
+    for (const z in want) if (Z.spot[z] !== want[z]) failures.push(`B7: ZIP ${z} should be ${want[z]} (got ${Z.spot[z]})`);
+    if (Z.btns.join('|') !== 'Hillsborough County|Pasco County') failures.push(`B7: ZIP 33558 (Lutz) should ask Hillsborough or Pasco (got ${JSON.stringify(Z.btns)})`);
+    if (Z.picked.county !== 'Pasco' || !/Pasco County/.test(Z.picked.text)) failures.push(`B7: picking Pasco should set Pasco (${JSON.stringify(Z.picked)})`);
+    if (Z.brandon.county !== 'Hillsborough' || Z.brandon.btns) failures.push(`B7: Brandon 33511 should go straight to Hillsborough (${JSON.stringify(Z.brandon)})`);
+    if (!/not found/i.test(Z.nf)) failures.push(`B7: an unknown ZIP should say not found (got "${Z.nf}")`);
+    /* client screen: the same question and answer */
+    const cz = await context.newPage(); await cz.goto(PAGE + '?client=1&pp=400000&inc=11000&dbt=800&rt=7&cn=Pinellas&mr=17.43&ts=x&nm=Test');
+    await cz.waitForFunction(() => document.getElementById('client-zip'));
+    const CZ = await cz.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms || 80));
+      const el = document.getElementById('client-zip'); el.value = '33558'; el.dispatchEvent(new Event('input', { bubbles: true })); await wait();
+      const btns = [...document.querySelectorAll('#client-zip-result .zip-county-btn')];
+      const names = btns.map((b) => b.textContent); const p = btns.find((b) => /Pasco/.test(b.textContent)); if (p) p.click(); await wait(200);
+      return { names, text: document.getElementById('client-zip-result').textContent };
+    });
+    await cz.close();
+    if (CZ.names.join('|') !== 'Hillsborough County|Pasco County' || !/Pasco County detected/.test(CZ.text)) failures.push(`B7: client ZIP 33558 should ask, then pick Pasco (${JSON.stringify(CZ)})`);
   }
 
   /* R. Q3: Share + PDF QR rebuild exactly what is on the client's screen */
