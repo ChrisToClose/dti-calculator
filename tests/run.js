@@ -35,7 +35,7 @@
      R. Q3: Share link + PDF QR reopen exactly the client's screen
      S. Bug hunt: night-mode amounts, no stray payment-card tags, rental line hides
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
-     U. Fonts load only from this site (no Google / outside font servers)
+     U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
      W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
         lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
    Exit code 0 = all good, 1 = something changed.
@@ -662,6 +662,14 @@ async function readScreen(page, pattern) {
       const local = path.join(ROOT, u.replace('/dti-calculator/', ''));
       if (!fs.existsSync(local)) failures.push(`Fonts: ${u} is missing from the fonts folder`);
     }
+    /* No title-font jump: the three title fonts are fetched first, and never swapped in late */
+    const preloads = [...html.matchAll(/<link rel="preload" href="([^"]+)" as="font" type="font\/woff2" crossorigin>/g)].map((m) => m[1]);
+    for (const f of ['bebas-neue-latin-400-normal', 'raleway-latin-800-normal', 'montserrat-latin-800-normal']) {
+      const href = '/dti-calculator/fonts/' + f + '.woff2';
+      if (!preloads.includes(href)) failures.push(`Fonts: ${f} should be preloaded (title font jumps on first visit)`);
+      else if (!fs.existsSync(path.join(ROOT, 'fonts', f + '.woff2'))) failures.push(`Fonts: preloaded ${f} is missing from the fonts folder`);
+    }
+    if (/font-display:\s*swap/.test(html)) failures.push('Fonts: font-display: swap makes the title jump from a backup font — use block');
   }
 
   /* W. S5 short links, tested as the REAL site (christoclose.github.io) with a stand-in Worker */
