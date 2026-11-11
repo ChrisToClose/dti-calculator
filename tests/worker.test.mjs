@@ -315,6 +315,26 @@ async function post(env, path, body) {
   check('a Save can never overwrite an existing link', sr2.status === 200 && JSON.parse(env3.LOOKUP_KV.m.get('link:QrLink2345')).p.inc === '11000');
 }
 
+/* ── 16. calc.christoclose.com is allowed; look-alikes are not ── */
+{
+  const env4 = baseEnv(); env4.LOOKUP_KV = fakeKV();
+  const ask = (origin) => worker.fetch(new Request('https://w.example/link-get', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'Nothing234' }) }), env4, {});
+  let r = await ask('https://calc.christoclose.com');
+  check('calc.christoclose.com may call the Worker', r.status === 404 && r.headers.get('access-control-allow-origin') === 'https://calc.christoclose.com', r.status);
+  r = await ask('https://christoclose.github.io');
+  check('github.io still allowed', r.status === 404);
+  for (const bad of ['https://evil.christoclose.com', 'https://calc.christoclose.com.evil.example', 'http://calc.christoclose.com']) {
+    r = await ask(bad);
+    check('look-alike refused: ' + bad, r.status === 403);
+  }
+  const pre = await worker.fetch(new Request('https://w.example/link-get', { method: 'OPTIONS', headers: { Origin: 'https://calc.christoclose.com' } }), env4, {});
+  check('calc preflight ok', pre.status === 204);
+  turnstileAnswer = { success: true, hostname: 'calc.christoclose.com' };
+  r = await post(env4, '/link-create', { params: { pp: '400000', inc: '9000', rt: '6' }, turnstileToken: 'tok' });
+  check('human check from calc.christoclose.com accepted', r.status === 200, r.status);
+  turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+}
+
 if (failures.length) {
   console.log(`\nWORKER TESTS FAILED — ${failures.length}:`);
   failures.forEach((f) => console.log('  ✗ ' + f));

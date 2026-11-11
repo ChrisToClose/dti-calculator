@@ -1,0 +1,36 @@
+# Deploys the calc Worker (christoclose-calc), which serves the calculator at
+# calc.christoclose.com, whenever its code or settings change on main.
+# Uses the CLOUDFLARE_API_TOKEN repository secret (never stored in code).
+name: Deploy calc Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'calc-worker.js'
+      - 'calc-wrangler.jsonc'
+      - 'tests/calc-worker.test.mjs'
+      - '.github/workflows/deploy-calc-worker.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-calc-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Calc Worker tests (must pass before deploying)
+        run: node tests/calc-worker.test.mjs
+
+      - name: Deploy to Cloudflare (christoclose-calc only)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          wranglerVersion: "4.154.0"
+          # --name is pinned so this can never deploy over christoclose-api or christoclose-tax
+          command: deploy --config calc-wrangler.jsonc --name christoclose-calc

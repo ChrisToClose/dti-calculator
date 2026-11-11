@@ -13,7 +13,7 @@
 
 // ── Security settings ──────────────────────────────────────────────
 // Only these websites may call this Worker. Add a preview or white-label site here when needed.
-const ALLOWED_ORIGINS = ['https://christoclose.github.io'];
+const ALLOWED_ORIGINS = ['https://christoclose.github.io', 'https://calc.christoclose.com'];
 
 // AI tax-bill photo reader (/tax-lookup). Switched OFF Oct 28, 2026 — nothing on the site uses it.
 // Planned to return as a fallback when the address lookup fails (see master to-do list).
@@ -46,7 +46,7 @@ const EMAIL_LIMITS = {
 // accepted (so the live page keeps working until the new page is published);
 // a request WITH a bad token is always refused. Set true once the page sends tokens.
 const TURNSTILE_REQUIRED = true;   // switched on Nov 9, 2026 after v8.30.8 went live
-const TURNSTILE_HOSTNAMES = ['christoclose.github.io'];
+const TURNSTILE_HOSTNAMES = ['christoclose.github.io', 'calc.christoclose.com'];
 
 // Only these template fields are accepted from the browser (anything else is dropped).
 const SCENARIO_FIELDS = [

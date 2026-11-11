@@ -1,0 +1,13 @@
+{
+  // christoclose-calc — serves the calculator at calc.christoclose.com (see calc-worker.js).
+  // Separate from christoclose-tax and christoclose-api (Tick by Tick). Read-only.
+  "name": "christoclose-calc",
+  "main": "calc-worker.js",
+  "compatibility_date": "2026-10-19",
+  // Same link storage as christoclose-tax — this Worker only READS short-link captions.
+  "kv_namespaces": [
+    { "binding": "LOOKUP_KV", "id": "d26fc7b330bd4570843d84079fcfbcb3" }
+  ]
+  // calc.christoclose.com is attached in the Cloudflare dashboard
+  // (Workers → christoclose-calc → Settings → Domains & Routes → Custom domain).
+}
