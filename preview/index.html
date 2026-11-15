@@ -2410,7 +2410,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.44.0',
+  version: '8.45.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -4401,6 +4401,9 @@ function unlockLender(){
     linkCall('/link-get', { id: p.get('s') }).then(function(res){
       wait.remove();
       if (res.status !== 200 || !res.body.ok || !res.body.params) { showLinkProblem([], res.status === 404 ? 'expired' : 'offline'); return; }
+      /* D3 Option B: Save Scenario and Share tell the Worker which link this page came from;
+         the Worker only allows them from a link Chris made (or one that traces back to it). */
+      window.CLIENT_LINK_ID = p.get('s');
       var q = new URLSearchParams(res.body.params); q.set('client','1');
       startClient(q);
     }).catch(function(){ wait.remove(); showLinkProblem([], 'offline'); });
@@ -5747,7 +5750,7 @@ function initClientView(p) {
         return fetch(CONFIG.workerUrl + '/send-scenario', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ params: templateParams, turnstileToken: token, linkId: saveLinkId, linkParams: saveLinkParams })
+          body: JSON.stringify({ params: templateParams, turnstileToken: token, from: window.CLIENT_LINK_ID || '', linkId: saveLinkId, linkParams: saveLinkParams })
         });
       })
       .then(function(r){
@@ -5792,7 +5795,7 @@ function initClientView(p) {
     var shareLabel = shareBtn.innerHTML;
     shareBtn.disabled = true; shareBtn.textContent = 'Making your private link\u2026';
     getHumanToken()
-      .then(function(token){ return linkCall('/link-create', { params: shareParams, turnstileToken: token }); })
+      .then(function(token){ return linkCall('/link-create', { params: shareParams, turnstileToken: token, from: window.CLIENT_LINK_ID || '' }); })
       .then(function(res){
         shareBtn.disabled = false; shareBtn.innerHTML = shareLabel;
         if (res.status !== 200 || !res.body.ok) throw new Error(res.body.error || 'Couldn\u2019t make a link right now. Please try again.');

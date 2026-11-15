@@ -50,12 +50,22 @@ globalThis.fetch = async function (url) {
   throw new Error('unexpected outside call: ' + url);
 };
 function fakeKV() {
-  const m = new Map();
+  const m = new Map(); const ttl = new Map();
   return {
-    m,
+    m, ttl,
     async get(k, type) { const v = m.has(k) ? m.get(k) : null; return v == null ? null : type === 'json' ? JSON.parse(v) : v; },
-    async put(k, v) { m.set(k, v); },
+    async put(k, v, opts) { m.set(k, v); ttl.set(k, opts && opts.expirationTtl); },
   };
+}
+
+/* D3 Option B: Save Scenario and client-made links must come from a link Chris made.
+   LENDER_LINK is a stand-in for one of his links; seedLender() puts it in the fake storage. */
+const LINK_REQUIRED_NOW = /const LINK_REQUIRED = true;/.test(src);
+const LENDER_LINK = 'ChrisLnk01';
+function seedLender(env, id = LENDER_LINK, ageDays = 0) {
+  if (!env.LOOKUP_KV) env.LOOKUP_KV = fakeKV();
+  env.LOOKUP_KV.m.set('link:' + id, JSON.stringify({ p: { pp: '400000', inc: '11000', rt: '7' }, by: 'lender', created: Date.now() - ageDays * 86400000 }));
+  return id;
 }
 const okLimiter = { limit: async () => ({ success: true }) };
 
@@ -63,10 +73,11 @@ let n = 0;
 function params(to, extra) {
   return { to_email: to, scenario_label: 'Test ' + (++n), property_address: '1 Main St', housing_payment: '$3,000', ...extra };
 }
-async function send(env, p, token) {
+async function send(env, p, token, from, w) {
   const body = { params: p };
   if (token !== undefined) body.turnstileToken = token;
-  const r = await worker.fetch(new Request('https://w.example/send-scenario', {
+  if (from === undefined) { seedLender(env); body.from = LENDER_LINK; } else if (from !== null) body.from = from;
+  const r = await (w || worker).fetch(new Request('https://w.example/send-scenario', {
     method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
     body: JSON.stringify(body),
   }), env, {});
@@ -285,9 +296,9 @@ async function post(env, path, body) {
   check('wrong PIN refused', r.status === 401 && r.body.pin === false, JSON.stringify(r));
   for (let i = 0; i < 12; i++) r = await post(env, '/link-create', { params: P, pin: 'guess' + i });
   check('too many wrong PINs → locked for the hour (even the right one)', r.status === 429 && (await post(env, '/link-create', { params: P, pin: 'correct horse 42' })).status === 429, JSON.stringify(r));
-  const env2 = baseEnv(); env2.LOOKUP_KV = fakeKV(); env2.LENDER_PIN = 'pin';
+  const env2 = baseEnv(); env2.LOOKUP_KV = fakeKV(); env2.LENDER_PIN = 'pin'; seedLender(env2);
   turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
-  r = await post(env2, '/link-create', { params: P, turnstileToken: 'tok' });
+  r = await post(env2, '/link-create', { params: P, turnstileToken: 'tok', from: LENDER_LINK });
   check('client Share with a human check gets a link', r.status === 200 && JSON.parse(env2.LOOKUP_KV.m.get('link:' + r.body.id)).by === 'client', JSON.stringify(r));
   r = await post(env2, '/link-create', { params: P });
   check('no PIN and no human check → refused', r.status === 403);
@@ -295,29 +306,29 @@ async function post(env, path, body) {
   r = await post(env2, '/link-create', { params: P, turnstileToken: 'bad' });
   check('failed human check → refused', r.status === 403);
   turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
-  r = await post(env2, '/link-create', { params: { pp: '400000' }, turnstileToken: 'tok' });
+  r = await post(env2, '/link-create', { params: { pp: '400000' }, turnstileToken: 'tok', from: LENDER_LINK });
   check('missing income/rate → refused', r.status === 400);
   const dayKey = [...env2.LOOKUP_KV.m.keys()].find((k) => k.startsWith('linkday:'));
   env2.LOOKUP_KV.m.set(dayKey, '300');
-  r = await post(env2, '/link-create', { params: P, turnstileToken: 'tok' });
+  r = await post(env2, '/link-create', { params: P, turnstileToken: 'tok', from: LENDER_LINK });
   check('client links capped at 300/day', r.status === 429);
   r = await post(env2, '/link-create', { params: P, pin: 'pin' });
   check('lender links are not affected by the client cap', r.status === 200);
   const big = await worker.fetch(new Request('https://w.example/link-create', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '9.9.9.9' }, body: JSON.stringify({ params: P, pin: 'x'.repeat(9000) }) }), env2, {});
   check('oversized request refused', big.status === 400);
   /* Save Scenario stores the PDF QR link under the id the page picked, only after a good send */
-  const env3 = baseEnv(); env3.LOOKUP_KV = fakeKV(); emailsSent = 0;
+  const env3 = baseEnv(); env3.LOOKUP_KV = fakeKV(); seedLender(env3); emailsSent = 0;
   const sr = await worker.fetch(new Request('https://w.example/send-scenario', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
-    body: JSON.stringify({ params: params('qr@example.com'), turnstileToken: 'tok', linkId: 'QrLink2345', linkParams: P }) }), env3, {});
+    body: JSON.stringify({ params: params('qr@example.com'), turnstileToken: 'tok', from: LENDER_LINK, linkId: 'QrLink2345', linkParams: P }) }), env3, {});
   check('Save Scenario stores the PDF QR link after sending', sr.status === 200 && emailsSent === 1 && JSON.parse(env3.LOOKUP_KV.m.get('link:QrLink2345') || '{}').by === 'save');
   const sr2 = await worker.fetch(new Request('https://w.example/send-scenario', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
-    body: JSON.stringify({ params: params('qr2@example.com'), turnstileToken: 'tok', linkId: 'QrLink2345', linkParams: { ...P, inc: '1' } }) }), env3, {});
+    body: JSON.stringify({ params: params('qr2@example.com'), turnstileToken: 'tok', from: LENDER_LINK, linkId: 'QrLink2345', linkParams: { ...P, inc: '1' } }) }), env3, {});
   check('a Save can never overwrite an existing link', sr2.status === 200 && JSON.parse(env3.LOOKUP_KV.m.get('link:QrLink2345')).p.inc === '11000');
 }
 
 /* ── 16. calc.christoclose.com is allowed; look-alikes are not ── */
 {
-  const env4 = baseEnv(); env4.LOOKUP_KV = fakeKV();
+  const env4 = baseEnv(); env4.LOOKUP_KV = fakeKV(); seedLender(env4);
   const ask = (origin) => worker.fetch(new Request('https://w.example/link-get', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'Nothing234' }) }), env4, {});
   let r = await ask('https://calc.christoclose.com');
   check('calc.christoclose.com may call the Worker', r.status === 404 && r.headers.get('access-control-allow-origin') === 'https://calc.christoclose.com', r.status);
@@ -330,9 +341,109 @@ async function post(env, path, body) {
   const pre = await worker.fetch(new Request('https://w.example/link-get', { method: 'OPTIONS', headers: { Origin: 'https://calc.christoclose.com' } }), env4, {});
   check('calc preflight ok', pre.status === 204);
   turnstileAnswer = { success: true, hostname: 'calc.christoclose.com' };
-  r = await post(env4, '/link-create', { params: { pp: '400000', inc: '9000', rt: '6' }, turnstileToken: 'tok' });
+  r = await post(env4, '/link-create', { params: { pp: '400000', inc: '9000', rt: '6' }, turnstileToken: 'tok', from: LENDER_LINK });
   check('human check from calc.christoclose.com accepted', r.status === 200, r.status);
   turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+}
+
+/* ── 17. D3 Option B (Chris, Nov 14): Save Scenario + client-made links only from a link Chris made ── */
+{
+  check('Option B switch is in the Worker', /const LINK_REQUIRED = (true|false);/.test(src));
+  /* "strict" = this same Worker file with the switch ON, so the rule is tested before and after it goes live */
+  const tmp2 = path.join(path.dirname(tmp), 'worker-strict.mjs');
+  fs.writeFileSync(tmp2, src.replace('const LINK_REQUIRED = false;', 'const LINK_REQUIRED = true;'));
+  const strict = (await import(pathToFileURL(tmp2).href)).default;
+  const postTo = async (w, env, path_, body) => {
+    const r = await w.fetch(new Request('https://w.example' + path_, { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' }, body: JSON.stringify(body) }), env, {});
+    return { status: r.status, body: await r.json().catch(() => ({})) };
+  };
+  const P = { pp: '400000', dp: '10', inc: '11000', dbt: '800', rt: '7', cn: 'Pinellas', mr: '17.43', nm: 'Sam' };
+  const DAY = 86400000;
+  turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+
+  /* Save Scenario */
+  let env = baseEnv(); seedLender(env); emailsSent = 0;
+  let r = await send(env, params('ob1@example.com'), 'tok', null, strict);
+  check('B: Save without a link is refused, with "refresh" (old open pages)', r.status === 403 && r.body.code === 'refresh' && /refresh/i.test(r.body.error) && emailsSent === 0, JSON.stringify(r));
+  check('B: a refused Save is not counted against anyone', env.EMAIL_LIMITS_KV.m.size === 0, [...env.EMAIL_LIMITS_KV.m.keys()].join(','));
+  r = await send(env, params('ob1@example.com'), 'tok', 'Nope123456', strict);
+  check('B: Save from an unknown / ended link is refused', r.status === 403 && r.body.code === 'link' && /ask Chris/.test(r.body.error) && emailsSent === 0, JSON.stringify(r));
+  for (const bad of ['../../etc', 'short', 12345, { id: LENDER_LINK }, [LENDER_LINK], true]) {
+    r = await send(env, params('ob1@example.com'), 'tok', bad, strict);
+    check('B: Save with a malformed link (' + JSON.stringify(bad) + ') is refused', r.status === 403 && emailsSent === 0, JSON.stringify(r));
+  }
+  r = await send(env, params('ob1@example.com'), 'tok', LENDER_LINK, strict);
+  check('B: Save from a link Chris made goes through', r.status === 200 && r.body.ok && emailsSent === 1, JSON.stringify(r));
+  turnstileAnswer = { success: false };
+  r = await send(env, params('ob2@example.com'), 'bad', LENDER_LINK, strict);
+  check('B: a good link does not replace the human check', r.status === 403 && emailsSent === 1, JSON.stringify(r));
+  turnstileAnswer = { success: true, hostname: 'christoclose.github.io' };
+  const envNoKv = baseEnv(); emailsSent = 0;
+  r = await send(envNoKv, params('ob3@example.com'), 'tok', LENDER_LINK, strict);
+  check('B: no link storage = refuse (fail closed)', r.status === 403 && emailsSent === 0, JSON.stringify(r));
+
+  /* Client-made links (Share) */
+  env = baseEnv(); env.LENDER_PIN = 'pin'; seedLender(env, LENDER_LINK, 80);   // Chris's link is 80 days old → 10 days left
+  r = await postTo(strict, env, '/link-create', { params: P, turnstileToken: 'tok' });
+  check('B: Share without a link is refused', r.status === 403 && r.body.code === 'refresh', JSON.stringify(r));
+  r = await postTo(strict, env, '/link-create', { params: P, turnstileToken: 'tok', from: 'Nope123456' });
+  check('B: Share from an unknown link is refused', r.status === 403 && r.body.code === 'link', JSON.stringify(r));
+  r = await postTo(strict, env, '/link-create', { params: P, turnstileToken: 'tok', from: LENDER_LINK, by: 'lender', root: 'Attacker01' });
+  const child = r.body.id; const childRec = child ? JSON.parse(env.LOOKUP_KV.m.get('link:' + child)) : {};
+  check('B: Share from Chris\'s link works and remembers it as the root', r.status === 200 && childRec.by === 'client' && childRec.root === LENDER_LINK, JSON.stringify([r, childRec]));
+  const childTtl = env.LOOKUP_KV.ttl.get('link:' + child);
+  check('B: a shared link ends when Chris\'s link ends (10 days left, not a fresh 90)', childTtl > 9.9 * 86400 && childTtl <= 10 * 86400, 'ttl seconds: ' + childTtl);
+  check('B: the reply says when the shared link ends', Math.abs(new Date(r.body.expires).getTime() - (Date.now() + 10 * DAY)) < 60000, r.body.expires);
+  r = await postTo(strict, env, '/link-create', { params: P, turnstileToken: 'tok', from: child });
+  const grand = r.body.id; const grandRec = grand ? JSON.parse(env.LOOKUP_KV.m.get('link:' + grand)) : {};
+  check('B: a share of a share still traces back to Chris\'s link', r.status === 200 && grandRec.root === LENDER_LINK && env.LOOKUP_KV.ttl.get('link:' + grand) <= 10 * 86400, JSON.stringify([r, grandRec]));
+  emailsSent = 0;
+  r = await send(env, params('ob4@example.com'), 'tok', child, strict);
+  check('B: Save from a shared link works while Chris\'s link is alive', r.status === 200 && emailsSent === 1, JSON.stringify(r));
+  r = await postTo(strict, env, '/link-create', { params: P, pin: 'pin' });
+  check('B: Chris (PIN) can always make a link, no "from" needed', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).by === 'lender' && env.LOOKUP_KV.ttl.get('link:' + r.body.id) === 90 * 86400, JSON.stringify(r));
+
+  /* Save's QR link also carries the root */
+  const sr = await strict.fetch(new Request('https://w.example/send-scenario', { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' },
+    body: JSON.stringify({ params: params('ob5@example.com'), turnstileToken: 'tok', from: child, linkId: 'QrLinkB234', linkParams: P }) }), env, {});
+  const qrRec = JSON.parse(env.LOOKUP_KV.m.get('link:QrLinkB234') || '{}');
+  check('B: the PDF QR link from a Save traces back to Chris\'s link and ends with it', sr.status === 200 && qrRec.by === 'save' && qrRec.root === LENDER_LINK && env.LOOKUP_KV.ttl.get('link:QrLinkB234') <= 10 * 86400, JSON.stringify(qrRec));
+
+  /* Links that do NOT come from Chris */
+  env.LOOKUP_KV.m.set('link:OldShare01', JSON.stringify({ p: P, by: 'client', created: Date.now() }));                       // made before Option B (no root)
+  env.LOOKUP_KV.m.set('link:SelfRoot01', JSON.stringify({ p: P, by: 'client', created: Date.now(), root: 'SelfRoot01' }));   // points at itself
+  env.LOOKUP_KV.m.set('link:FakeRoot01', JSON.stringify({ p: P, by: 'client', created: Date.now(), root: 'OldShare01' }));   // points at a non-lender link
+  env.LOOKUP_KV.m.set('link:BrokenRec1', '{not json');
+  emailsSent = 0;
+  for (const id of ['OldShare01', 'SelfRoot01', 'FakeRoot01', 'BrokenRec1']) {
+    r = await send(env, params('ob6@example.com'), 'tok', id, strict);
+    const c = await postTo(strict, env, '/link-create', { params: P, turnstileToken: 'tok', from: id });
+    check('B: link ' + id + ' (not from Chris) can\'t Save or Share', r.status === 403 && r.body.code === 'link' && c.status === 403 && emailsSent === 0, JSON.stringify([r, c]));
+  }
+  r = await postTo(strict, env, '/link-get', { id: 'OldShare01' });
+  check('B: such a link can still be opened and read', r.status === 200 && r.body.params.inc === '11000', JSON.stringify(r));
+
+  /* When Chris's link is gone, shares of it stop too */
+  env.LOOKUP_KV.m.delete('link:' + LENDER_LINK); emailsSent = 0;
+  r = await send(env, params('ob7@example.com'), 'tok', child, strict);
+  check('B: once Chris\'s link has ended, its shares can\'t Save', r.status === 403 && r.body.code === 'link' && emailsSent === 0, JSON.stringify(r));
+  seedLender(env, LENDER_LINK, 90);   // exactly at its 90 days: nothing left
+  r = await send(env, params('ob7@example.com'), 'tok', LENDER_LINK, strict);
+  check('B: a link Chris made that is past its 90 days is refused even if still stored', r.status === 403 && emailsSent === 0, JSON.stringify(r));
+
+  /* Until the switch is on, the live page (which sends no link yet) must keep working */
+  if (!LINK_REQUIRED_NOW) {
+    env = baseEnv(); env.LENDER_PIN = 'pin'; seedLender(env); emailsSent = 0;
+    r = await send(env, params('ob8@example.com'), 'tok', null);
+    check('B off: Save without a link still works (today\'s live page)', r.status === 200 && emailsSent === 1, JSON.stringify(r));
+    r = await send(env, params('ob9@example.com'), 'tok', 'Nope123456');
+    check('B off: a link that IS sent is still checked', r.status === 403 && r.body.code === 'link' && emailsSent === 1, JSON.stringify(r));
+    r = await post(env, '/link-create', { params: P, turnstileToken: 'tok' });
+    check('B off: Share without a link still works (today\'s live page)', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).root === undefined, JSON.stringify(r));
+    r = await post(env, '/link-create', { params: P, turnstileToken: 'tok', from: LENDER_LINK });
+    check('B off: a new page that sends its link already gets the root', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).root === LENDER_LINK, JSON.stringify(r));
+  }
+  console.log('Link from Chris required (Option B): ' + (LINK_REQUIRED_NOW ? 'YES' : 'NO (transition — switch on after the new page is published)'));
 }
 
 if (failures.length) {
@@ -340,4 +451,4 @@ if (failures.length) {
   failures.forEach((f) => console.log('  ✗ ' + f));
   process.exit(1);
 }
-console.log('\nWORKER TESTS PASSED — Save Scenario: human check, 5/hour + 15/day per recipient, 50/day site, duplicates, fail-closed.');
+console.log('\nWORKER TESTS PASSED — Save Scenario: human check, 5/hour + 15/day per recipient, 50/day site, duplicates, fail-closed; links from Chris only (Option B rule tested on and off).');

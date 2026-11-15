@@ -4,7 +4,8 @@
 //           TURNSTILE_SECRET (Cloudflare Turnstile secret key — the "I'm human" check on Save Scenario)
 // Bindings: LOOKUP_LIMITER, EMAIL_LIMITER — Cloudflare rate limiters, configured in wrangler.jsonc
 //           EMAIL_LIMITS_KV — KV storage for Save Scenario send counts (wrangler.jsonc)
-//           LOOKUP_KV — same storage; also holds short client links (link:<id>, 90 days)
+//           LOOKUP_KV — same storage; also holds short client links (link:<id>, 90 days;
+//                       a client-made link ends with the link Chris made — D3 Option B)
 // Secrets:  LENDER_PIN — Chris's private PIN for making client links from the lender screen
 //           LOOKUP_KV — same KV storage: saved Realie answers + monthly Realie cap
 // Secret:   REALIE_API_KEY — Realie public-record lookups for counties without a county lookup
@@ -34,8 +35,7 @@ const EMAILJS_SETTINGS = {
   lenderEmail: 'cgreenidge@apmortgage.com', // always CC'd; cannot be changed by the browser
 };
 // Save Scenario abuse limits (Q7, Chris decided Nov 9, 2026 — decision D3 Option A).
-// ⚠️ LATER: when short lender-issued links exist (S5/P4.4), switch to "only people
-// with a link Chris made" (D3 Option B).
+// D3 Option B ("only people with a link Chris made") is added below: see LINK_REQUIRED.
 const EMAIL_LIMITS = {
   perRecipientPerHour: 5,   // same recipient address, rolling 60 minutes
   perRecipientPerDay: 15,   // same recipient address, rolling 24 hours
@@ -73,6 +73,17 @@ const LINK_LIMITS = {
 const LINK_FIELDS = ['pp', 'dp', 'lt', 'tm', 'inc', 'dbt', 'rt', 'rr', 'cn', 'mr', 'tax', 'ins', 'hoa', 'hs',
   'fld', 'fi', 'cdd', 'ca', 'ren', 'grn', 'pit', 'pmi', 'pqp', 'pqd', 'fco', 'nm', 'ts'];
 const LINK_ID_RE = /^[A-Za-z0-9]{10}$/;
+
+// ── D3 Option B (Chris, Nov 14, 2026): Save Scenario emails and client-made links
+// (Share, the PDF's QR code) only work from a link Chris made with his PIN, or from
+// a link that traces back to one. The page sends the link it was opened with as "from".
+// A client-made link remembers Chris's link as its "root" and ends when that link ends.
+// While false, a request WITHOUT "from" is still accepted (so the live page keeps
+// working until the new page is published); a "from" that IS sent is always checked.
+// Set true once the live page sends "from".
+const LINK_REQUIRED = false;
+const LINK_REFRESH_MSG = 'Please refresh this page and try again.';
+const LINK_NOT_TRUSTED_MSG = 'Saving and sharing aren\u2019t available from this link. Please ask Chris for a fresh link.';
 
 export default {
   async fetch(request, env, ctx) {
@@ -359,6 +370,10 @@ async function handleSendScenario(request, env, json) {
     }
   }
 
+  // ── D3 Option B: only from a link Chris made, or one that traces back to it ──
+  const linkCheck = await checkFromLink(env, body);
+  if (linkCheck.refuse) return json(linkCheck.refuse, 403);
+
   // ── Q7: send limits (fail closed: no storage = no sending) ──
   const kv = env.EMAIL_LIMITS_KV;
   if (!kv) {
@@ -433,7 +448,7 @@ async function handleSendScenario(request, env, json) {
   // send went through (never fails the email if storing the link doesn't work).
   if (body.linkId !== undefined || body.linkParams !== undefined) {
     try {
-      const stored = await storeClientLink(env, String(body.linkId || ''), body.linkParams, 'save');
+      const stored = await storeClientLink(env, String(body.linkId || ''), body.linkParams, 'save', linkCheck.trust);
       if (!stored.ok) console.warn('Save Scenario link not stored:', stored.error);
     } catch (e) { console.error('Save Scenario link error:', e && e.message); }
   }
@@ -463,12 +478,15 @@ function newLinkId() {
   return id;
 }
 
-async function storeClientLink(env, id, incoming, by) {
+// trust (client-made links only) = { rootId, ends } from checkFromLink: the link Chris made
+// that this one traces back to, and when that link ends.
+async function storeClientLink(env, id, incoming, by, trust) {
   const kv = env.LOOKUP_KV;
   if (!kv) return { ok: false, error: 'storage missing' };
   const p = cleanLinkParams(incoming);
   if (!p) return { ok: false, error: 'bad numbers' };
   if (!LINK_ID_RE.test(id)) return { ok: false, error: 'bad id' };
+  if (by !== 'lender' && LINK_REQUIRED && !trust) return { ok: false, error: 'no root' };
   if (by !== 'lender') {
     const dayKey = 'linkday:' + easternDate(Date.now());
     const used = parseInt((await kv.get(dayKey)) || '0', 10);
@@ -477,8 +495,55 @@ async function storeClientLink(env, id, incoming, by) {
   }
   if (await kv.get('link:' + id)) return { ok: false, error: 'id taken' };
   const now = Date.now();
-  await kv.put('link:' + id, JSON.stringify({ p, by, created: now }), { expirationTtl: LINK_LIMITS.ttlDays * 86400 });
-  return { ok: true, id, expires: new Date(now + LINK_LIMITS.ttlDays * 86400000).toISOString() };
+  const rec = { p, by, created: now };
+  let ends = now + LINK_LIMITS.ttlDays * 86400000;
+  if (by !== 'lender' && trust) {
+    // A client-made link ends when Chris's link ends (never gets a fresh 90 days of its own)
+    rec.root = trust.rootId;
+    ends = Math.min(ends, trust.ends);
+    if (ends - now < 60000) return { ok: false, error: 'root ended' };
+  }
+  await kv.put('link:' + id, JSON.stringify(rec), { expirationTtl: Math.max(60, Math.floor((ends - now) / 1000)) });
+  return { ok: true, id, expires: new Date(ends).toISOString() };
+}
+
+// D3 Option B. Reads one stored link (or null).
+async function readLink(kv, id) {
+  if (!kv || typeof id !== 'string' || !LINK_ID_RE.test(id)) return null;
+  let raw;
+  try { raw = await kv.get('link:' + id); } catch (e) { return null; }
+  if (!raw) return null;
+  try { const rec = JSON.parse(raw); return rec && typeof rec === 'object' ? rec : null; } catch (e) { return null; }
+}
+
+// D3 Option B. Does this link come from Chris? Yes if he made it (by: 'lender'), or if it is a
+// client-made link whose "root" is a link he made that still exists. Returns { rootId, ends } or null.
+async function trustedLink(env, id) {
+  const kv = env.LOOKUP_KV;
+  const rec = await readLink(kv, id);
+  if (!rec) return null;
+  let rootId = id, root = rec;
+  if (rec.by !== 'lender') {
+    if (typeof rec.root !== 'string' || !LINK_ID_RE.test(rec.root)) return null;   // made without one of Chris's links
+    rootId = rec.root;
+    root = await readLink(kv, rootId);
+    if (!root || root.by !== 'lender') return null;                                // Chris's link ended, or isn't his
+  }
+  const ends = Number(root.created) + LINK_LIMITS.ttlDays * 86400000;
+  if (!isFinite(ends) || ends - Date.now() < 60000) return null;
+  return { rootId, ends };
+}
+
+// D3 Option B. Checks the "from" link a Save Scenario or Share request came from.
+// Returns { trust } to go ahead (trust is null only while LINK_REQUIRED is false and no "from"
+// was sent), or { refuse: { error, code } } to stop.
+async function checkFromLink(env, body) {
+  const from = body && typeof body.from === 'string' ? body.from.slice(0, 20) : '';
+  if (!from) {
+    return LINK_REQUIRED ? { refuse: { error: LINK_REFRESH_MSG, code: 'refresh' } } : { trust: null };
+  }
+  const trust = await trustedLink(env, from);
+  return trust ? { trust } : { refuse: { error: LINK_NOT_TRUSTED_MSG, code: 'link' } };
 }
 
 // true / false, or 'locked' after too many wrong tries from this visitor this hour
@@ -513,7 +578,7 @@ async function handlePinCheck(request, env, json) {
 async function handleLinkCreate(request, env, json) {
   const body = await readJson(request);
   if (!body) return json({ error: 'Invalid request.' }, 400);
-  let by;
+  let by, trust = null;
   if (body.pin !== undefined) {
     const ok = await checkLenderPin(env, body.pin, request.headers.get('CF-Connecting-IP'));
     if (ok === 'locked') return json({ error: 'Too many wrong PINs. Try again in an hour.' }, 429);
@@ -525,12 +590,17 @@ async function handleLinkCreate(request, env, json) {
       return json({ error: 'We couldn\u2019t confirm you\u2019re not a robot. Please refresh the page and try again.' }, 403);
     }
     by = 'client';
+    // D3 Option B: a client can only make a link from one Chris made (or one that traces back to it)
+    const linkCheck = await checkFromLink(env, body);
+    if (linkCheck.refuse) return json(linkCheck.refuse, 403);
+    trust = linkCheck.trust;
   }
   let stored = { ok: false, error: 'id taken' };
   for (let i = 0; i < 3 && !stored.ok && stored.error === 'id taken'; i++) {
-    stored = await storeClientLink(env, newLinkId(), body.params, by);
+    stored = await storeClientLink(env, newLinkId(), body.params, by, trust);
   }
   if (!stored.ok) {
+    if (stored.error === 'no root' || stored.error === 'root ended') return json({ error: LINK_NOT_TRUSTED_MSG, code: 'link' }, 403);
     if (stored.error === 'bad numbers') return json({ error: 'Those numbers don\u2019t look right.' }, 400);
     if (stored.error === 'daily limit') return json({ error: 'Too many links today. Please contact Chris directly.' }, 429);
     return json({ error: 'Couldn\u2019t make a link right now. Please try again.' }, 503);

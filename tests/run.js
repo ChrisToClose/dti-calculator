@@ -38,6 +38,7 @@
      B7. Every Florida ZIP finds its county (Census list); county-line ZIPs ask which county
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
      W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
+        D3 Option B: Share + Save send the link the page came from; shares of shares work; links not from Chris can't Save/Share;
         lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
@@ -745,7 +746,12 @@ async function readScreen(page, pattern) {
   {
     const SITE = 'https://christoclose.github.io/dti-calculator/' + (PAGE_FILE.startsWith('preview') ? 'preview/' : '');
     const pageHtml = fs.readFileSync(path.resolve(ROOT, PAGE_FILE), 'utf8');
-    const store = new Map(); const calls = [];
+    const store = new Map(); const calls = []; const sentFrom = [];
+    /* D3 Option B stand-in: each stored link is { p, by, root }. A link "comes from Chris" if he made it
+       (PIN) or its root is one he made — same rule as the real Worker (tested in tests/worker.test.mjs). */
+    const rootOf = (id) => { const rec = store.get(id); if (!rec) return null; if (rec.by === 'lender') return id; const r0 = rec.root && store.get(rec.root); return r0 && r0.by === 'lender' ? rec.root : null; };
+    const NOT_FROM_CHRIS = { error: 'Saving and sharing aren’t available from this link. Please ask Chris for a fresh link.', code: 'link' };
+    const NEEDS_REFRESH = { error: 'Please refresh this page and try again.', code: 'refresh' };
     const wctx = await browser.newContext({ timezoneId: 'America/New_York', locale: 'en-US' });
     await wctx.route('**/*', async (r) => {
       const req = r.request(); const u = new URL(req.url());
@@ -761,11 +767,25 @@ async function readScreen(page, pattern) {
         if (u.pathname === '/link-create') {
           if (b.pin !== undefined && b.pin !== 'right-pin') return reply(401, { error: 'That PIN isn’t right.', pin: false });
           if (b.pin === undefined && !b.turnstileToken) return reply(403, { error: 'robot' });
-          const id = 'Test' + String(store.size).padStart(6, '0'); store.set(id, b.params); return reply(200, { ok: true, id });
+          let root;
+          if (b.pin === undefined) {
+            sentFrom.push({ what: 'share', from: b.from });
+            if (!b.from) return reply(403, NEEDS_REFRESH);
+            root = rootOf(b.from); if (!root) return reply(403, NOT_FROM_CHRIS);
+          }
+          const id = 'Test' + String(store.size).padStart(6, '0');
+          store.set(id, b.pin !== undefined ? { p: b.params, by: 'lender' } : { p: b.params, by: 'client', root });
+          return reply(200, { ok: true, id });
         }
         if (u.pathname === '/pin-check') return b.pin === 'right-pin' ? reply(200, { ok: true }) : reply(401, { error: 'That PIN isn’t right.' });
-        if (u.pathname === '/link-get') return store.has(b.id) ? reply(200, { ok: true, params: store.get(b.id) }) : reply(404, { error: 'expired' });
-        if (u.pathname === '/send-scenario') { if (b.linkId && b.linkParams && !store.has(b.linkId)) store.set(b.linkId, b.linkParams); return reply(200, { ok: true }); }
+        if (u.pathname === '/link-get') return store.has(b.id) ? reply(200, { ok: true, params: store.get(b.id).p }) : reply(404, { error: 'expired' });
+        if (u.pathname === '/send-scenario') {
+          sentFrom.push({ what: 'save', from: b.from });
+          if (!b.from) return reply(403, NEEDS_REFRESH);
+          const root = rootOf(b.from); if (!root) return reply(403, NOT_FROM_CHRIS);
+          if (b.linkId && b.linkParams && !store.has(b.linkId)) store.set(b.linkId, { p: b.linkParams, by: 'save', root });
+          return reply(200, { ok: true });
+        }
         return reply(404, { error: 'unknown' });
       }
       return r.abort();
@@ -853,6 +873,55 @@ async function readScreen(page, pattern) {
       const d = Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]);
       if (d.length) failures.push(`Short links: ${name} link reopens different numbers — ${d.map((k) => `${k}: ${before[k]} → ${after[k]}`).join('; ')}`);
     }
+    // 4b. D3 Option B: Share and Save told the Worker which link this page was opened from (Chris's link)
+    const lenderId = (lenderUrl.split('?s=')[1] || '');
+    const fromShare = sentFrom.filter((x) => x.what === 'share').map((x) => x.from);
+    const fromSave = sentFrom.filter((x) => x.what === 'save').map((x) => x.from);
+    if (!fromShare.length || fromShare.some((f) => f !== lenderId)) failures.push(`Option B: Share must send the link the page was opened from (sent ${JSON.stringify(fromShare)}, expected ${lenderId})`);
+    if (!fromSave.length || fromSave.some((f) => f !== lenderId)) failures.push(`Option B: Save Scenario must send the link the page was opened from (sent ${JSON.stringify(fromSave)}, expected ${lenderId})`);
+    const shareId = W.share ? W.share.split('?s=')[1] : null;
+    if (shareId && (!store.get(shareId) || store.get(shareId).root !== lenderId)) failures.push(`Option B: a shared link should trace back to Chris's link (${JSON.stringify(store.get(shareId))})`);
+
+    // 4c. a share of a share still works (it traces back to Chris's link)
+    const useLink = async (page, id, doSave) => {
+      await page.goto(SITE + '?s=' + id); await page.waitForFunction(() => document.getElementById('cbr-mi') && document.getElementById('client-back-dti').textContent.trim()); await page.waitForTimeout(400);
+      return page.evaluate(async (doSave) => {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms || 80));
+        const o = document.getElementById('client-onboard'); if (o) o.style.display = 'none';
+        CONFIG.turnstileSiteKey = 'test-site-key'; tsLoadFailed = false; tsWidgetId = 1;
+        window.turnstile = { reset() {}, execute() { setTimeout(() => { const p = tsPending; tsPending = null; if (p) p.resolve('T'); }, 10); } };
+        let shared = null, alerted = null; navigator.share = (d) => { shared = d; return Promise.resolve(); }; window.alert = (m) => { alerted = String(m); };
+        document.getElementById('btn-share-scenario').click(); await wait(600);
+        let saveErr = '', saveOk = false;
+        if (doSave) {
+          window.qrcode = () => ({ addData() {}, make() {}, getModuleCount: () => 21, isDark: () => false });
+          const fakeDoc = new Proxy({}, { get: (t, k) => k === 'internal' ? { pageSize: { getWidth: () => 215.9, getHeight: () => 279.4, width: 215.9, height: 279.4 }, getNumberOfPages: () => 1 } : k === 'splitTextToSize' ? (x) => [String(x)] : (k === 'getTextWidth' || k === 'getStringUnitWidth') ? () => 10 : k === 'getNumberOfPages' ? () => 1 : k === 'then' ? undefined : () => fakeDoc });
+          window.jspdf = { jsPDF: function () { return fakeDoc; } };
+          document.getElementById('save-email').value = 'b@example.com'; document.getElementById('save-label').value = 'y'; document.getElementById('save-address').value = '2 Main St';
+          const b = document.getElementById('btn-save-scenario'); b.disabled = false; b.style.display = ''; b.click(); await wait(800);
+          const e = document.getElementById('save-error'), c = document.getElementById('save-confirm');
+          saveErr = e && e.style.display !== 'none' ? e.textContent : ''; saveOk = !!c && c.style.display !== 'none';
+        }
+        return { share: shared && shared.url, alerted, saveErr, saveOk };
+      }, doSave);
+    };
+    if (shareId) {
+      const p3 = await wctx.newPage(); p3.on('pageerror', (e) => pageErrors.push('share of a share: ' + e.message));
+      const again = await useLink(p3, shareId, true); await p3.close();
+      const againId = again.share ? again.share.split('?s=')[1] : null;
+      if (!againId || !store.get(againId) || store.get(againId).root !== lenderId) failures.push(`Option B: sharing from a shared link should work and still trace back to Chris's link (${JSON.stringify(again)})`);
+      if (!again.saveOk || again.saveErr) failures.push(`Option B: Save Scenario from a shared link should work (${JSON.stringify(again)})`);
+    }
+
+    // 4d. a link that does NOT come from Chris opens, but Share and Save are refused with a plain message
+    store.set('OldShare01', { p: Object.fromEntries(new URLSearchParams(LONG)), by: 'client' });
+    const p4 = await wctx.newPage(); p4.on('pageerror', (e) => pageErrors.push('link not from Chris: ' + e.message));
+    const stranger = await useLink(p4, 'OldShare01', true);
+    const strangerScreen = await p4.evaluate(() => document.getElementById('client-back-dti').textContent.trim()); await p4.close();
+    if (!strangerScreen) failures.push('Option B: a link not from Chris should still open and show its numbers');
+    if (stranger.share || !/ask Chris for a fresh link/.test(stranger.alerted || '')) failures.push(`Option B: Share from a link not from Chris should be refused with "ask Chris for a fresh link" (${JSON.stringify(stranger)})`);
+    if (stranger.saveOk || !/ask Chris for a fresh link/.test(stranger.saveErr)) failures.push(`Option B: Save from a link not from Chris should show "ask Chris for a fresh link", not "on its way" (${JSON.stringify(stranger)})`);
+
     // 5. an unknown / expired short link
     await pg.goto(SITE + '?s=Nope123456'); await settle();
     const expKind = await pg.evaluate(() => { const b = document.getElementById('link-problem'); return b && b.getAttribute('data-kind'); });
