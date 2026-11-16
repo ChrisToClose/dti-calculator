@@ -37,6 +37,7 @@
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
      B7. Every Florida ZIP finds its county (Census list); county-line ZIPs ask which county
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
+     AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
         never scrolls sideways at 320–430 wide (lender header badge included); desktop text sizes are unchanged.
@@ -413,6 +414,61 @@ async function readScreen(page, pattern) {
   if (M.afterNo !== '' || !M.askHiddenAfterNo) failures.push(`Q5: "No, I'll fix the address" must not fill anything (${JSON.stringify(M)})`);
   if (M.afterYes !== '400.00') failures.push(`Q5: "Yes, use this property" should fill 400.00/mo, got "${M.afterYes}"`);
   if (M.exactFill !== '400.00' || !M.askHiddenForExact) failures.push(`Q5: an exact match should fill straight away, got "${M.exactFill}"`);
+
+  /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the
+         Save section — only when that box is empty or still holds an address filled this way. */
+  await client.goto(BASE);
+  const AF = await client.evaluate(async () => {
+    if (typeof fillSaveAddress !== 'function' || typeof saveAddressText !== 'function') return { missing: true };
+    const out = {};
+    const reply = (obj) => async () => ({ ok: true, status: 200, text: async () => JSON.stringify(obj) });
+    const box = () => document.getElementById('save-address').value;
+    const set = (street, city, unit, county) => { document.getElementById('realie-address').value = street; document.getElementById('realie-city').value = city; document.getElementById('realie-unit').value = unit; document.getElementById('realie-county').value = county; };
+    out.start = box();
+    // 1. nothing found → nothing filled
+    set('456 Oak Ave', 'St. Petersburg', '', 'Pinellas');
+    window.fetch = reply({ found: false });
+    await lookupRealieAddress(); out.notFound = box();
+    // 2. an exact county match → filled the way the client entered it
+    window.fetch = reply({ annual_tax: 4800, tax_year: 2025, county: 'Pinellas', address_confirmed: '456 OAK AVE, ST PETERSBURG, FL 33701' });
+    await lookupRealieAddress(); out.exact = box();
+    // 3. a second house replaces the first (the box still holds what was filled for them)
+    set('12 Palm Way', 'Gulfport', '3B', 'Pinellas');
+    window.fetch = reply({ annual_tax: 3600, tax_year: 2025, county: 'Pinellas', address_confirmed: '12 PALM WAY 3B, GULFPORT, FL' });
+    await lookupRealieAddress(); out.second = box();
+    // 4. the client types their own → later lookups leave it alone
+    document.getElementById('save-address').value = 'My own words';
+    set('789 Pine St', 'Largo', 'Apt 7', 'Pinellas');
+    window.fetch = reply({ annual_tax: 2400, tax_year: 2025, county: 'Pinellas', address_confirmed: '789 PINE ST APT 7, LARGO, FL' });
+    await lookupRealieAddress(); out.keptOwn = box();
+    // 5. the client empties the box → the next lookup fills it again
+    document.getElementById('save-address').value = '';
+    await lookupRealieAddress(); out.afterClear = box();
+    // 6. a near match: nothing until "Yes, use this property", then the county's address in normal case
+    document.getElementById('save-address').value = '';
+    set('100 Main St', 'St. Petersburg', '', 'Pinellas');
+    window.fetch = reply({ annual_tax: 4800, tax_year: 2025, county: 'Pinellas', address_confirmed: '100 MAIN AVE N, ST PETERSBURG, FL 33701', needs_confirmation: true, confirm_reason: 'street differs' });
+    await lookupRealieAddress(); out.nearBeforeYes = box();
+    document.getElementById('tax-confirm-no').click(); out.nearAfterNo = box();
+    await lookupRealieAddress(); document.getElementById('tax-confirm-yes').click(); out.nearAfterYes = box();
+    // 7. a public-record (guidance) answer fills too; with no city, the county is used
+    document.getElementById('save-address').value = '';
+    set('1 Test St', '', '', 'Broward');
+    window.fetch = reply({ source: 'realie', guidance_only: true, annual_tax: 3911.5, tax_year: 2024, county: 'Broward', address_confirmed: '1 TEST ST' });
+    await lookupRealieAddress(); out.guidance = box();
+    out.label = document.getElementById('save-label').value;
+    return out;
+  });
+  if (AF.missing) failures.push('Address fill: the page has no fillSaveAddress / saveAddressText (the tax-lookup address should fill "Property Address")');
+  else {
+    const want = { start: '', notFound: '', exact: '456 Oak Ave, St. Petersburg, FL', second: '12 Palm Way, Unit 3B, Gulfport, FL', keptOwn: 'My own words',
+      afterClear: '789 Pine St, Apt 7, Largo, FL', nearBeforeYes: '', nearAfterNo: '', nearAfterYes: '100 Main Ave N, St Petersburg, FL 33701', guidance: '1 Test St, Broward County, FL', label: '' };
+    const NAMES = { start: 'before any lookup the box is empty', notFound: 'a lookup that finds nothing fills nothing', exact: 'a found record fills the address the client entered',
+      second: 'looking up a second house replaces the first, with "Unit" added to a bare unit number', keptOwn: 'an address the client typed themselves is never replaced',
+      afterClear: 'after the client empties the box the next lookup fills it again', nearBeforeYes: 'a near match fills nothing before the client confirms', nearAfterNo: '"No, I\'ll fix the address" fills nothing',
+      nearAfterYes: '"Yes, use this property" fills the county\'s address in normal case', guidance: 'a public-record answer fills too (county used when no city was entered)', label: 'Scenario Label is never touched' };
+    for (const k of Object.keys(want)) if (AF[k] !== want[k]) failures.push(`Address fill: ${NAMES[k]} — expected "${want[k]}", got "${AF[k]}"`);
+  }
 
   /* N. ADDR1: typing shows Google suggestions (via the Worker); picking one fills street, city, county, unit */
   await client.goto(BASE);
