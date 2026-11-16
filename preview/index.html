@@ -2428,7 +2428,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.47.0',
+  version: '8.48.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2528,6 +2528,125 @@ var COUNTIES = {
   "Suwannee":16.50,"Taylor":15.00,"Union":16.00,"Volusia":17.70,
   "Wakulla":12.50,"Walton":8.00,"Washington":14.00
 };
+
+/* ============================================================
+   SECTION: FLORIDA PROPERTY TAX RULES (TAX1a, Nov 2026)
+   ------------------------------------------------------------
+   Works out a home's yearly property tax the way the county does:
+   school taxes and all other taxes separately, because the
+   homestead exemption is different for each.
+
+   NOT used by the payment or the DTI bar (Chris, Nov 16, 2026: the
+   DTI bar shows what the loan is approved on). This math is for the
+   "after the county re-values the home" help, and is ready for the
+   day underwriting uses the 2027 rules.
+
+   The rules, and where they come from:
+   • 2026 and earlier — the first $25,000 of assessed value is exempt
+     from every tax. A second exemption (up to $26,411 in 2026) covers
+     assessed value above $50,000, for NON-school taxes only.
+     (FL Dept. of Revenue, s. 196.031(1)(b), revised Jan 2026.)
+   • 2027 on — Amendment 3 (CS/HJR 1F), on the Nov 3, 2026 ballot,
+     effective Jan 1, 2027. School taxes: still only the first $25,000.
+     Other taxes: the first $150,000 in 2027, the first $250,000 from
+     2028 (inflation-adjusted from 2029 — amounts not published yet).
+     Someone who was NOT a permanent Florida resident on Dec 31, 2026
+     gets $50,000 for other taxes for the first four years of their
+     exemption (inflation-adjusted from 2028), then the full amount.
+   Checked to the cent against real 2026 Pinellas tax bills and against
+   the Pinellas and Volusia property appraisers' published examples
+   (tests/run.js, check TX).
+   ============================================================ */
+var FL_TAX = {
+  firstExemption: 25000,                       /* every tax, school included */
+  additional2026: { from: 50000, max: 26411 }, /* non-school only; 2026 amount */
+  amendment3: {
+    firstYear: 2027,
+    nonSchool2027: 150000,
+    nonSchoolLater: 250000,                    /* 2028 on */
+    newResident: 50000,                        /* not a Florida resident on Dec 31, 2026 */
+    newResidentYears: 4
+  },
+  /* What the county is assumed to value the home at after a sale, as a share of the price.
+     1.00 = the full price (what the estimate has always assumed). Pinellas' own estimator
+     uses 85% of the price or the current market value, whichever is higher. */
+  assessedShareOfPrice: 1.00,
+  /* School tax rate (mills) by county — it is the same everywhere inside a county.
+     Add a county only from an official source, with its year. */
+  schoolMills: {
+    "Pinellas": { mills: 6.2730, year: 2026, source: "Pinellas County Tax Collector 2026 bills: School-State Law 3.0250 + School-Local Bd. 3.2480" }
+  }
+};
+
+/* The school tax rate for a county, or null when it hasn't been added yet. */
+function flSchoolMills(countyName) {
+  var row = FL_TAX.schoolMills[countyName];
+  return row && row.mills > 0 ? row.mills : null;
+}
+
+/* How much of a homestead's assessed value is exempt: { school, other }.
+   o.assessed, o.taxYear, o.residentBy2026 (false = moved to Florida in 2027 or later),
+   o.exemptionYear (1 = the first year this person has the exemption). */
+function flHomesteadExemptions(o) {
+  var av = Math.max(Number(o.assessed) || 0, 0);
+  var first = Math.min(av, FL_TAX.firstExemption);
+  var a3 = FL_TAX.amendment3;
+  if (!(o.taxYear >= a3.firstYear)) {
+    var slice = Math.min(Math.max(av - FL_TAX.additional2026.from, 0), FL_TAX.additional2026.max);
+    return { school: first, other: first + slice };
+  }
+  var limit = o.taxYear >= a3.firstYear + 1 ? a3.nonSchoolLater : a3.nonSchool2027;
+  if (o.residentBy2026 === false) {
+    var yr = o.exemptionYear >= 1 ? o.exemptionYear : 1;
+    limit = yr > a3.newResidentYears ? a3.nonSchoolLater : a3.newResident;
+  }
+  return { school: first, other: Math.min(av, limit) };
+}
+
+/* Yearly property tax for one tax year. Returns null when the rates aren't known.
+   o.assessed, o.homestead, o.taxYear, o.residentBy2026, o.exemptionYear,
+   o.totalMills (every tax together), o.schoolMills, o.nonAdValorem (flat yearly fees on the bill). */
+function flPropertyTax(o) {
+  var given = function(v){ return (v === null || v === undefined || v === '') ? NaN : Number(v); };
+  var av = given(o.assessed), total = given(o.totalMills), school = given(o.schoolMills);
+  if (!(av >= 0) || !(total > 0)) return null;
+  if (o.homestead) {
+    /* the exemption differs for school taxes, so a homestead can't be worked out without the school rate */
+    if (!(school > 0) || school > total) return null;
+  } else {
+    if (isNaN(school)) school = 0;               /* no exemption: the split doesn't change the total */
+    if (!(school >= 0) || school > total) return null;
+  }
+  var ex = o.homestead ? flHomesteadExemptions(o) : { school: 0, other: 0 };
+  var schoolTaxable = av - ex.school, otherTaxable = av - ex.other;
+  var schoolTax = schoolTaxable * school / 1000;
+  var otherTax = otherTaxable * (total - school) / 1000;
+  var flat = Math.max(Number(o.nonAdValorem) || 0, 0);
+  var annual = schoolTax + otherTax + flat;
+  return { schoolExempt: ex.school, otherExempt: ex.other, schoolTaxable: schoolTaxable, otherTaxable: otherTaxable,
+           schoolTax: schoolTax, otherTax: otherTax, flatFees: flat, annual: annual, monthly: annual / 12 };
+}
+
+/* A buyer's taxes year by year. o.closeYear = the year they close and move in.
+   That year's bill is still the current owner's (o.currentBill, if known). On the next
+   January 1 the county re-values the home and the buyer's own exemption starts (year 1).
+   The assessed value is held level afterwards (Save Our Homes limits later increases to 3% a year).
+   Returns [{ taxYear, exemptionYear, whose, annual, monthly }], or null when the rates aren't known. */
+function flTaxPath(o) {
+  var years = o.years >= 1 ? o.years : 6;
+  var assessed = o.assessed != null ? Number(o.assessed) : (Number(o.price) || 0) * FL_TAX.assessedShareOfPrice;
+  var out = [];
+  if (o.currentBill != null && Number(o.currentBill) >= 0) {
+    out.push({ taxYear: o.closeYear, exemptionYear: 0, whose: 'current owner', annual: Number(o.currentBill), monthly: Number(o.currentBill) / 12 });
+  }
+  for (var i = 1; i <= years; i++) {
+    var t = flPropertyTax({ assessed: assessed, homestead: o.homestead !== false, taxYear: o.closeYear + i,
+      residentBy2026: o.residentBy2026, exemptionYear: i, totalMills: o.totalMills, schoolMills: o.schoolMills, nonAdValorem: o.nonAdValorem });
+    if (!t) return null;
+    out.push({ taxYear: o.closeYear + i, exemptionYear: i, whose: 'buyer', annual: t.annual, monthly: t.monthly });
+  }
+  return out;
+}
 
 /* ============================================================
    SECTION: ZIP-TO-COUNTY MAP

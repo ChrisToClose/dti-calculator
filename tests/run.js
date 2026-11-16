@@ -45,13 +45,16 @@
      W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
         D3 Option B: Share + Save send the link the page came from; shares of shares work; links not from Chris can't Save/Share;
         lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
+     TX. Florida property tax rules (TAX1a): real 2026 Pinellas tax bills to the cent, the property
+        appraisers' published Amendment 3 examples, page math = independent math for every year/case,
+        and the payment itself is NOT changed by any of it
    Exit code 0 = all good, 1 = something changed.
    ============================================================ */
 
 const path = require('path');
 const fs = require('fs');
 const { chromium } = require('playwright');
-const { reference } = require('./reference');
+const { reference, referenceFlTax } = require('./reference');
 const scenarios = require('./scenarios');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -885,6 +888,133 @@ async function readScreen(page, pattern) {
     const desk = await lender.evaluate(() => ({ touch: matchMedia('(any-pointer: coarse)').matches,
       income: getComputedStyle(document.getElementById('income')).fontSize, email: getComputedStyle(document.getElementById('save-email')).fontSize, address: getComputedStyle(document.getElementById('realie-address')).fontSize }));
     if (desk.touch || desk.income !== '15px' || desk.email !== '15px' || desk.address !== '14px') failures.push(`Phones: desktop text boxes should be unchanged (income 15px, email 15px, tax-lookup address 14px) — got ${JSON.stringify(desk)}`);
+  }
+
+  /* TX. Florida property tax rules (TAX1a). Rule math only — the payment and DTI bar do not use it. */
+  {
+    const has = await lender.evaluate(() => typeof FL_TAX === 'object' && typeof flPropertyTax === 'function'
+      && typeof flHomesteadExemptions === 'function' && typeof flTaxPath === 'function' && typeof flSchoolMills === 'function');
+    if (!has) failures.push('Tax rules: the Florida property tax rules (FL_TAX / flPropertyTax / flTaxPath) are missing from the page');
+    else {
+      const pageTax = (o) => lender.evaluate((o) => flPropertyTax(o), o);
+      const near = (a, b, tol) => typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) <= tol;
+
+      /* 1. Real 2026 tax bills, St. Petersburg (Pinellas County Tax Collector's site, read Nov 16, 2026).
+            Only the numbers are kept — no owner, address or account. "bill" is the total ad valorem tax
+            on the bill; paidEarly = the bill shows the amount after the 4% November discount. */
+      const ST_PETE_2026 = { totalMills: 19.8345, schoolMills: 6.2730 };
+      const BILLS = [
+        { assessed: 145068, homestead: true,  bill: 2023.31 },
+        { assessed: 449926, homestead: true,  bill: 8070.02 },
+        { assessed: 328141, homestead: true,  bill: 5428.29, paidEarly: 0.96 },
+        { assessed: 270025, homestead: true,  bill: 4501.77 },
+        { assessed: 668888, homestead: true,  bill: 12413.04 },
+        { assessed: 224516, homestead: true,  bill: 3599.13 },
+        { assessed: 454962, homestead: false, bill: 9023.94 },
+        { assessed: 368021, homestead: false, bill: 7299.51 },
+      ];
+      for (const b of BILLS) {
+        const t = await pageTax({ ...ST_PETE_2026, assessed: b.assessed, homestead: b.homestead, taxYear: 2026 });
+        const want = b.bill, got = t ? t.annual * (b.paidEarly || 1) : null;
+        if (!near(got, want, 0.03)) failures.push(`Tax rules: a real 2026 St. Petersburg bill (assessed $${b.assessed.toLocaleString()}, ${b.homestead ? 'homestead' : 'no homestead'}) is $${want} — the page works out $${got == null ? 'nothing' : got.toFixed(2)}`);
+        if (t && b.homestead && (t.schoolTaxable !== b.assessed - 25000 || t.otherTaxable !== b.assessed - 51411)) failures.push(`Tax rules: 2026 homestead on $${b.assessed} should tax $${b.assessed - 25000} for schools and $${b.assessed - 51411} for everything else (page: ${t.schoolTaxable} / ${t.otherTaxable})`);
+      }
+
+      /* 2. The property appraisers' own published Amendment 3 examples (yearly saving vs. 2026, full exemption):
+            Pinellas (12.2011 non-school mills): about $1,203 in 2027 and $2,423 in 2028.
+            Volusia  (11.8092 non-school mills): about $1,164 in 2027 and $2,345 in 2028. */
+      for (const ex of [{ who: 'Pinellas', other: 12.2011, y2027: 1203, y2028: 2423 }, { who: 'Volusia', other: 11.8092, y2027: 1164, y2028: 2345 }]) {
+        const base = { assessed: 400000, homestead: true, schoolMills: 6, totalMills: 6 + ex.other };
+        const a = await pageTax({ ...base, taxYear: 2026 }), b = await pageTax({ ...base, taxYear: 2027 }), c = await pageTax({ ...base, taxYear: 2028 });
+        if (!a || !b || !c || Math.round(a.annual - b.annual) !== ex.y2027 || Math.round(a.annual - c.annual) !== ex.y2028) {
+          failures.push(`Tax rules: ${ex.who} property appraiser's example says the new exemption saves $${ex.y2027} (2027) and $${ex.y2028} (2028) — the page works out $${a && b ? Math.round(a.annual - b.annual) : '?'} and $${a && c ? Math.round(a.annual - c.annual) : '?'}`);
+        }
+        if (a && b && c && (!near(a.schoolTax, b.schoolTax, 1e-9) || !near(a.schoolTax, c.schoolTax, 1e-9))) failures.push(`Tax rules: school taxes must not change under the 2027 rules (${ex.who} example)`);
+      }
+
+      /* 3. The rules, spelled out on round numbers */
+      const taxable = async (o) => { const t = await pageTax({ totalMills: 20, schoolMills: 6, homestead: true, ...o }); return t ? [t.schoolTaxable, t.otherTaxable] : null; };
+      const FACTS = [
+        ['2026, $400,000',                                { assessed: 400000, taxYear: 2026 },                                           [375000, 348589]],
+        ['2026, $60,000 (part of the second exemption)',  { assessed: 60000,  taxYear: 2026 },                                           [35000, 25000]],
+        ['2026, $40,000 (first exemption only)',          { assessed: 40000,  taxYear: 2026 },                                           [15000, 15000]],
+        ['2026, $20,000 (fully exempt)',                  { assessed: 20000,  taxYear: 2026 },                                           [0, 0]],
+        ['2027, Florida resident, $400,000',              { assessed: 400000, taxYear: 2027, residentBy2026: true },                     [375000, 250000]],
+        ['2028, Florida resident, $400,000',              { assessed: 400000, taxYear: 2028, residentBy2026: true },                     [375000, 150000]],
+        ['2031, Florida resident, $400,000',              { assessed: 400000, taxYear: 2031, residentBy2026: true },                     [375000, 150000]],
+        ['2027, Florida resident, $120,000',              { assessed: 120000, taxYear: 2027, residentBy2026: true },                     [95000, 0]],
+        ['2028, Florida resident, $200,000',              { assessed: 200000, taxYear: 2028, residentBy2026: true },                     [175000, 0]],
+        ['2028, new to Florida, year 1, $400,000',        { assessed: 400000, taxYear: 2028, residentBy2026: false, exemptionYear: 1 },  [375000, 350000]],
+        ['2031, new to Florida, year 4, $400,000',        { assessed: 400000, taxYear: 2031, residentBy2026: false, exemptionYear: 4 },  [375000, 350000]],
+        ['2032, new to Florida, year 5, $400,000',        { assessed: 400000, taxYear: 2032, residentBy2026: false, exemptionYear: 5 },  [375000, 150000]],
+        ['2028, no homestead, $400,000',                  { assessed: 400000, taxYear: 2028, homestead: false },                         [400000, 400000]],
+      ];
+      for (const [name, input, want] of FACTS) {
+        const got = await taxable(input);
+        if (!got || got[0] !== want[0] || got[1] !== want[1]) failures.push(`Tax rules: ${name} should be taxed on $${want[0]} for schools and $${want[1]} for everything else (page: ${got ? got.join(' / ') : 'nothing'})`);
+      }
+
+      /* 4. Page math = independent math, for every mix of value, year and buyer */
+      const GRID = [];
+      for (const assessed of [0, 12000, 25000, 49999, 50000, 62500, 76411, 76412, 149999, 150000, 150001, 249999, 250000, 250001, 318500, 400000, 832750, 1999999]) {
+        for (const taxYear of [2025, 2026, 2027, 2028, 2029, 2032]) {
+          for (const homestead of [true, false]) {
+            for (const residentBy2026 of [true, false]) {
+              for (const exemptionYear of [1, 4, 5]) {
+                GRID.push({ assessed, taxYear, homestead, residentBy2026, exemptionYear, totalMills: 19.8345, schoolMills: 6.2730, nonAdValorem: assessed === 318500 ? 412.6 : 0 });
+              }
+            }
+          }
+        }
+      }
+      const pageGrid = await lender.evaluate((grid) => grid.map((o) => flPropertyTax(o)), GRID);
+      let gridBad = 0, gridFirst = '';
+      GRID.forEach((o, i) => {
+        const ref = referenceFlTax(o), got = pageGrid[i];
+        const ok = got && ref && ['schoolTaxable', 'otherTaxable', 'schoolTax', 'otherTax', 'annual', 'monthly'].every((k) => near(got[k], ref[k], 1e-6));
+        if (!ok) { gridBad++; if (!gridFirst) gridFirst = `${JSON.stringify(o)} → page ${got ? got.annual : 'nothing'}, independent math ${ref ? ref.annual : 'nothing'}`; }
+        if (got && (got.annual < 0 || got.schoolTaxable < 0 || got.otherTaxable < 0)) failures.push(`Tax rules: a negative tax or taxable value for ${JSON.stringify(o)}`);
+      });
+      if (gridBad) failures.push(`Tax rules: the page and the independent math disagree in ${gridBad} of ${GRID.length} cases — first: ${gridFirst}`);
+
+      /* 5. Bad or missing rates give "no answer", never a wrong number */
+      const refusals = await lender.evaluate(() => [
+        flPropertyTax({ assessed: 400000, homestead: true, taxYear: 2027, totalMills: 19.8, schoolMills: null }),   // school rate not known
+        flPropertyTax({ assessed: 400000, homestead: true, taxYear: 2027, totalMills: 19.8 }),                      // school rate left out
+        flPropertyTax({ assessed: 400000, homestead: true, taxYear: 2027, totalMills: 19.8, schoolMills: 0 }),      // no county has a 0 school rate
+        flPropertyTax({ assessed: 400000, homestead: true, taxYear: 2027, totalMills: 0, schoolMills: 6 }),
+        flPropertyTax({ assessed: 400000, homestead: true, taxYear: 2027, totalMills: 5, schoolMills: 6 }),        // school rate above the total
+        flPropertyTax({ assessed: -1, homestead: true, taxYear: 2027, totalMills: 19, schoolMills: 6 }),
+        flPropertyTax({ assessed: null, homestead: false, taxYear: 2027, totalMills: 19, schoolMills: 6 }),
+        flSchoolMills('Atlantis'),
+      ]);
+      /* A missing school rate must never be read as 0 — that would give a homestead the big non-school
+         exemption on its school taxes too, and show a tax that is far too low. */
+      if (refusals.some((r) => r !== null)) failures.push(`Tax rules: missing or bad rates should give no answer (got ${JSON.stringify(refusals)})`);
+      const plain = await lender.evaluate(() => flPropertyTax({ assessed: 400000, homestead: false, taxYear: 2027, totalMills: 19.8345 }));
+      if (!plain || !near(plain.annual, 400000 * 19.8345 / 1000, 1e-6)) failures.push(`Tax rules: without a homestead the tax is the full value × the total rate, with or without the school rate (${JSON.stringify(plain)})`);
+      const pinellas = await lender.evaluate(() => ({ mills: flSchoolMills('Pinellas'), row: FL_TAX.schoolMills.Pinellas }));
+      if (pinellas.mills !== 6.2730 || !pinellas.row || pinellas.row.year !== 2026 || !pinellas.row.source) failures.push(`Tax rules: Pinellas school rate should be 6.2730 (2026) with its source (${JSON.stringify(pinellas)})`);
+
+      /* 6. A buyer's tax path: the current owner's bill first, then the buyer's own bill after the county re-values */
+      const path1 = await lender.evaluate((r) => flTaxPath({ price: 400000, closeYear: 2026, currentBill: 3100, residentBy2026: true, ...r }), ST_PETE_2026);
+      const want2027 = referenceFlTax({ ...ST_PETE_2026, assessed: 400000, homestead: true, taxYear: 2027 }).annual;
+      const want2028 = referenceFlTax({ ...ST_PETE_2026, assessed: 400000, homestead: true, taxYear: 2028 }).annual;
+      if (!path1 || path1.length !== 7 || path1[0].whose !== 'current owner' || path1[0].taxYear !== 2026 || path1[0].annual !== 3100
+        || path1[1].taxYear !== 2027 || !near(path1[1].annual, want2027, 1e-6) || path1[2].taxYear !== 2028 || !near(path1[2].annual, want2028, 1e-6)
+        || !near(path1[6].annual, want2028, 1e-6) || !(want2028 < want2027)) failures.push(`Tax rules: tax path for a Florida resident closing in 2026 is wrong (${JSON.stringify(path1)})`);
+      const path2 = await lender.evaluate((r) => flTaxPath({ price: 400000, closeYear: 2027, residentBy2026: false, years: 5, ...r }), ST_PETE_2026);
+      const newcomer = referenceFlTax({ ...ST_PETE_2026, assessed: 400000, homestead: true, taxYear: 2028, residentBy2026: false, exemptionYear: 1 }).annual;
+      if (!path2 || path2.length !== 5 || path2[0].taxYear !== 2028 || path2[0].whose !== 'buyer' || !path2.slice(0, 4).every((y) => near(y.annual, newcomer, 1e-6))
+        || path2[4].taxYear !== 2032 || !near(path2[4].annual, want2028, 1e-6)) failures.push(`Tax rules: tax path for someone new to Florida closing in 2027 is wrong (${JSON.stringify(path2)})`);
+      const noRates = await lender.evaluate(() => flTaxPath({ price: 400000, closeYear: 2026, totalMills: 19.8345, schoolMills: 25 }));
+      if (noRates !== null) failures.push('Tax rules: a tax path with bad rates should give no answer');
+
+      /* 7. None of this touches the payment: the estimate is still (price − $50,000) × the county rate */
+      const pay = await lender.evaluate(() => calcAll({ income: 9000, otherDebts: 0, rate: 6.5, loanType: 'CONV', purchasePrice: 400000, downPct: 20, termYears: 30,
+        countyMillRate: 17.43, homestead: true, ficoVal: 760 }).monthlyTax);
+      if (!near(pay, (400000 - 50000) * 17.43 / 1000 / 12, 1e-9)) failures.push(`Tax rules: the payment's tax estimate changed (now ${pay}) — it must stay (price − $50,000) × county rate until Chris switches the new rules on`);
+    }
   }
 
   /* W. S5 short links, tested as the REAL site (christoclose.github.io) with a stand-in Worker */
