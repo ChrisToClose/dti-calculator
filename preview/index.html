@@ -1156,7 +1156,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   .field-row { grid-template-columns: 1fr; }
   .loan-type-group { flex-wrap: wrap; }
   .loan-btn { min-width: calc(50% - 5px); }
-  .setup-header { flex-wrap: wrap; }
+  /* ZOOM1 (header): the row that holds the title, the version and the yellow LENDER ONLY badge is
+     .setup-header-inner. The old rule here named the outer box (.setup-header), which is not the row, so it
+     never did anything: on the smallest phones (320px wide) the three pieces could not fit side by side and
+     the badge was pushed past the right edge of the screen. Now the badge drops onto its own line under the
+     title whenever the row is too narrow. Wider phones (about 345px and up) look exactly as before. */
+  .setup-header-inner { flex-wrap: wrap; row-gap: 6px; }
   .setup-header-badge { margin-left: 0; margin-top: 4px; }
 }
 </style>
@@ -2423,7 +2428,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.46.0',
+  version: '8.46.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',

@@ -39,7 +39,8 @@
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
-        never scrolls sideways at 320–430 wide; desktop text sizes are unchanged
+        never scrolls sideways at 320–430 wide (lender header badge included); desktop text sizes are unchanged.
+        Measured with the same fonts on every test machine (the page's own title fonts + DejaVu Sans)
      W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
         D3 Option B: Share + Save send the link the page came from; shares of shares work; links not from Chris can't Save/Share;
         lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
@@ -746,8 +747,28 @@ async function readScreen(page, pattern) {
   }
 
   /* PH. Phones (ZOOM1, Nov 16, 2026). An iPhone zooms the whole page in when you tap a box whose text is under
-        16px, and leaves it zoomed: the right edge and the round ? / dark-mode buttons end up off the screen. */
+        16px, and leaves it zoomed: the right edge and the round ? / dark-mode buttons end up off the screen.
+        SAME FONTS ON EVERY TEST MACHINE: how wide a row is depends on the font, and the first version of this
+        check used whatever font the machine happened to have — it passed on one computer and failed on GitHub's
+        (same page, wider font: the yellow LENDER ONLY badge ran 8px off a 320px screen). So the page is opened
+        as a website on this computer (http://localhost — nothing leaves the machine), which lets its own title
+        fonts load the way they do for a client, and ordinary text is set in DejaVu Sans, the widest of the
+        standard system fonts: a row that fits in it also fits in an iPhone's, an Android's or a Windows PC's
+        own (narrower) font. */
   {
+    const PH_SITE = 'http://localhost/dti-calculator/' + PAGE_FILE.split(path.sep).join('/').replace(/index\.html$/, '');   // exactly the copy under test
+    const sameFonts = () => {   // runs before the page draws: ordinary text ('Segoe UI', system-ui, …) becomes DejaVu Sans
+      [["local('DejaVu Sans')", '100 500'], ["local('DejaVu Sans Bold')", '600 900']].forEach(([src, weight]) => {
+        const f = new FontFace('Segoe UI', src, { weight }); document.fonts.add(f); f.load().catch(() => {});
+      });
+    };
+    const fontsUsed = async () => {   // load every font the page declares (and the DejaVu stand-in) BEFORE anything is measured — no racing the browser
+      const faces = Array.from(document.fonts);
+      await Promise.all(faces.map((f) => f.load().catch(() => null)));
+      await document.fonts.ready;
+      const mine = (f) => /Segoe UI/.test(f.family);
+      return { text: faces.filter(mine).map((f) => f.status), site: faces.filter((f) => !mine(f)).map((f) => f.status) };
+    };
     const look = () => {
       const typed = (e) => !['range', 'checkbox', 'radio', 'hidden', 'button', 'submit', 'file'].includes(e.type);
       const W = document.documentElement.clientWidth;
@@ -762,23 +783,41 @@ async function readScreen(page, pattern) {
         Array.from(row.children).forEach((k) => { const kr = k.getBoundingClientRect(); if (kr.width > 0 && kr.right > inner + 0.6) out.push(`"${(k.id || k.textContent || k.tagName).trim().slice(0, 24)}" sticks out of its row by ${Math.round(kr.right - inner)}px`); });
         if (rr.right > W + 0.6) out.push(`the row of ${e.id} runs ${Math.round(rr.right - W)}px off the screen`);
       });
-      if (document.documentElement.scrollWidth > W) out.push(`the page scrolls sideways (${document.documentElement.scrollWidth}px wide on a ${W}px screen)`);
+      if (document.documentElement.scrollWidth > W) {
+        /* say WHAT runs past the right edge, so a red X names the culprit */
+        const past = Array.from(document.querySelectorAll('body *')).filter((k) => { const kr = k.getBoundingClientRect(); return kr.width > 0 && kr.height > 0 && kr.left < W && kr.right > W + 0.6 && getComputedStyle(k).position !== 'fixed'; });
+        const who = past.filter((k) => !past.some((o) => o !== k && k.contains(o))).slice(0, 4).map((k) => `"${(k.id || k.textContent || k.tagName).trim().replace(/\s+/g, ' ').slice(0, 24)}" by ${Math.round(k.getBoundingClientRect().right - W)}px`);
+        out.push(`the page scrolls sideways (${document.documentElement.scrollWidth}px wide on a ${W}px screen)` + (who.length ? ` — past the right edge: ${who.join(', ')}` : ''));
+      }
       return { touch: matchMedia('(any-pointer: coarse)').matches, small, out: Array.from(new Set(out)) };
     };
     for (const width of [320, 360, 390, 430]) {
       const phone = await browser.newContext({ viewport: { width, height: 800 }, isMobile: true, hasTouch: true, timezoneId: 'America/New_York', locale: 'en-US' });
-      await phone.route('**/*', (r) => (r.request().url().startsWith('file:') ? r.continue() : r.abort()));
+      await phone.route('**/*', (r) => {   // this computer plays the website: the page and its fonts come from this folder, nothing else is reachable
+        const u = new URL(r.request().url());
+        if (u.host !== 'localhost' || !u.pathname.startsWith('/dti-calculator/')) return r.abort();
+        let rel = decodeURIComponent(u.pathname.slice('/dti-calculator/'.length)); if (rel === '' || rel.endsWith('/')) rel += 'index.html';
+        const fp = path.join(ROOT, rel);
+        return fp.startsWith(ROOT + path.sep) && fs.existsSync(fp) && fs.statSync(fp).isFile() ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' });
+      });
+      await phone.addInitScript(sameFonts);
       const pLender = await phone.newPage();
-      await pLender.goto(PAGE);
+      await pLender.goto(PH_SITE);
       await pLender.waitForFunction(() => typeof calcAll === 'function' && typeof S === 'object');
       const url = await pLender.evaluate(() => { S.clientName = 'Test'; S.income = 9000; S.otherDebts = 500; S.purchasePrice = 400000; S.rate = 6.5; setLocation('Pinellas', COUNTIES['Pinellas']); refreshAll(); return buildClientUrl(); });
       await pLender.evaluate(() => document.querySelectorAll('#setup-page .pencil-btn').forEach((b) => b.click()));   // open every "enter your own amount" box
+      const LF = await pLender.evaluate(fontsUsed);
       const L = await pLender.evaluate(look);
       const pClient = await phone.newPage();
       await pClient.goto(url);
       await pClient.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
       await pClient.evaluate(() => ['client-price-pencil', 'client-ins-pencil', 'client-tax-pencil', 'tax-lookup-toggle'].forEach((id) => document.getElementById(id).click()));
+      const CF = await pClient.evaluate(fontsUsed);
       const C = await pClient.evaluate(look);
+      for (const [where, F] of [['lender', LF], ['client', CF]]) {
+        if (F.text.length !== 2 || F.text.some((st) => st !== 'loaded')) failures.push(`Phones (${width}px), ${where} screen: this test machine could not set ordinary text in DejaVu Sans (${F.text.join(', ') || 'font not found'}), so the phone widths can't be trusted`);
+        if (!F.site.length || F.site.some((st) => st !== 'loaded')) failures.push(`Phones (${width}px), ${where} screen: the page's own title fonts did not all load in the test (${F.site.filter((st) => st !== 'loaded').length} of ${F.site.length} missing), so the phone widths are not the ones a client sees`);
+      }
       if (!L.touch || !C.touch) failures.push(`Phones: the test browser is not acting as a touch screen at ${width}px, so the phone checks mean nothing`);
       if (L.small.length) failures.push(`Phones (${width}px), lender screen: an iPhone zooms in and stays zoomed for boxes under 16px — ${L.small.join(', ')}`);
       if (C.small.length) failures.push(`Phones (${width}px), client screen: an iPhone zooms in and stays zoomed for boxes under 16px — ${C.small.join(', ')}`);
