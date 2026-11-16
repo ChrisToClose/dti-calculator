@@ -348,11 +348,17 @@ async function post(env, path, body) {
 
 /* ── 17. D3 Option B (Chris, Nov 14): Save Scenario + client-made links only from a link Chris made ── */
 {
-  check('Option B switch is in the Worker', /const LINK_REQUIRED = (true|false);/.test(src));
-  /* "strict" = this same Worker file with the switch ON, so the rule is tested before and after it goes live */
+  const SWITCH = /const LINK_REQUIRED = (true|false);/;
+  check('Option B switch is in the Worker', SWITCH.test(src));
+  check('Option B is switched ON (the live page, v8.45.0 on, sends its link)', LINK_REQUIRED_NOW);
+  /* "strict" = this same Worker file with the switch ON; "lenient" = the same file with it OFF
+     (the emergency off-switch). Both are tested whichever way the real switch is set. */
   const tmp2 = path.join(path.dirname(tmp), 'worker-strict.mjs');
-  fs.writeFileSync(tmp2, src.replace('const LINK_REQUIRED = false;', 'const LINK_REQUIRED = true;'));
+  fs.writeFileSync(tmp2, src.replace(SWITCH, 'const LINK_REQUIRED = true;'));
   const strict = (await import(pathToFileURL(tmp2).href)).default;
+  const tmp3 = path.join(path.dirname(tmp), 'worker-lenient.mjs');
+  fs.writeFileSync(tmp3, src.replace(SWITCH, 'const LINK_REQUIRED = false;'));
+  const lenient = (await import(pathToFileURL(tmp3).href)).default;
   const postTo = async (w, env, path_, body) => {
     const r = await w.fetch(new Request('https://w.example' + path_, { method: 'POST', headers: { Origin: ORIGIN, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.4' }, body: JSON.stringify(body) }), env, {});
     return { status: r.status, body: await r.json().catch(() => ({})) };
@@ -431,19 +437,30 @@ async function post(env, path, body) {
   r = await send(env, params('ob7@example.com'), 'tok', LENDER_LINK, strict);
   check('B: a link Chris made that is past its 90 days is refused even if still stored', r.status === 403 && emailsSent === 0, JSON.stringify(r));
 
-  /* Until the switch is on, the live page (which sends no link yet) must keep working */
-  if (!LINK_REQUIRED_NOW) {
+  /* The emergency off-switch: with the switch OFF, a page that sends no link works again,
+     and a link that IS sent is still checked */
+  {
     env = baseEnv(); env.LENDER_PIN = 'pin'; seedLender(env); emailsSent = 0;
-    r = await send(env, params('ob8@example.com'), 'tok', null);
-    check('B off: Save without a link still works (today\'s live page)', r.status === 200 && emailsSent === 1, JSON.stringify(r));
-    r = await send(env, params('ob9@example.com'), 'tok', 'Nope123456');
+    r = await send(env, params('ob8@example.com'), 'tok', null, lenient);
+    check('B off: Save without a link works', r.status === 200 && emailsSent === 1, JSON.stringify(r));
+    r = await send(env, params('ob9@example.com'), 'tok', 'Nope123456', lenient);
     check('B off: a link that IS sent is still checked', r.status === 403 && r.body.code === 'link' && emailsSent === 1, JSON.stringify(r));
-    r = await post(env, '/link-create', { params: P, turnstileToken: 'tok' });
-    check('B off: Share without a link still works (today\'s live page)', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).root === undefined, JSON.stringify(r));
-    r = await post(env, '/link-create', { params: P, turnstileToken: 'tok', from: LENDER_LINK });
-    check('B off: a new page that sends its link already gets the root', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).root === LENDER_LINK, JSON.stringify(r));
+    r = await postTo(lenient, env, '/link-create', { params: P, turnstileToken: 'tok' });
+    check('B off: Share without a link works', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).root === undefined, JSON.stringify(r));
+    r = await postTo(lenient, env, '/link-create', { params: P, turnstileToken: 'tok', from: LENDER_LINK });
+    check('B off: a page that sends its link still gets the root', r.status === 200 && JSON.parse(env.LOOKUP_KV.m.get('link:' + r.body.id)).root === LENDER_LINK, JSON.stringify(r));
   }
-  console.log('Link from Chris required (Option B): ' + (LINK_REQUIRED_NOW ? 'YES' : 'NO (transition — switch on after the new page is published)'));
+  /* And the Worker exactly as it is deployed behaves like "strict" */
+  if (LINK_REQUIRED_NOW) {
+    env = baseEnv(); env.LENDER_PIN = 'pin'; seedLender(env); emailsSent = 0;
+    r = await send(env, params('ob10@example.com'), 'tok', null);
+    check('B on (as deployed): Save without a link is refused with "please refresh"', r.status === 403 && r.body.code === 'refresh' && emailsSent === 0, JSON.stringify(r));
+    r = await post(env, '/link-create', { params: P, turnstileToken: 'tok' });
+    check('B on (as deployed): Share without a link is refused with "please refresh"', r.status === 403 && r.body.code === 'refresh', JSON.stringify(r));
+    r = await send(env, params('ob11@example.com'), 'tok', LENDER_LINK);
+    check('B on (as deployed): Save from a link Chris made sends the email', r.status === 200 && emailsSent === 1, JSON.stringify(r));
+  }
+  console.log('Link from Chris required (Option B): ' + (LINK_REQUIRED_NOW ? 'YES' : 'NO (emergency off-switch is set)'));
 }
 
 if (failures.length) {

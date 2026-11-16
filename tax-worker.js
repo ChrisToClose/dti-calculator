@@ -78,10 +78,12 @@ const LINK_ID_RE = /^[A-Za-z0-9]{10}$/;
 // (Share, the PDF's QR code) only work from a link Chris made with his PIN, or from
 // a link that traces back to one. The page sends the link it was opened with as "from".
 // A client-made link remembers Chris's link as its "root" and ends when that link ends.
-// While false, a request WITHOUT "from" is still accepted (so the live page keeps
-// working until the new page is published); a "from" that IS sent is always checked.
-// Set true once the live page sends "from".
-const LINK_REQUIRED = false;
+// SWITCHED ON Nov 16, 2026, after page v8.45.0 (which sends "from") went live and Chris's
+// real-phone Share test passed. A request WITHOUT "from" (an old page still open, or
+// someone calling this Worker directly) is now refused with "please refresh".
+// Emergency off-switch: set this back to false — requests without "from" are accepted
+// again, and a "from" that IS sent is still checked.
+const LINK_REQUIRED = true;
 const LINK_REFRESH_MSG = 'Please refresh this page and try again.';
 const LINK_NOT_TRUSTED_MSG = 'Saving and sharing aren\u2019t available from this link. Please ask Chris for a fresh link.';
 
