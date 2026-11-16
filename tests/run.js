@@ -37,6 +37,9 @@
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
      B7. Every Florida ZIP finds its county (Census list); county-line ZIPs ask which county
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
+     PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
+        and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
+        never scrolls sideways at 320–430 wide; desktop text sizes are unchanged
      W. Short client links (S5): lender PIN, short link = same screen, Share + PDF QR short, long links + unknown ids expired;
         D3 Option B: Share + Save send the link the page came from; shares of shares work; links not from Chris can't Save/Share;
         lender lock screen (plain visit without the PIN sees no setup; wrong/old PIN stays locked)
@@ -740,6 +743,53 @@ async function readScreen(page, pattern) {
       else if (!fs.existsSync(path.join(ROOT, 'fonts', f + '.woff2'))) failures.push(`Fonts: preloaded ${f} is missing from the fonts folder`);
     }
     if (/font-display:\s*swap/.test(html)) failures.push('Fonts: font-display: swap makes the title jump from a backup font — use block');
+  }
+
+  /* PH. Phones (ZOOM1, Nov 16, 2026). An iPhone zooms the whole page in when you tap a box whose text is under
+        16px, and leaves it zoomed: the right edge and the round ? / dark-mode buttons end up off the screen. */
+  {
+    const look = () => {
+      const typed = (e) => !['range', 'checkbox', 'radio', 'hidden', 'button', 'submit', 'file'].includes(e.type);
+      const W = document.documentElement.clientWidth;
+      const small = [], out = [];
+      document.querySelectorAll('input, select, textarea').forEach((e) => {
+        if (!typed(e)) return;
+        const px = parseFloat(getComputedStyle(e).fontSize);
+        if (!(px >= 16)) small.push(`${e.id || e.name || e.tagName} (${px}px)`);
+        const r = e.getBoundingClientRect(); if (!(r.width > 0)) return;
+        const row = e.parentElement, rr = row.getBoundingClientRect(), cs = getComputedStyle(row);
+        const inner = rr.right - parseFloat(cs.paddingRight) - parseFloat(cs.borderRightWidth);
+        Array.from(row.children).forEach((k) => { const kr = k.getBoundingClientRect(); if (kr.width > 0 && kr.right > inner + 0.6) out.push(`"${(k.id || k.textContent || k.tagName).trim().slice(0, 24)}" sticks out of its row by ${Math.round(kr.right - inner)}px`); });
+        if (rr.right > W + 0.6) out.push(`the row of ${e.id} runs ${Math.round(rr.right - W)}px off the screen`);
+      });
+      if (document.documentElement.scrollWidth > W) out.push(`the page scrolls sideways (${document.documentElement.scrollWidth}px wide on a ${W}px screen)`);
+      return { touch: matchMedia('(any-pointer: coarse)').matches, small, out: Array.from(new Set(out)) };
+    };
+    for (const width of [320, 360, 390, 430]) {
+      const phone = await browser.newContext({ viewport: { width, height: 800 }, isMobile: true, hasTouch: true, timezoneId: 'America/New_York', locale: 'en-US' });
+      await phone.route('**/*', (r) => (r.request().url().startsWith('file:') ? r.continue() : r.abort()));
+      const pLender = await phone.newPage();
+      await pLender.goto(PAGE);
+      await pLender.waitForFunction(() => typeof calcAll === 'function' && typeof S === 'object');
+      const url = await pLender.evaluate(() => { S.clientName = 'Test'; S.income = 9000; S.otherDebts = 500; S.purchasePrice = 400000; S.rate = 6.5; setLocation('Pinellas', COUNTIES['Pinellas']); refreshAll(); return buildClientUrl(); });
+      await pLender.evaluate(() => document.querySelectorAll('#setup-page .pencil-btn').forEach((b) => b.click()));   // open every "enter your own amount" box
+      const L = await pLender.evaluate(look);
+      const pClient = await phone.newPage();
+      await pClient.goto(url);
+      await pClient.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+      await pClient.evaluate(() => ['client-price-pencil', 'client-ins-pencil', 'client-tax-pencil', 'tax-lookup-toggle'].forEach((id) => document.getElementById(id).click()));
+      const C = await pClient.evaluate(look);
+      if (!L.touch || !C.touch) failures.push(`Phones: the test browser is not acting as a touch screen at ${width}px, so the phone checks mean nothing`);
+      if (L.small.length) failures.push(`Phones (${width}px), lender screen: an iPhone zooms in and stays zoomed for boxes under 16px — ${L.small.join(', ')}`);
+      if (C.small.length) failures.push(`Phones (${width}px), client screen: an iPhone zooms in and stays zoomed for boxes under 16px — ${C.small.join(', ')}`);
+      if (L.out.length) failures.push(`Phones (${width}px), lender screen: ${L.out.join('; ')}`);
+      if (C.out.length) failures.push(`Phones (${width}px), client screen (pencils + tax lookup open): ${C.out.join('; ')}`);
+      await phone.close();
+    }
+    /* Desktop (no touch screen) keeps the sizes it has always had */
+    const desk = await lender.evaluate(() => ({ touch: matchMedia('(any-pointer: coarse)').matches,
+      income: getComputedStyle(document.getElementById('income')).fontSize, email: getComputedStyle(document.getElementById('save-email')).fontSize, address: getComputedStyle(document.getElementById('realie-address')).fontSize }));
+    if (desk.touch || desk.income !== '15px' || desk.email !== '15px' || desk.address !== '14px') failures.push(`Phones: desktop text boxes should be unchanged (income 15px, email 15px, tax-lookup address 14px) — got ${JSON.stringify(desk)}`);
   }
 
   /* W. S5 short links, tested as the REAL site (christoclose.github.io) with a stand-in Worker */
