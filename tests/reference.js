@@ -107,4 +107,45 @@ function reference(s) {
   };
 }
 
-module.exports = { reference, RULES };
+/* ------------------------------------------------------------
+   INDEPENDENT FLORIDA PROPERTY TAX (TAX1a) — written separately from
+   flPropertyTax / flHomesteadExemptions in the page.
+   Rules: FL Dept. of Revenue (2026 amounts) and Amendment 3, CS/HJR 1F
+   (2027 on). See the notes above FL_TAX in the page.
+   ------------------------------------------------------------ */
+const FL = {
+  first: 25000,                 // exempt from every tax
+  slice2026: [50000, 76411],    // 2026: this slice of value is also exempt from NON-school taxes
+  newRulesFrom: 2027,
+  cap2027: 150000,              // non-school, Florida resident by Dec 31, 2026
+  capLater: 250000,             // 2028 on
+  newcomerCap: 50000,           // moved to Florida in 2027 or later: first four years
+  newcomerYears: 4,
+};
+
+function referenceFlTax(o) {
+  const assessed = o.assessed, totalMills = o.totalMills, schoolMills = o.schoolMills;
+  if (!(assessed >= 0) || !(totalMills > 0) || !(schoolMills >= 0) || schoolMills > totalMills) return null;
+  let schoolBase = assessed, otherBase = assessed;
+  if (o.homestead) {
+    // School taxes: only the first $25,000 is exempt, in every year.
+    schoolBase = assessed > FL.first ? assessed - FL.first : 0;
+    if (o.taxYear < FL.newRulesFrom) {
+      // Other taxes: the first $25,000, plus the slice of value between $50,000 and $76,411.
+      const [lo, hi] = FL.slice2026;
+      const slice = assessed <= lo ? 0 : assessed >= hi ? hi - lo : assessed - lo;
+      otherBase = schoolBase - slice;
+    } else {
+      let cap = o.taxYear === 2027 ? FL.cap2027 : FL.capLater;
+      if (o.residentBy2026 === false) cap = (o.exemptionYear || 1) > FL.newcomerYears ? FL.capLater : FL.newcomerCap;
+      otherBase = assessed > cap ? assessed - cap : 0;
+    }
+  }
+  const schoolTax = schoolBase * schoolMills / 1000;
+  const otherTax = otherBase * (totalMills - schoolMills) / 1000;
+  const flat = o.nonAdValorem > 0 ? o.nonAdValorem : 0;
+  const annual = schoolTax + otherTax + flat;
+  return { schoolTaxable: schoolBase, otherTaxable: otherBase, schoolTax, otherTax, annual, monthly: annual / 12 };
+}
+
+module.exports = { reference, RULES, referenceFlTax };
