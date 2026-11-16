@@ -22,7 +22,10 @@ on:
 
 jobs:
   math-tests:
-    runs-on: ubuntu-latest
+    # Pinned (CI1, Nov 2026): GitHub moved "ubuntu-latest" to Ubuntu 26, where our test
+    # browser tool (Playwright 1.56.0) cannot install. 24.04 is what passed on Nov 11.
+    # Only move this together with a Playwright update (1.61+ supports Ubuntu 26.04).
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

@@ -18,7 +18,8 @@ permissions:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    # Pinned (CI1, Nov 2026): same machine type as math-tests.yml — see the note there.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
