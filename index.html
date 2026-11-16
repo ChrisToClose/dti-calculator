@@ -414,6 +414,17 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 input, select, textarea, button { font-family: inherit; font-size: inherit; }
+/* ZOOM1 (Nov 16, 2026): an iPhone zooms the whole page in when you tap a box whose text is
+   smaller than 16px, and stays zoomed — the right edge and the round ? / dark-mode buttons
+   end up off the screen. On touch screens every box you can type in is 16px. Needs
+   !important because many boxes set their own size inline. Desktop is not affected. */
+@media (any-pointer: coarse) {
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="file"]):not([type="hidden"]),
+  select, textarea { font-size: 16px !important; }
+  /* the grey hint in the tax-lookup address box stays its old size so the whole hint still fits;
+     what the client types is 16px, which is what matters for the zoom */
+  #realie-address::placeholder { font-size: 14px; }
+}
 button { cursor: pointer; border: none; outline: none; }
 input[type="number"]:focus,
 input[type="text"]:focus,
@@ -914,8 +925,10 @@ body.dark-mode .tax-ins-val { color: #fff; }
 
 .override-input-wrap { display: none; margin-top: 8px; }
 .override-input-wrap.visible { display: flex; gap: 8px; align-items: center; }
+/* ZOOM1: on small phones the box shrinks to fit, so "× Clear" never gets pushed off the screen */
+.override-input-wrap .prefix-wrap { min-width: 0; }
 .override-input-wrap input {
-  flex: 1; height: 38px;
+  flex: 1; min-width: 0; max-width: 100%; height: 38px;
   border: 1.5px solid var(--teal);
   border-radius: var(--radius-sm);
   background: var(--surface); color: var(--text);
@@ -1143,7 +1156,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   .field-row { grid-template-columns: 1fr; }
   .loan-type-group { flex-wrap: wrap; }
   .loan-btn { min-width: calc(50% - 5px); }
-  .setup-header { flex-wrap: wrap; }
+  /* ZOOM1 (header): the row that holds the title, the version and the yellow LENDER ONLY badge is
+     .setup-header-inner. The old rule here named the outer box (.setup-header), which is not the row, so it
+     never did anything: on the smallest phones (320px wide) the three pieces could not fit side by side and
+     the badge was pushed past the right edge of the screen. Now the badge drops onto its own line under the
+     title whenever the row is too narrow. Wider phones (about 345px and up) look exactly as before. */
+  .setup-header-inner { flex-wrap: wrap; row-gap: 6px; }
   .setup-header-badge { margin-left: 0; margin-top: 4px; }
 }
 </style>
@@ -2157,8 +2175,8 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
           <div style="display:flex;gap:8px;margin-bottom:8px;">
             <input type="text" id="realie-city" placeholder="City"
-              style="flex:1;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box;">
-            <select id="realie-state" style="width:80px;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 6px;background:var(--surface);color:var(--text);font-size:14px;">
+              style="flex:1;min-width:0;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box;">
+            <select id="realie-state" style="flex:none;width:80px;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 6px;background:var(--surface);color:var(--text);font-size:14px;">
               <option value="FL" selected>FL</option>
               <option value="GA">GA</option>
               <option value="AL">AL</option>
@@ -2174,7 +2192,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           </div>
 
           <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <select id="realie-county" style="flex:1;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;">
+            <select id="realie-county" style="flex:1;min-width:0;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;">
               <option value="">Select County…</option>
               <option value="Pinellas">Pinellas</option>
               <option value="Hillsborough">Hillsborough</option>
@@ -2182,7 +2200,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
               <option value="Manatee">Manatee</option>
             </select>
             <input type="text" id="realie-unit" placeholder="Unit / Apt # (optional)"
-              style="width:160px;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box;">
+              style="flex:1;min-width:0;max-width:160px;height:42px;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 10px;background:var(--surface);color:var(--text);font-size:14px;box-sizing:border-box;">
           </div>
 
           <button onclick="lookupRealieAddress()" id="realie-lookup-btn"
@@ -2410,7 +2428,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.45.0',
+  version: '8.46.1',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
