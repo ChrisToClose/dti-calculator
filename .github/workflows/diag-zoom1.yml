@@ -1,0 +1,21 @@
+# TEMPORARY (branch diag-zoom1 only, never merged): prints which element makes the lender
+# screen wider than a 320px phone on GitHub's test machine. Changes nothing.
+name: Diagnostic (temporary) - phone width
+on:
+  push:
+    branches: [diag-zoom1]
+jobs:
+  diag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install test tools
+        run: npm ci --no-audit --no-fund
+      - name: Install headless browser
+        run: npx playwright install --with-deps chromium
+      - name: Measure the phone widths
+        run: node diag/diag-zoom1.js
