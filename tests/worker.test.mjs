@@ -468,6 +468,42 @@ async function post(env, path, body) {
   console.log('Link from Chris required (Option B): ' + (LINK_REQUIRED_NOW ? 'YES' : 'NO (emergency off-switch is set)'));
 }
 
+/* 20. Saved clients (Chris, Nov 16, 2026): up to 5, behind the PIN, only the client's profile kept */
+{
+  const env = baseEnv(); env.LOOKUP_KV = fakeKV(); env.LENDER_PIN = 'correct horse 42';
+  const PIN = 'correct horse 42';
+  let r = await post(env, '/clients', { pin: 'wrong', action: 'list' });
+  check('saved clients: wrong PIN refused', r.status === 401 && !r.body.clients, JSON.stringify(r));
+  r = await post(env, '/clients', { action: 'list' });
+  check('saved clients: no PIN refused', r.status === 401, JSON.stringify(r));
+  r = await post(env, '/clients', { pin: PIN, action: 'list' });
+  check('saved clients: empty list to start, 5 spots', r.status === 200 && r.body.clients.length === 0 && r.body.slots === 5, JSON.stringify(r));
+  const sarah = { nm: 'Sarah', nm2: 'Mike', inc: 9000, debts: [400, 24, 80, 119, -5, 'x'], lt: 'FHA', tm: 30, rt: 6.375, fco: 700, ren: false,
+                  email: 'leak@example.com', address: '1 Main St', tax: 999, evil: '<script>' };
+  r = await post(env, '/clients', { pin: PIN, action: 'save', client: sarah });
+  const saved = r.body.clients && r.body.clients[0];
+  check('saved clients: save keeps name, co-borrower, income, each debt, loan type, rate, credit score', r.status === 200 && saved.nm === 'Sarah' && saved.nm2 === 'Mike' && saved.inc === 9000 && saved.debts.join(',') === '400,24,80,119' && saved.lt === 'FHA' && saved.rt === 6.375 && saved.fco === 700 && /^[A-Za-z0-9]{8}$/.test(saved.id), JSON.stringify(r));
+  check('saved clients: anything else (email, address, tax, junk) is NOT stored', saved && saved.email === undefined && saved.address === undefined && saved.tax === undefined && saved.evil === undefined && !env.LOOKUP_KV.m.get('lo-clients').includes('leak@'), JSON.stringify(saved));
+  r = await post(env, '/clients', { pin: PIN, action: 'save', id: saved.id, client: Object.assign({}, sarah, { inc: 9500, debts: [400, 30] }) });
+  check('saved clients: saving with the same id updates, not adds', r.status === 200 && r.body.clients.length === 1 && r.body.clients[0].inc === 9500 && r.body.clients[0].debts.join(',') === '400,30', JSON.stringify(r.body));
+  r = await post(env, '/clients', { pin: PIN, action: 'save', client: { inc: 5000 } });
+  check('saved clients: a client with no name is refused', r.status === 400, JSON.stringify(r));
+  r = await post(env, '/clients', { pin: PIN, action: 'save', client: { nm: '<b>Bob</b>', inc: 'lots', rt: 99, lt: 'JUMBO', tm: 7, fco: 1 } });
+  const bob = r.body.clients && r.body.clients[1];
+  check('saved clients: bad values are cleaned (no tags, 0 income, no rate, CONV, 30 yr, 760)', bob && bob.nm === 'bBob/b' && bob.inc === 0 && bob.rt === null && bob.lt === 'CONV' && bob.tm === 30 && bob.fco === 760, JSON.stringify(bob));
+  for (const n of ['C3', 'C4', 'C5']) await post(env, '/clients', { pin: PIN, action: 'save', client: { nm: n, inc: 1 } });
+  r = await post(env, '/clients', { pin: PIN, action: 'save', client: { nm: 'Sixth', inc: 1 } });
+  check('saved clients: a 6th client is refused with "spots are full"', r.status === 409 && r.body.full === true && /full/.test(r.body.error), JSON.stringify(r));
+  r = await post(env, '/clients', { pin: PIN, action: 'delete', id: saved.id });
+  check('saved clients: delete removes just that one', r.status === 200 && r.body.clients.length === 4 && !r.body.clients.some((c) => c.id === saved.id), JSON.stringify(r.body));
+  r = await post(env, '/clients', { pin: PIN, action: 'save', client: { nm: 'Sixth', inc: 1 } });
+  check('saved clients: after a delete there is room again', r.status === 200 && r.body.clients.length === 5, JSON.stringify(r.body));
+  r = await post(env, '/clients', { pin: PIN, action: 'nuke' });
+  check('saved clients: unknown action refused', r.status === 400);
+  for (let i = 0; i < 12; i++) r = await post(env, '/clients', { pin: 'guess' + i, action: 'list' });
+  check('saved clients: guessing the PIN locks out for the hour (even the right PIN)', r.status === 429 && (await post(env, '/clients', { pin: PIN, action: 'list' })).status === 429, JSON.stringify(r));
+}
+
 if (failures.length) {
   console.log(`\nWORKER TESTS FAILED — ${failures.length}:`);
   failures.forEach((f) => console.log('  ✗ ' + f));
