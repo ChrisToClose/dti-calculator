@@ -37,6 +37,7 @@
      T. Floating ? / night-day buttons never cover the payment card; header ? on small phones
      B7. Every Florida ZIP finds its county (Census list); county-line ZIPs ask which county
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
+     DB. Debts: one box per debt (+ Add debt, ×, Enter adds a box); they add up; the link carries only the total
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -414,6 +415,50 @@ async function readScreen(page, pattern) {
   if (M.afterNo !== '' || !M.askHiddenAfterNo) failures.push(`Q5: "No, I'll fix the address" must not fill anything (${JSON.stringify(M)})`);
   if (M.afterYes !== '400.00') failures.push(`Q5: "Yes, use this property" should fill 400.00/mo, got "${M.afterYes}"`);
   if (M.exactFill !== '400.00' || !M.askHiddenForExact) failures.push(`Q5: an exact match should fill straight away, got "${M.exactFill}"`);
+
+  /* DB. Debts, one box per debt (Chris, Nov 16, 2026): type 400, 24, 80, 119 in their own boxes → $623 total;
+         change or remove one → the total follows; the link carries only the total. */
+  {
+    const D = await lender.evaluate(async () => {
+      if (!document.getElementById('debt-add') || typeof setDebtList !== 'function') return { missing: true };
+      const keep = S.debtList.slice();
+      const out = {};
+      const typeIn = (inp, v) => { inp.focus(); inp.value = v; inp.dispatchEvent(new Event('input', { bubbles: true })); inp.blur(); };
+      const boxes = () => Array.from(document.querySelectorAll('#debt-list .debt-input'));
+      setDebtList([]);
+      out.startBoxes = boxes().length; out.startRemoveHidden = getComputedStyle(document.querySelector('#debt-list .debt-remove')).visibility === 'hidden';
+      typeIn(boxes()[0], '400');
+      for (const v of ['24', '80', '119']) { document.getElementById('debt-add').click(); typeIn(boxes()[boxes().length - 1], v); }
+      out.total = S.otherDebts; out.list = S.debtList.join(','); out.text = document.getElementById('debt-total').textContent;
+      out.link = new URL(buildClientUrl()).searchParams.get('dbt');
+      typeIn(boxes()[1], '30');                       // the $24 debt went up to $30
+      out.changed = S.otherDebts;
+      boxes()[2].closest('.debt-row').querySelector('.debt-remove').click();   // pay off the $80 one
+      out.removed = S.otherDebts; out.removedList = S.debtList.join(',');
+      boxes()[0].closest('.debt-row').querySelector('.debt-remove').click();   // remove the first one: next moves up
+      out.firstRemoved = S.debtList.join(','); out.firstId = boxes()[0].id;
+      boxes()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      out.enterAdds = boxes().length;
+      setDebtList([100, 50.5]);
+      out.loaded = S.otherDebts + '|' + boxes().map((b) => b.value).join(',');
+      typeIn(boxes()[0], '-40'); out.negative = S.otherDebts;
+      setDebtList(keep.length ? keep : [0]);
+      return out;
+    });
+    if (D.missing) failures.push('Debts: the one-box-per-debt list (+ Add debt) is missing from the lender screen');
+    else {
+      if (D.startBoxes !== 1 || !D.startRemoveHidden) failures.push(`Debts: should start with one box and no × (${JSON.stringify(D)})`);
+      if (D.total !== 623 || D.list !== '400,24,80,119') failures.push(`Debts: 400 + 24 + 80 + 119 should total 623 (${JSON.stringify(D)})`);
+      if (D.text !== 'Total: $623/mo (4 debts)') failures.push(`Debts: total line should read "Total: $623/mo (4 debts)", got "${D.text}"`);
+      if (D.link !== '623') failures.push(`Debts: the client link should carry the total dbt=623, got ${D.link}`);
+      if (D.changed !== 629) failures.push(`Debts: changing one debt from 24 to 30 should give 629, got ${D.changed}`);
+      if (D.removed !== 549 || D.removedList !== '400,30,119') failures.push(`Debts: removing the 80 should give 549 (${D.removedList} = ${D.removed})`);
+      if (D.firstRemoved !== '30,119' || D.firstId !== 'other-debts') failures.push(`Debts: removing the first debt should leave 30,119 in boxes still starting with #other-debts (${D.firstRemoved}, ${D.firstId})`);
+      if (D.enterAdds !== 3) failures.push(`Debts: pressing Enter in a debt box should add a new box (got ${D.enterAdds} boxes)`);
+      if (D.loaded !== '150.5|100,50.5') failures.push(`Debts: loading [100, 50.5] should fill two boxes totalling 150.5, got ${D.loaded}`);
+      if (D.negative !== 50.5) failures.push(`Debts: a negative number must count as 0, got total ${D.negative}`);
+    }
+  }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the
          Save section — only when that box is empty or still holds an address filled this way. */
