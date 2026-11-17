@@ -39,6 +39,7 @@
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
      DB. Debts: one box per debt (+ Add debt, ×, Enter adds a box); they add up; the link carries only the total
      CB. Co-borrower: optional "Co-Borrower First Name" box; link carries nm2; text message + client welcome say "Sarah & Mike"
+     MC. My Clients: save / load / update / start new / remove (asks first) / 5 spots; only the profile is sent, with the PIN
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -499,6 +500,78 @@ async function readScreen(page, pattern) {
     if (!/for you, Mike!$/.test(W.coOnly)) failures.push(`Co-borrower: with only a co-borrower the welcome should say "…for you, Mike!", got "${W.coOnly}"`);
     if (/for you,/.test(W.none)) failures.push(`Co-borrower: with no names the welcome should be the generic one, got "${W.none}"`);
     if (evilTag) failures.push('Co-borrower: a co-borrower name from a link was put on the page as code (must be shown as plain text)');
+  }
+
+  /* MC. My Clients (Chris, Nov 16, 2026): up to 5 saved client profiles behind the PIN (Worker /clients, faked here) */
+  {
+    const M = await lender.evaluate(async () => {
+      if (!document.getElementById('my-clients-card') || typeof loadMyClients !== 'function') return { missing: true };
+      const realFetch = window.fetch; const sent = [];
+      let store = [], n = 0;
+      window.fetch = async (url, opt) => {
+        const b = JSON.parse(opt.body); sent.push(b);
+        let out;
+        if (!/\/clients$/.test(url)) out = { status: 404, body: {} };
+        else if (b.action === 'list') out = { status: 200, body: { clients: store, slots: 5 } };
+        else if (b.action === 'save') {
+          const i = b.id ? store.findIndex((c) => c.id === b.id) : -1;
+          if (i < 0 && store.length >= 5) out = { status: 409, body: { error: 'All 5 client spots are full. Remove one first.', full: true } };
+          else { const rec = Object.assign({ id: i >= 0 ? b.id : 'ID' + String(++n).padStart(6, '0') }, b.client); if (i >= 0) store[i] = rec; else store.push(rec); out = { status: 200, body: { clients: store, slots: 5, id: rec.id } }; }
+        } else if (b.action === 'delete') { store = store.filter((c) => c.id !== b.id); out = { status: 200, body: { clients: store, slots: 5 } }; }
+        return { status: out.status, json: async () => JSON.parse(JSON.stringify(out.body)) };
+      };
+      const type = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+      const names = () => Array.from(document.querySelectorAll('#mc-list .mc-name')).map((e) => e.textContent);
+      const screen = () => [S.clientName, S.coBorrowerName, S.income, S.debtList.join('+'), S.otherDebts, S.loanType, S.termYears, S.rate, S.ficoVal].join('|');
+      const out = {};
+      await loadMyClients();
+      out.empty = document.querySelector('#mc-list .mc-empty') ? 'empty' : 'not empty';
+      out.count0 = document.getElementById('mc-count').textContent;
+      type('client-name', 'Sarah'); type('co-borrower-name', 'Mike'); type('income', '9000'); setDebtList([400, 24, 80, 119]);
+      document.querySelector('.loan-btn[data-loan="FHA"]').click(); document.querySelector('.term-btn[data-term="15"]').click();
+      type('rate', '6.5'); const f = document.querySelector('input[name="fico"][value="700"]'); f.checked = true; f.dispatchEvent(new Event('change', { bubbles: true }));
+      out.before = screen();
+      document.getElementById('mc-save').click(); await new Promise((r) => setTimeout(r, 50));
+      const saveBody = sent.filter((b) => b.action === 'save')[0];
+      out.sentClient = saveBody && JSON.stringify(saveBody.client);
+      out.sentHasPin = saveBody && 'pin' in saveBody;
+      out.afterSave = names().join(','); out.saveLabel = document.getElementById('mc-save').textContent; out.msg = document.getElementById('mc-msg').textContent;
+      document.getElementById('mc-new').click();
+      out.cleared = screen();
+      document.querySelector('#mc-list .mc-load').click();
+      out.reloaded = screen();
+      type('income', '9500'); document.getElementById('mc-save').click(); await new Promise((r) => setTimeout(r, 50));
+      out.updatedCount = store.length; out.updatedIncome = store[0].inc;
+      document.getElementById('mc-new').click();
+      for (const nm of ['B', 'C', 'D', 'E']) { type('client-name', nm); document.getElementById('mc-save').click(); await new Promise((r) => setTimeout(r, 30)); document.getElementById('mc-new').click(); }
+      out.fullLabel = document.getElementById('mc-save').textContent; out.fullDisabled = document.getElementById('mc-save').disabled;
+      document.querySelector('#mc-list .mc-del').click();
+      out.confirmText = (document.querySelector('#mc-list .mc-confirm') || {}).textContent;
+      document.querySelector('#mc-list .mc-remove-no').click();
+      out.keptCount = names().length;
+      document.querySelector('#mc-list .mc-del').click(); document.querySelector('#mc-list .mc-remove-yes').click(); await new Promise((r) => setTimeout(r, 50));
+      out.afterDelete = names().join(',');
+      store.push({ id: 'IDevil01', nm: '<img src=x onerror=window.__mcHacked=1>', inc: 1, debts: [] }); await loadMyClients();
+      out.evil = !!document.querySelector('#mc-list img') || !!window.__mcHacked;
+      window.fetch = realFetch;
+      document.getElementById('mc-new').click(); MC.list = []; mcRender(); mcMsg('');
+      return out;
+    });
+    if (M.missing) failures.push('My Clients: the "My Clients" card is missing from the lender screen');
+    else {
+      const want = (k, v) => { if (M[k] !== v) failures.push(`My Clients: ${k} should be ${JSON.stringify(v)}, got ${JSON.stringify(M[k])}`); };
+      want('empty', 'empty'); want('count0', '0 of 5 spots');
+      want('before', 'Sarah|Mike|9000|400+24+80+119|623|FHA|15|6.5|700');
+      want('sentClient', JSON.stringify({ nm: 'Sarah', nm2: 'Mike', inc: 9000, debts: [400, 24, 80, 119], lt: 'FHA', tm: 15, rt: 6.5, fco: 700, ren: false, grn: 0, pit: 0 }));
+      want('sentHasPin', true);
+      want('afterSave', 'Sarah & Mike'); want('saveLabel', 'Update Sarah & Mike'); want('msg', 'Sarah & Mike saved.');
+      want('cleared', '||0|0|0|CONV|30|6.5|760');
+      want('reloaded', 'Sarah|Mike|9000|400+24+80+119|623|FHA|15|6.5|700');
+      want('updatedCount', 1); want('updatedIncome', 9500);
+      want('fullLabel', 'All 5 spots full'); want('fullDisabled', true);
+      want('confirmText', 'Remove Sarah & Mike?RemoveKeep'); want('keptCount', 5);
+      want('afterDelete', 'B,C,D,E'); want('evil', false);
+    }
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the

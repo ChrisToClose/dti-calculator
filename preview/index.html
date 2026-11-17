@@ -445,6 +445,29 @@ select:focus {
   pointer-events: none; z-index: 2; user-select: none;
 }
 .prefix-wrap input { padding-left: 26px !important; }
+/* My Clients (Nov 16, 2026) */
+.mc-count { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .04em; }
+.mc-list { display: flex; flex-direction: column; gap: 8px; }
+.mc-item { display: flex; align-items: stretch; gap: 6px; }
+.mc-load { flex: 1; min-width: 0; text-align: left; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; font: inherit; }
+.mc-load:hover { border-color: var(--teal); }
+.mc-item.active .mc-load { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(43,127,164,.25); }
+.mc-name { display: block; font-weight: 800; font-size: 15px; color: var(--navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.dark-mode .mc-name { color: #fff; }
+.mc-sub { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.mc-del { flex: none; width: 44px; border: 1.5px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+.mc-del:hover { color: var(--red); border-color: var(--red); }
+.mc-confirm { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1.5px solid var(--red); border-radius: 10px; font-size: 13px; font-weight: 700; }
+.mc-confirm span { flex: 1; min-width: 0; }
+.mc-confirm button { flex: none; padding: 8px 12px; border-radius: 8px; font: inherit; font-weight: 800; cursor: pointer; }
+.mc-msg { min-height: 18px; margin: 8px 0 4px; font-size: 13px; font-weight: 700; color: var(--text-muted); }
+.mc-msg.err { color: var(--red); }
+.mc-msg.ok { color: var(--green); }
+.mc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.mc-btn { flex: 1 1 140px; padding: 11px 12px; border-radius: 8px; border: none; background: var(--yellow); color: #1B3A6B; font-weight: 800; font-size: 14px; cursor: pointer; }
+.mc-btn:disabled { opacity: .5; cursor: default; }
+.mc-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+.mc-empty { font-size: 13px; color: var(--text-muted); padding: 4px 0; }
 /* Debts, one box per debt (Nov 16, 2026) */
 .debt-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .debt-row .prefix-wrap { flex: 1; min-width: 0; }
@@ -1261,6 +1284,21 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
 
   <div class="two-col">
     <div class="left-col">
+
+      <!-- ===================================================
+           MY CLIENTS (Chris, Nov 16, 2026): up to 5 saved client profiles,
+           kept in Chris's Cloudflare account behind his PIN
+           =================================================== -->
+      <div class="card" id="my-clients-card">
+        <div class="card-title" style="justify-content:space-between;"><span>&#11088; My Clients</span><span id="mc-count" class="mc-count"></span></div>
+        <div id="mc-list" class="mc-list"></div>
+        <div id="mc-msg" class="mc-msg" role="status" aria-live="polite"></div>
+        <div class="mc-actions">
+          <button type="button" id="mc-save" class="mc-btn">Save this client</button>
+          <button type="button" id="mc-new" class="mc-btn mc-ghost">Start a new client</button>
+        </div>
+        <div class="field-hint" style="margin-top:8px;">Saves the name(s), income, each debt, loan type, term, rate, credit score and departing-home rent &mdash; not the house.</div>
+      </div>
 
       <!-- ===================================================
            CARD 1: LOAN TYPE
@@ -2453,7 +2491,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.50.0',
+  version: '8.51.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -3871,6 +3909,111 @@ document.getElementById('co-borrower-name').addEventListener('input',function(){
 bindNum('departing-pitia','departingPitia',parseFloat,updateFm0132);
 
 /* ============================================================
+   SECTION: MY CLIENTS (Chris, Nov 16, 2026)
+   Up to 5 client profiles, saved in Chris's Cloudflare account behind his PIN (Worker /clients).
+   A profile = names, income, each debt, loan type, term, rate, credit score band, departing-home rent.
+   ============================================================ */
+var MC = { list: [], slots: 5, activeId: null, confirmId: null, busy: false };
+function mcProfileFromScreen(){
+  return { nm: S.clientName, nm2: S.coBorrowerName, inc: S.income, debts: (S.debtList || []).filter(function(d){ return d > 0; }),
+           lt: S.loanType, tm: S.termYears, rt: S.rate, fco: S.ficoVal, ren: !!S.rentalActive, grn: S.grossRent, pit: S.departingPitia };
+}
+function mcSet(id, value, evt){ var e = document.getElementById(id); if (!e) return; e.value = value; e.dispatchEvent(new Event(evt || 'input', { bubbles: true })); }
+function mcApply(c){
+  mcSet('client-name', c.nm || ''); mcSet('co-borrower-name', c.nm2 || '');
+  mcSet('income', c.inc > 0 ? c.inc : '');
+  if (!(c.inc > 0)) S.income = 0;
+  setDebtList(c.debts || []); S.debtsTouched = true;
+  var w = document.getElementById('debts-warn-msg'); if (w) w.remove();
+  document.getElementById('other-debts').classList.remove('field-warn-border');
+  var lb = document.querySelector('.loan-btn[data-loan="' + (c.lt || 'CONV') + '"]'); if (lb) lb.click();
+  var tb = document.querySelector('.term-btn[data-term="' + (c.tm || 30) + '"]'); if (tb) tb.click();
+  if (c.rt > 0) mcSet('rate', c.rt);
+  var f = document.querySelector('input[name="fico"][value="' + (c.fco || 760) + '"]'); if (f) { f.checked = true; f.dispatchEvent(new Event('change', { bubbles: true })); }
+  var rt = document.getElementById('rental-toggle');
+  if (rt.checked !== !!c.ren) { rt.checked = !!c.ren; rt.dispatchEvent(new Event('change', { bubbles: true })); }
+  if (c.ren) { mcSet('rent-slider', c.grn || 0); mcSet('departing-pitia', c.pit || 0); }
+  refreshAll();
+}
+function mcBlank(){ return { nm: '', nm2: '', inc: 0, debts: [], lt: 'CONV', tm: 30, rt: 0, fco: 760, ren: false, grn: 0, pit: 0 }; }
+function mcSub(c){
+  var debt = (c.debts || []).reduce(function(a, b){ return a + b; }, 0);
+  return [c.lt || 'CONV', c.inc > 0 ? fmt(c.inc) + '/mo income' : 'no income yet', debt > 0 ? fmt(debt) + '/mo debts' : '$0 debts'].join(' · ');
+}
+function mcMsg(text, kind){ var m = document.getElementById('mc-msg'); m.textContent = text || ''; m.className = 'mc-msg' + (kind ? ' ' + kind : ''); }
+function mcRender(){
+  var box = document.getElementById('mc-list');
+  box.innerHTML = '';
+  document.getElementById('mc-count').textContent = MC.list.length + ' of ' + MC.slots + ' spots';
+  if (!MC.list.length) { var e = document.createElement('div'); e.className = 'mc-empty'; e.textContent = 'No saved clients yet. Fill in a client below, then tap “Save this client”.'; box.appendChild(e); }
+  MC.list.forEach(function(c){
+    var item = document.createElement('div'); item.className = 'mc-item' + (c.id === MC.activeId ? ' active' : '');
+    var names = bothNames(c.nm, c.nm2) || 'Client';
+    if (MC.confirmId === c.id) {
+      var cf = document.createElement('div'); cf.className = 'mc-confirm';
+      var t = document.createElement('span'); t.textContent = 'Remove ' + names + '?';
+      var yes = document.createElement('button'); yes.type = 'button'; yes.className = 'mc-remove-yes'; yes.textContent = 'Remove';
+      yes.style.cssText = 'border:none;background:var(--red);color:#fff;';
+      var no = document.createElement('button'); no.type = 'button'; no.className = 'mc-remove-no'; no.textContent = 'Keep';
+      no.style.cssText = 'border:1.5px solid var(--border);background:transparent;color:var(--text);';
+      yes.onclick = function(){ if (MC.activeId === c.id) MC.activeId = null; MC.confirmId = null; mcCall({ action: 'delete', id: c.id }, names + ' removed.'); };
+      no.onclick = function(){ MC.confirmId = null; mcRender(); };
+      cf.appendChild(t); cf.appendChild(yes); cf.appendChild(no); item.appendChild(cf);
+    } else {
+      var load = document.createElement('button'); load.type = 'button'; load.className = 'mc-load';
+      var n = document.createElement('span'); n.className = 'mc-name'; n.textContent = names;
+      var sub = document.createElement('span'); sub.className = 'mc-sub'; sub.textContent = mcSub(c);
+      load.appendChild(n); load.appendChild(sub);
+      load.onclick = function(){ MC.activeId = c.id; MC.confirmId = null; mcApply(c); mcRender(); mcMsg(names + ' loaded. Pick the house, then make the link.', 'ok'); };
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'mc-del'; del.innerHTML = '&times;';
+      del.setAttribute('aria-label', 'Remove ' + names); del.title = 'Remove ' + names;
+      del.onclick = function(){ MC.confirmId = c.id; mcRender(); };
+      item.appendChild(load); item.appendChild(del);
+    }
+    box.appendChild(item);
+  });
+  var active = MC.list.filter(function(c){ return c.id === MC.activeId; })[0];
+  var save = document.getElementById('mc-save');
+  save.textContent = active ? 'Update ' + (bothNames(active.nm, active.nm2) || 'client') : 'Save this client';
+  save.disabled = MC.busy || (!active && MC.list.length >= MC.slots);
+  if (!active && MC.list.length >= MC.slots) save.textContent = 'All ' + MC.slots + ' spots full';
+}
+function mcCall(body, okText){
+  var pin = getLenderPin();
+  if (!pin && !LOCAL_TEST) { mcMsg('Unlock with your PIN first.', 'err'); return Promise.resolve(null); }
+  MC.busy = true; mcRender();
+  body.pin = pin;
+  return linkCall('/clients', body).then(function(res){
+    MC.busy = false;
+    if (res.status === 200 && Array.isArray(res.body.clients)) {
+      MC.list = res.body.clients; MC.slots = res.body.slots || MC.slots;
+      if (res.body.id) MC.activeId = res.body.id;
+      if (MC.activeId && !MC.list.some(function(c){ return c.id === MC.activeId; })) MC.activeId = null;
+      mcRender(); mcMsg(okText || '', okText ? 'ok' : '');
+      return res.body;
+    }
+    mcRender();
+    if (res.status === 401) mcMsg('Your PIN didn’t work — reload the page and enter it again.', 'err');
+    else mcMsg(res.body && res.body.error ? res.body.error : 'Couldn’t reach your saved clients. Try again.', 'err');
+    return null;
+  }).catch(function(){ MC.busy = false; mcRender(); mcMsg('Couldn’t reach your saved clients. Check your connection.', 'err'); return null; });
+}
+function loadMyClients(){ return mcCall({ action: 'list' }); }
+document.getElementById('mc-save').addEventListener('click', function(){
+  var prof = mcProfileFromScreen();
+  if (!prof.nm && !prof.nm2) { mcMsg('Add the client’s first name before saving.', 'err'); document.getElementById('client-name').focus(); return; }
+  var body = { action: 'save', client: prof };
+  if (MC.activeId) body.id = MC.activeId;
+  mcCall(body, bothNames(prof.nm, prof.nm2) + (MC.activeId ? ' updated.' : ' saved.'));
+});
+document.getElementById('mc-new').addEventListener('click', function(){
+  MC.activeId = null; MC.confirmId = null; mcApply(mcBlank()); S.debtsTouched = false; mcRender();
+  mcMsg('Cleared. Fill in the new client below.', '');
+  document.getElementById('client-name').focus();
+});
+mcRender();
+
+/* ============================================================
    SECTION: LOCATION TABS + ZIP + COUNTY SEARCH
    ============================================================ */
 document.querySelectorAll('.loc-tab').forEach(function(tab){
@@ -4536,6 +4679,7 @@ function unlockLender(){
   var g = document.getElementById('lender-gate'); if (g) g.remove();
   setParamsLocked(true);
   refreshAll();
+  loadMyClients();
 }
 
 /* ============================================================
@@ -4591,6 +4735,7 @@ function unlockLender(){
   if (!LOCAL_TEST) {
     linkCall('/pin-check', { pin: getLenderPin() }).then(function(res){
       if (res.status === 401) { setLenderPin(''); lockLender('Your PIN changed \u2014 please enter it again.'); }
+      else loadMyClients();
     }).catch(function(){});
   }
 })();
