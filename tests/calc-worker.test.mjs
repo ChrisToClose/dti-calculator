@@ -132,6 +132,15 @@ const meta = (html, key) => { const m = head(html).match(new RegExp('<meta (?:pr
   const c = mod.buildCaption({ nm: 'leo' });
   check('headline only when no details', c.title === 'Leo\u2019s Home Payment Estimate' && !c.title.includes('\n'), JSON.stringify(c));
 }
+// 10b. Co-borrower (Nov 16, 2026): both names in the caption; co-borrower alone; junk dropped
+{
+  const both = mod.buildCaption({ nm: 'sarah', nm2: 'mike jones', pp: '400000' });
+  check('co-borrower: both names', both.headline === 'Sarah & Mike\u2019s Home Payment Estimate', both.headline);
+  const coOnly = mod.buildCaption({ nm2: 'mike' });
+  check('co-borrower only', coOnly.headline === 'Mike\u2019s Home Payment Estimate', coOnly.headline);
+  const junk = mod.buildCaption({ nm: 'sarah', nm2: '<123>' });
+  check('co-borrower junk dropped', junk.headline === 'Sarah\u2019s Home Payment Estimate' && !junk.title.includes('<'), junk.headline);
+}
 // 11. Little helpers
 {
   check('firstName trims', mod.firstName('  maria  lopez ') === 'Maria');

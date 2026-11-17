@@ -1285,6 +1285,10 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             <label>Client First Name <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(optional)</span></label>
             <input type="text" id="client-name" placeholder="e.g. Sarah" maxlength="40" autocomplete="off" style="text-transform:capitalize;">
           </div>
+          <div class="field">
+            <label>Co-Borrower First Name <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(optional)</span></label>
+            <input type="text" id="co-borrower-name" placeholder="e.g. Mike" maxlength="40" autocomplete="off" style="text-transform:capitalize;">
+          </div>
         </div>
         <div class="field-row">
           <div class="field">
@@ -2449,7 +2453,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.49.0',
+  version: '8.50.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2873,6 +2877,7 @@ var S = {
   rentalActive:false, grossRent:0, departingPitia:0,
   debtsTouched:false,
   clientName:'',
+  coBorrowerName:'',
 };
 
 var watermarkTimer=null, watermarkActive=false;
@@ -3860,6 +3865,9 @@ function setDebtList(values){   /* fills the boxes from a list (used when a save
 document.getElementById('client-name').addEventListener('input',function(){
   S.clientName=this.value.trim();
 });
+document.getElementById('co-borrower-name').addEventListener('input',function(){
+  S.coBorrowerName=this.value.trim();
+});
 bindNum('departing-pitia','departingPitia',parseFloat,updateFm0132);
 
 /* ============================================================
@@ -4074,6 +4082,11 @@ var URL_DEFAULTS = {
   hs:'1', tax:'', ins:'', fld:'0', fi:100,
   cdd:'0', ca:0, fco:760, pmi:'', ren:'0', grn:0, pit:0
 };
+/* Co-borrower (Nov 16, 2026): "Sarah", "Sarah & Mike", or "Mike" when only the co-borrower is filled in */
+function bothNames(a, b){
+  function cap(x){ x = String(x || '').trim(); return x ? x.charAt(0).toUpperCase() + x.slice(1) : ''; }
+  return [cap(a), cap(b)].filter(Boolean).join(' & ');
+}
 function buildClientUrl(){
   var base=window.location.href.split('?')[0];
   var now=new Date();
@@ -4101,6 +4114,7 @@ function buildClientUrl(){
   if (S.pmiOverride != null)                    p.pmi = S.pmiOverride;
   if (S.rentalActive)                         { p.ren = '1'; if(S.grossRent > 0) p.grn = S.grossRent; if(S.departingPitia > 0) p.pit = S.departingPitia; }
   if (S.clientName)                            p.nm  = S.clientName;
+  if (S.coBorrowerName)                        p.nm2 = S.coBorrowerName;
 
   return base+'?client=1&'+new URLSearchParams(p).toString();
 }
@@ -4212,7 +4226,8 @@ function buildIntroMessage(url) {
   if (S.floodActive) includes.push('flood insurance');
   if (S.cddActive && S.cddAnnual > 0) includes.push('community fee');
   var inclStr = includes.slice(0,-1).join(', ') + (includes.length > 1 ? ' & ' : '') + includes[includes.length-1];
-  var greeting = S.clientName ? 'Hey '+S.clientName.charAt(0).toUpperCase()+S.clientName.slice(1)+'!' : 'Hey!';
+  var names = bothNames(S.clientName, S.coBorrowerName);
+  var greeting = names ? 'Hey '+names+'!' : 'Hey!';
   return greeting+' I built a Housing Payment Calculator just for you \u2014 I\u2019ve already loaded in your income and debts so everything is factored in. Explore different home prices and down payment options and let me know if you have any questions!\n\n'+url;
 }
 
@@ -4431,6 +4446,7 @@ function readClientLink(p) {
     departingPitia:num('pit', 'Departing payment',0,    0, BIG),
     ts:            p.get('ts') || '',
     clientName:    p.get('nm') || '',
+    coBorrowerName:p.get('nm2') || '',
   };
   return { values: values, problems: problems };
 }
@@ -5455,8 +5471,8 @@ function initClientView(p) {
   if (onboardEl) {
     /* Inject client name into step-1 headline if present */
     var onboardH2 = onboardEl.querySelector('.ob-headline');
-    if (onboardH2 && CP.clientName) {
-      var safeName = escapeHtml(CP.clientName.charAt(0).toUpperCase() + CP.clientName.slice(1));
+    if (onboardH2 && (CP.clientName || CP.coBorrowerName)) {
+      var safeName = escapeHtml(bothNames(CP.clientName, CP.coBorrowerName));
       onboardH2.innerHTML = 'Chris built this <em>just</em> for you, <strong>' + safeName + '!</strong>';
     }
     /* Multi-step state */

@@ -71,7 +71,7 @@ const LINK_LIMITS = {
   pinTriesPerHour: 10,      // wrong-PIN attempts per visitor per hour
 };
 const LINK_FIELDS = ['pp', 'dp', 'lt', 'tm', 'inc', 'dbt', 'rt', 'rr', 'cn', 'mr', 'tax', 'ins', 'hoa', 'hs',
-  'fld', 'fi', 'cdd', 'ca', 'ren', 'grn', 'pit', 'pmi', 'pqp', 'pqd', 'fco', 'nm', 'ts'];
+  'fld', 'fi', 'cdd', 'ca', 'ren', 'grn', 'pit', 'pmi', 'pqp', 'pqd', 'fco', 'nm', 'nm2', 'ts'];   // nm2 = co-borrower first name (Nov 16, 2026)
 const LINK_ID_RE = /^[A-Za-z0-9]{10}$/;
 
 // ── D3 Option B (Chris, Nov 14, 2026): Save Scenario emails and client-made links
@@ -466,7 +466,7 @@ function cleanLinkParams(incoming) {
   for (const key of LINK_FIELDS) {
     const v = incoming[key];
     if (v === undefined || v === null || v === '') continue;
-    out[key] = String(v).slice(0, key === 'nm' ? 40 : 60);
+    out[key] = String(v).slice(0, (key === 'nm' || key === 'nm2') ? 40 : 60);
   }
   if (!out.pp || !out.inc || !out.rt) return null;   // the page reader checks every value again
   return out;

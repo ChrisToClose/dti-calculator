@@ -101,7 +101,8 @@ function shortPrice(pp) {
 }
 
 function buildCaption(p) {
-  const name = firstName(p.nm);
+  // Co-borrower (Nov 16, 2026): "Sarah & Mike's Home Payment Estimate"
+  const name = [firstName(p.nm), firstName(p.nm2)].filter(Boolean).join(' & ');
   const title = name ? name + '\u2019s Home Payment Estimate' : 'Your Home Payment Estimate';
   const parts = [];
   const price = shortPrice(p.pp);
