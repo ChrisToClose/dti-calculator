@@ -143,6 +143,11 @@ export default {
       return handlePinCheck(request, env, json);
     }
 
+    // ── Saved clients (Chris, Nov 16, 2026): his own short list, behind his PIN ──
+    if (url.pathname === '/clients' && request.method === 'POST') {
+      return handleClients(request, env, json);
+    }
+
     // ── /send-scenario route — "Save Scenario" email ───────────────
     if (url.pathname === '/send-scenario' && request.method === 'POST') {
       return handleSendScenario(request, env, json);
@@ -567,6 +572,85 @@ async function readJson(request) {
   const text = await request.text();
   if (text.length > 8000) return null;               // links are tiny; refuse anything big
   try { return JSON.parse(text); } catch (e) { return null; }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SAVED CLIENTS (Chris, Nov 16, 2026: "prepopulate up to 5 current clients ... behind PIN")
+// One list in LOOKUP_KV under "lo-clients". Every call needs Chris's PIN (same lock-out as links).
+// Only the client's own profile is kept: names, income, each debt, loan type, term, rate, credit
+// score band, departing-home rent — never an address, email or tax bill.
+// ─────────────────────────────────────────────────────────────────
+const CLIENT_SLOTS = 5;
+const CLIENTS_KEY = 'lo-clients';
+const CLIENT_ID_RE = /^[A-Za-z0-9]{8}$/;
+
+function cleanClient(c) {
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return null;
+  const text = (v) => String(v == null ? '' : v).replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  const money = (v, max) => { const n = Number(v); return isFinite(n) && n >= 0 && n <= max ? Math.round(n * 100) / 100 : 0; };
+  const out = {
+    nm: text(c.nm), nm2: text(c.nm2),
+    inc: money(c.inc, 10000000),
+    debts: Array.isArray(c.debts) ? c.debts.slice(0, 20).map((d) => money(d, 1000000)).filter((d) => d > 0) : [],
+    lt: ['CONV', 'FHA', 'VA', 'USDA'].includes(c.lt) ? c.lt : 'CONV',
+    tm: [15, 20, 25, 30].includes(Number(c.tm)) ? Number(c.tm) : 30,
+    rt: (() => { const n = Number(c.rt); return isFinite(n) && n > 0 && n < 25 ? Math.round(n * 1000) / 1000 : null; })(),
+    fco: [620, 640, 660, 680, 700, 720, 740, 760].includes(Number(c.fco)) ? Number(c.fco) : 760,
+    ren: c.ren === true || c.ren === '1' || c.ren === 1,
+    grn: money(c.grn, 1000000), pit: money(c.pit, 1000000),
+  };
+  if (!out.nm && !out.nm2) return null;      // a saved client needs a name to pick it by
+  return out;
+}
+
+async function readClients(kv) {
+  try {
+    const raw = await kv.get(CLIENTS_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((r) => r && CLIENT_ID_RE.test(r.id)) : [];
+  } catch (e) { return []; }
+}
+
+function newClientId() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  let id = '';
+  for (const b of crypto.getRandomValues(new Uint8Array(8))) id += abc[b % abc.length];
+  return id;
+}
+
+// body: { pin, action: 'list' | 'save' | 'delete', client?, id? }
+async function handleClients(request, env, json) {
+  const body = await readJson(request);
+  if (!body) return json({ error: 'Invalid request.' }, 400);
+  if (!env.LOOKUP_KV) return json({ error: 'Saved clients aren\u2019t available right now.' }, 503);
+  const ok = await checkLenderPin(env, body.pin, request.headers.get('CF-Connecting-IP'));
+  if (ok === 'locked') return json({ error: 'Too many wrong PINs. Try again in an hour.' }, 429);
+  if (!ok) return json({ error: 'That PIN isn\u2019t right.', pin: false }, 401);
+  const kv = env.LOOKUP_KV;
+  let list = await readClients(kv);
+  const action = body.action;
+  if (action === 'list') return json({ clients: list, slots: CLIENT_SLOTS }, 200);
+  if (action === 'save') {
+    const c = cleanClient(body.client);
+    if (!c) return json({ error: 'Add the client\u2019s first name before saving.' }, 400);
+    const id = typeof body.id === 'string' && CLIENT_ID_RE.test(body.id) ? body.id : null;
+    const i = id ? list.findIndex((r) => r.id === id) : -1;
+    const rec = Object.assign({ id: i >= 0 ? id : newClientId(), saved: Date.now() }, c);
+    if (i >= 0) list[i] = rec;
+    else {
+      if (list.length >= CLIENT_SLOTS) return json({ error: 'All ' + CLIENT_SLOTS + ' client spots are full. Remove one first.', full: true }, 409);
+      list.push(rec);
+    }
+    await kv.put(CLIENTS_KEY, JSON.stringify(list));
+    return json({ clients: list, slots: CLIENT_SLOTS, id: rec.id }, 200);
+  }
+  if (action === 'delete') {
+    const id = typeof body.id === 'string' ? body.id : '';
+    list = list.filter((r) => r.id !== id);
+    await kv.put(CLIENTS_KEY, JSON.stringify(list));
+    return json({ clients: list, slots: CLIENT_SLOTS }, 200);
+  }
+  return json({ error: 'Invalid request.' }, 400);
 }
 
 async function handlePinCheck(request, env, json) {
