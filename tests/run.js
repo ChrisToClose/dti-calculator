@@ -38,6 +38,7 @@
      B7. Every Florida ZIP finds its county (Census list); county-line ZIPs ask which county
      U. Fonts load only from this site (no Google / outside font servers); title fonts preloaded, no swap jump
      DB. Debts: one box per debt (+ Add debt, ×, Enter adds a box); they add up; the link carries only the total
+     CB. Co-borrower: optional "Co-Borrower First Name" box; link carries nm2; text message + client welcome say "Sarah & Mike"
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -458,6 +459,46 @@ async function readScreen(page, pattern) {
       if (D.loaded !== '150.5|100,50.5') failures.push(`Debts: loading [100, 50.5] should fill two boxes totalling 150.5, got ${D.loaded}`);
       if (D.negative !== 50.5) failures.push(`Debts: a negative number must count as 0, got total ${D.negative}`);
     }
+  }
+
+  /* CB. Co-borrower name (Chris, Nov 16, 2026): optional box on the lender screen; travels in the link as nm2;
+         the text-message greeting and the client's welcome say "Sarah & Mike"; blank = exactly as before. */
+  {
+    const L = await lender.evaluate(() => {
+      const box = document.getElementById('co-borrower-name');
+      if (!box) return { missing: true };
+      const type = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+      const keep = [S.clientName, S.coBorrowerName];
+      const out = {};
+      type('client-name', 'sarah'); type('co-borrower-name', 'mike');
+      out.both = new URL(buildClientUrl()).searchParams; out.bothNm = out.both.get('nm'); out.bothNm2 = out.both.get('nm2'); delete out.both;
+      out.bothText = buildIntroMessage('LINK').split('!')[0];
+      type('co-borrower-name', '');
+      out.blankNm2 = new URL(buildClientUrl()).searchParams.has('nm2');
+      out.soloText = buildIntroMessage('LINK').split('!')[0];
+      type('client-name', ''); type('co-borrower-name', 'mike');
+      out.coOnlyText = buildIntroMessage('LINK').split('!')[0];
+      type('client-name', keep[0] || ''); type('co-borrower-name', keep[1] || '');
+      out.label = box.closest('.field').querySelector('label').textContent.replace(/\s+/g, ' ').trim();
+      return out;
+    });
+    if (L.missing) failures.push('Co-borrower: the "Co-Borrower First Name" box is missing from the lender screen');
+    else {
+      if (L.bothNm !== 'sarah' || L.bothNm2 !== 'mike') failures.push(`Co-borrower: the link should carry nm=sarah and nm2=mike (${JSON.stringify(L)})`);
+      if (L.bothText !== 'Hey Sarah & Mike') failures.push(`Co-borrower: the text message should start "Hey Sarah & Mike!", got "${L.bothText}"`);
+      if (L.blankNm2) failures.push('Co-borrower: a blank co-borrower box must not add nm2 to the link');
+      if (L.soloText !== 'Hey Sarah') failures.push(`Co-borrower: with no co-borrower the text message should still start "Hey Sarah!", got "${L.soloText}"`);
+      if (L.coOnlyText !== 'Hey Mike') failures.push(`Co-borrower: with only a co-borrower the text message should start "Hey Mike!", got "${L.coOnlyText}"`);
+      if (L.label !== 'Co-Borrower First Name (optional)') failures.push(`Co-borrower: label should read "Co-Borrower First Name (optional)", got "${L.label}"`);
+    }
+    const welcome = async (qs) => { await client.goto(BASE.replace('&nm=Test', '') + qs); return client.evaluate(() => document.querySelector('#client-onboard .ob-headline').textContent.replace(/\s+/g, ' ').trim()); };
+    const W = { both: await welcome('&nm=Test&nm2=mike'), solo: await welcome('&nm=Test'), coOnly: await welcome('&nm2=mike'), none: await welcome(''), evil: await welcome('&nm=Test&nm2=' + encodeURIComponent('<img src=x onerror=alert(1)>')) };
+    const evilTag = await client.evaluate(() => !!document.querySelector('#client-onboard .ob-headline img'));
+    if (!/for you, Test & Mike!$/.test(W.both)) failures.push(`Co-borrower: the client's welcome should say "…for you, Test & Mike!", got "${W.both}"`);
+    if (!/for you, Test!$/.test(W.solo)) failures.push(`Co-borrower: with no co-borrower the welcome should be unchanged ("…for you, Test!"), got "${W.solo}"`);
+    if (!/for you, Mike!$/.test(W.coOnly)) failures.push(`Co-borrower: with only a co-borrower the welcome should say "…for you, Mike!", got "${W.coOnly}"`);
+    if (/for you,/.test(W.none)) failures.push(`Co-borrower: with no names the welcome should be the generic one, got "${W.none}"`);
+    if (evilTag) failures.push('Co-borrower: a co-borrower name from a link was put on the page as code (must be shown as plain text)');
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the

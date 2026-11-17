@@ -288,6 +288,11 @@ async function post(env, path, body) {
   check('only known link fields are stored (junk dropped)', rec.p.pp === '400000' && rec.p.nm === 'Sam' && rec.p.evil === undefined && rec.by === 'lender', JSON.stringify(rec));
   r = await post(env, '/link-get', { id });
   check('reading a link returns its numbers', r.status === 200 && r.body.params.inc === '11000', JSON.stringify(r));
+  {  /* co-borrower (Nov 16, 2026): nm2 is kept, capped at 40 characters like nm */
+    const r2 = await post(env, '/link-create', { params: Object.assign({}, P, { nm2: 'Mike' + 'x'.repeat(60) }), pin: 'correct horse 42' });
+    const rec2 = JSON.parse(env.LOOKUP_KV.m.get('link:' + r2.body.id));
+    check('co-borrower name (nm2) is stored with the link, max 40 characters', r2.status === 200 && rec2.p.nm2 && rec2.p.nm2.startsWith('Mike') && rec2.p.nm2.length === 40, JSON.stringify(rec2.p.nm2));
+  }
   r = await post(env, '/link-get', { id: 'Nope123456' });
   check('unknown/expired link → "expired"', r.status === 404 && r.body.error === 'expired');
   r = await post(env, '/link-get', { id: '../../etc' });
