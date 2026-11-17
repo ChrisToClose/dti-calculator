@@ -445,6 +445,18 @@ select:focus {
   pointer-events: none; z-index: 2; user-select: none;
 }
 .prefix-wrap input { padding-left: 26px !important; }
+/* Debts, one box per debt (Nov 16, 2026) */
+.debt-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.debt-row .prefix-wrap { flex: 1; min-width: 0; }
+.debt-row .prefix-wrap input { width: 100%; min-width: 0; }
+.debt-remove { flex: none; width: 36px; height: 36px; border: 1px solid var(--border); background: transparent; border-radius: 8px; color: var(--text-muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.debt-remove:hover { color: var(--red); border-color: var(--red); }
+#debt-list.single .debt-remove { visibility: hidden; }
+.debt-add { display: block; width: 100%; margin: 2px 0 6px; padding: 8px 10px; background: transparent; border: 1px dashed var(--teal); border-radius: 8px; color: var(--teal); font-size: 13px; font-weight: 700; cursor: pointer; }
+.debt-add:disabled { opacity: .45; cursor: default; }
+body.dark-mode .debt-add { color: #fff; border-color: rgba(255,255,255,.5); }
+.debt-total { font-size: 13px; font-weight: 800; color: var(--navy); margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
+body.dark-mode .debt-total { color: #fff; }
 .suffix-wrap { position: relative; }
 .suffix-wrap input { padding-right: 28px; }
 .suffix {
@@ -1284,10 +1296,19 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           </div>
           <div class="field">
             <label>Other Monthly Debts</label>
-            <div class="prefix-wrap">
-              <span class="prefix">$</span>
-              <input type="number" id="other-debts" value="0" min="0" step="50">
+            <!-- DEBTS (Chris, Nov 16, 2026): one box per debt, so one can be changed later; they add up by themselves.
+                 The first box keeps the id "other-debts". -->
+            <div id="debt-list">
+              <div class="debt-row">
+                <div class="prefix-wrap">
+                  <span class="prefix">$</span>
+                  <input type="number" id="other-debts" class="debt-input" value="0" min="0" step="1" inputmode="decimal" aria-label="Debt 1, monthly payment">
+                </div>
+                <button type="button" class="debt-remove" aria-label="Remove this debt" title="Remove this debt">&times;</button>
+              </div>
             </div>
+            <button type="button" id="debt-add" class="debt-add">+ Add debt</button>
+            <div id="debt-total" class="debt-total" style="display:none;"></div>
             <span class="field-hint">Car, student loans, credit cards — non-departing only</span>
           </div>
         </div>
@@ -2428,7 +2449,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.47.0',
+  version: '8.49.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2843,7 +2864,7 @@ function calcAll(p) {
 var S = {
   loanType:'CONV', purchasePrice:400000, downPct:5, termYears:30,
   rate:7.00, rateReveal:false, hoa:0,
-  income:0, otherDebts:0,
+  income:0, otherDebts:0, debtList:[],
   countyName:null, countyMillRate:null,
   homestead:true, taxOverride:null, insOverride:null,
   floodActive:false, floodIns:100,
@@ -3767,7 +3788,75 @@ document.getElementById('rate').addEventListener('input',function(){
 document.getElementById('rate-reveal').addEventListener('change',function(){S.rateReveal=this.checked;});
 bindNum('hoa','hoa',parseFloat);
 bindNum('income','income',parseFloat);
-bindNum('other-debts','otherDebts',parseFloat);
+/* DEBTS: one box per debt. S.otherDebts is always the total of the boxes; S.debtList keeps each one. */
+var DEBT_MAX = 20;
+function debtInputs(){ return Array.prototype.slice.call(document.querySelectorAll('#debt-list .debt-input')); }
+function syncDebts(){
+  var vals = debtInputs().map(function(e){ var v = parseFloat(e.value); return isFinite(v) && v > 0 ? v : 0; });
+  var total = Math.round(vals.reduce(function(a,b){ return a + b; }, 0) * 100) / 100;
+  S.debtList = vals; S.otherDebts = total;
+  var list = document.getElementById('debt-list');
+  list.classList.toggle('single', vals.length < 2);
+  document.getElementById('debt-add').disabled = vals.length >= DEBT_MAX;
+  var counted = vals.filter(function(v){ return v > 0; }).length;
+  var tot = document.getElementById('debt-total');
+  if (vals.length > 1) { tot.style.display = 'block'; tot.textContent = 'Total: ' + fmt(total) + '/mo' + (counted ? ' (' + counted + ' debt' + (counted === 1 ? '' : 's') + ')' : ''); }
+  else tot.style.display = 'none';
+  refreshAll();
+}
+function addDebtRow(value, focus){
+  var list = document.getElementById('debt-list');
+  if (debtInputs().length >= DEBT_MAX) return null;
+  var row = document.createElement('div'); row.className = 'debt-row';
+  row.innerHTML = '<div class="prefix-wrap"><span class="prefix">$</span><input type="number" class="debt-input" min="0" step="1" inputmode="decimal"></div>'
+    + '<button type="button" class="debt-remove" aria-label="Remove this debt" title="Remove this debt">&times;</button>';
+  list.appendChild(row);
+  var inp = row.querySelector('input');
+  inp.setAttribute('aria-label', 'Debt ' + debtInputs().length + ', monthly payment');
+  if (value != null && value !== '') inp.value = value;
+  if (focus) inp.focus();
+  syncDebts();
+  return inp;
+}
+function setDebtList(values){   /* fills the boxes from a list (used when a saved client is loaded) */
+  var list = document.getElementById('debt-list');
+  Array.prototype.slice.call(list.querySelectorAll('.debt-row')).slice(1).forEach(function(r){ r.remove(); });
+  values = (values || []).filter(function(v){ return isFinite(+v) && +v > 0; });
+  document.getElementById('other-debts').value = values.length ? values[0] : 0;
+  values.slice(1).forEach(function(v){ addDebtRow(v, false); });
+  syncDebts();
+}
+(function(){
+  var list = document.getElementById('debt-list');
+  list.addEventListener('focusin', function(e){ if (e.target.classList.contains('debt-input') && (e.target.value === '0')) e.target.value = ''; });
+  list.addEventListener('focusout', function(e){
+    if (!e.target.classList.contains('debt-input')) return;
+    S.debtsTouched = true;
+    if (e.target.id === 'other-debts' && (e.target.value === '' || isNaN(+e.target.value))) e.target.value = 0;
+    var w = document.getElementById('debts-warn-msg'); if (w) w.remove();
+    document.getElementById('other-debts').classList.remove('field-warn-border');
+    syncDebts();
+  });
+  list.addEventListener('input', function(e){ if (e.target.classList.contains('debt-input')) syncDebts(); });
+  list.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && e.target.classList.contains('debt-input')) { e.preventDefault(); addDebtRow('', true); }
+  });
+  list.addEventListener('click', function(e){
+    var b = e.target.closest('.debt-remove'); if (!b) return;
+    var rows = list.querySelectorAll('.debt-row');
+    var row = b.closest('.debt-row');
+    if (rows.length < 2) return;
+    if (row === rows[0]) {   /* removing the first box: the next one moves up into it (the first box keeps its id) */
+      var nextVal = rows[1].querySelector('input').value;
+      rows[1].remove(); document.getElementById('other-debts').value = nextVal || 0;
+    } else row.remove();
+    debtInputs().forEach(function(inp, i){ inp.setAttribute('aria-label', 'Debt ' + (i + 1) + ', monthly payment'); });
+    S.debtsTouched = true;
+    syncDebts();
+  });
+  document.getElementById('debt-add').addEventListener('click', function(){ S.debtsTouched = true; addDebtRow('', true); });
+  list.classList.add('single');
+})();
 document.getElementById('client-name').addEventListener('input',function(){
   S.clientName=this.value.trim();
 });
@@ -4081,7 +4170,7 @@ function validateSetup() {
       warnMsg.id = 'debts-warn-msg';
       warnMsg.style.cssText = 'font-size:12px;color:var(--amber);font-weight:600;margin-top:4px;';
       warnMsg.textContent = 'Confirm $0 other debts or enter actual amount';
-      debtsEl.parentNode.insertAdjacentElement('afterend', warnMsg);
+      document.getElementById('debt-list').insertAdjacentElement('afterend', warnMsg);
     }
     /* Doesn't block — just warns */
   } else {
