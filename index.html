@@ -2428,7 +2428,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.46.1',
+  version: '8.47.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2973,6 +2973,9 @@ async function lookupRealieAddress() {
         data.assessed_value ? '$' + Math.round(data.assessed_value).toLocaleString() : '—';
       resultCard.style.display = 'block';
 
+      // ── ADDR-FILL: the same address goes into "Property Address" in the Save section ──
+      fillSaveAddress(saveAddressText({ street: address, unit: unit, city: city, state: state, county: data.county || county }, data));
+
       statusEl.style.color = guidanceOnly ? 'var(--text-muted)' : '#16a34a';
       statusEl.textContent = guidanceOnly
         ? 'Shown for guidance — your payment still uses the estimate for you.'
@@ -3032,6 +3035,48 @@ async function lookupRealieAddress() {
   } finally {
     document.getElementById('tax-skeleton').style.display = 'none';
   }
+}
+
+/* ADDR-FILL (Chris, Nov 16, 2026): when the tax lookup finds a record, the same address goes into
+   "Property Address" in the Save section, so the client doesn't type it twice. It only fills when
+   that box is empty or still holds an address filled in this way — never over what the client typed. */
+var saveAddressAutoFilled = '';
+
+/* County records are written in capitals ("100 MAIN AVE, ST PETERSBURG, FL") — make them read normally.
+   Directions (N, SW…), FL and anything with a number in it are left alone. */
+function prettyCountyAddress(s) {
+  s = String(s || '').replace(/\s+/g, ' ').trim();
+  if (!s || /[a-z]/.test(s)) return s;
+  var keep = { N:1, S:1, E:1, W:1, NE:1, NW:1, SE:1, SW:1, FL:1 };
+  return s.split(' ').map(function(w){
+    var core = w.replace(/[,.]/g, '');
+    if (keep[core] || /\d/.test(core)) return w;
+    return w.charAt(0) + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+/* The text for the Property Address box. typed = what the client entered in the tax lookup
+   { street, unit, city, state, county }. When the client had to confirm a county record that
+   didn't exactly match what they typed, the county's own address is the one to use. */
+function saveAddressText(typed, data) {
+  var confirmed = data && data.address_confirmed ? prettyCountyAddress(data.address_confirmed) : '';
+  if (data && data.needs_confirmation && confirmed) return confirmed;
+  var street = String(typed.street || '').replace(/\s+/g, ' ').trim();
+  if (!street) return confirmed;
+  var unit = String(typed.unit || '').replace(/\s+/g, ' ').trim();
+  if (unit && !/^(unit|apt|apartment|ste|suite|#)/i.test(unit)) unit = 'Unit ' + unit;
+  var place = String(typed.city || '').trim() || (typed.county ? typed.county + ' County' : '');
+  return [street, unit, place, String(typed.state || 'FL').trim()].filter(Boolean).join(', ');
+}
+
+function fillSaveAddress(text) {
+  var el = document.getElementById('save-address');
+  text = String(text || '').trim().slice(0, 120);
+  if (!el || !text) return;
+  var now = el.value.trim();
+  if (now && now !== saveAddressAutoFilled) return;      /* the client typed their own — leave it alone */
+  el.value = text;
+  saveAddressAutoFilled = text;
 }
 
 /* ADDR1: Google address autocomplete in the tax lookup.
