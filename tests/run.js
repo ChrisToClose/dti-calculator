@@ -41,6 +41,7 @@
      CB. Co-borrower: optional "Co-Borrower First Name" box; link carries nm2; text message + client welcome say "Sarah & Mike"
      MC. My Clients: save / load / update / start new / remove (asks first) / 5 spots; only the profile is sent, with the PIN
      SL. Sliders: drawn by the page (28px navy knob, 8px line filled in teal up to the knob), light and dark; the line follows the knob
+     MO. Motion: help pages, tax lookup and the help backdrop fade in; can be turned around mid-way; Reduce Motion switches all animation off
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -614,6 +615,60 @@ async function readScreen(page, pattern) {
     if (moved.dragged !== '0.5000') failures.push(`Sliders: dragging HOA to $1,000 of $2,000 should fill the line to the middle (0.5000), got ${moved.dragged}`);
     if (moved.price !== '0.5000' || moved.before === moved.price) failures.push(`Sliders: moving the price to $800K should move its teal line to 0.5000 (was ${moved.before}, now ${moved.price})`);
     check('client, after moving', await client.evaluate(look));
+  }
+
+  /* MO. Motion (Chris's list of 20, items 9 and 11 — Nov 18, 2026): help pages, the tax lookup and the grey screen
+         behind the help guide fade in; tapping again mid-way just turns it around; "Reduce Motion" switches it all off. */
+  {
+    await client.goto(BASE);
+    await client.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const M = await client.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const out = {};
+      if (typeof fadeIn !== 'function') return { missing: true };
+      const o = document.getElementById('client-onboard'); if (o) o.style.display = 'none';
+      const panel = document.getElementById('tax-lookup-panel'), tog = document.getElementById('tax-lookup-toggle');
+      tog.click();
+      out.taxStart = getComputedStyle(panel).opacity < 1 && /opacity/.test(getComputedStyle(panel).transitionProperty);
+      await wait(400); out.taxEnd = getComputedStyle(panel).opacity + '|' + getComputedStyle(panel).transform + '|' + panel.style.display;
+      tog.click(); tog.click(); tog.click();            // close, open, close — fast
+      out.taxFast = panel.style.display; await wait(350); out.taxFastLater = panel.style.display;
+      const ov = document.getElementById('help-overlay'), dr = document.getElementById('help-drawer');
+      document.getElementById('help-btn').click();
+      out.ovStart = ov.style.display + '|' + (getComputedStyle(ov).opacity < 1);
+      await wait(450); out.ovOpen = ov.style.display + '|' + getComputedStyle(ov).opacity + '|' + dr.style.transform;
+      const content = document.getElementById('help-content');
+      document.getElementById('help-next').click();
+      out.pageStart = getComputedStyle(content).opacity < 1; await wait(350); out.pageEnd = getComputedStyle(content).opacity;
+      document.getElementById('help-close').click();
+      out.closingBlocksTaps = getComputedStyle(ov).pointerEvents;
+      document.getElementById('help-btn').click();      // changed my mind mid-way
+      await wait(500); out.reopened = ov.style.display + '|' + getComputedStyle(ov).opacity + '|' + dr.style.transform + '|' + getComputedStyle(ov).pointerEvents;
+      document.getElementById('help-close').click(); await wait(500);
+      out.closed = ov.style.display + '|' + dr.style.transform;
+      return out;
+    });
+    if (M.missing) failures.push('Motion: the fade helper is missing (help pages / tax lookup should fade in)');
+    else {
+      const want = (k, v) => { if (M[k] !== v) failures.push(`Motion: ${k} should be ${JSON.stringify(v)}, got ${JSON.stringify(M[k])}`); };
+      want('taxStart', true); want('taxEnd', '1|none|block'); want('taxFast', 'none'); want('taxFastLater', 'none');
+      want('ovStart', 'block|true'); want('ovOpen', 'block|1|translateX(0px)'); want('pageStart', true); want('pageEnd', '1');
+      want('closingBlocksTaps', 'none'); want('reopened', 'block|1|translateX(0px)|auto'); want('closed', 'none|translateX(100%)');
+    }
+    const calm = await browser.newContext({ viewport: { width: 390, height: 800 }, reducedMotion: 'reduce', timezoneId: 'America/New_York', locale: 'en-US' });
+    const cp = await calm.newPage();
+    await cp.goto(BASE);
+    await cp.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+    const R = await cp.evaluate(() => {
+      const secs = (v) => Math.max.apply(null, String(v).split(',').map((x) => parseFloat(x) * (/ms/.test(x) ? 0.001 : 1)));
+      const probe = document.createElement('div'); probe.className = 'thermo-over'; document.body.appendChild(probe);
+      const res = { drawer: secs(getComputedStyle(document.getElementById('help-drawer')).transitionDuration), fill: secs(getComputedStyle(document.getElementById('client-thermo-fill')).transitionDuration),
+               pulse: secs(getComputedStyle(probe).animationDuration), pulseCount: getComputedStyle(probe).animationIterationCount };
+      probe.remove(); return res;
+    });
+    if (!(R.drawer <= 0.001) || !(R.fill <= 0.001) || !(R.pulse <= 0.001) || R.pulseCount !== '1') failures.push(`Motion: with the phone set to Reduce Motion nothing should animate (${JSON.stringify(R)})`);
+    await calm.close();
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the
