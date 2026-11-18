@@ -40,6 +40,7 @@
      DB. Debts: one box per debt (+ Add debt, ×, Enter adds a box); they add up; the link carries only the total
      CB. Co-borrower: optional "Co-Borrower First Name" box; link carries nm2; text message + client welcome say "Sarah & Mike"
      MC. My Clients: save / load / update / start new / remove (asks first) / 5 spots; only the profile is sent, with the PIN
+     SL. Sliders: drawn by the page (28px navy knob, 8px line filled in teal up to the knob), light and dark; the line follows the knob
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -572,6 +573,47 @@ async function readScreen(page, pattern) {
       want('confirmText', 'Remove Sarah & Mike?RemoveKeep'); want('keptCount', 5);
       want('afterDelete', 'B,C,D,E'); want('evil', false);
     }
+  }
+
+  /* SL. Sliders you can see (Chris, Nov 16-18, 2026): the page draws every slider itself — navy knob, white ring,
+         teal line filled up to the knob — instead of leaving it to the phone (iPhones drew white on pale grey). */
+  {
+    const look = () => {
+      const out = { rules: {}, sliders: [] };
+      for (const sheet of document.styleSheets) { let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
+        for (const r of rules) { const sel = r.selectorText || '';
+          if (sel === 'input[type="range"]::-webkit-slider-thumb') out.rules.thumb = [r.style.width, r.style.height, r.style.background || r.style.backgroundColor].join(' ');
+          if (sel === 'input[type="range"]::-webkit-slider-runnable-track') out.rules.track = r.style.height + ' ' + (/var\(--fill/.test(r.style.background || r.style.backgroundImage) ? 'filled' : 'plain');
+          if (sel === 'body.dark-mode input[type="range"]::-webkit-slider-thumb') out.rules.darkThumb = r.style.background || r.style.backgroundColor;
+        } }
+      const expect = (e) => { const min = parseFloat(e.min) || 0, max = parseFloat(e.max); return Math.min(1, Math.max(0, (parseFloat(e.value) - min) / (max - min))).toFixed(4); };
+      document.querySelectorAll('input[type="range"]').forEach((e) => out.sliders.push({ id: e.id, appearance: getComputedStyle(e).appearance || getComputedStyle(e).webkitAppearance, fill: e.style.getPropertyValue('--fill'), want: expect(e) }));
+      return out;
+    };
+    const check = (where, L) => {
+      if (!L.rules.thumb || !/^28px 28px .*(navy|27, 58, 107)/.test(L.rules.thumb)) failures.push(`Sliders (${where}): the knob should be drawn by the page, 28px and navy (found: ${L.rules.thumb || 'no rule'})`);
+      if (L.rules.track !== '8px filled') failures.push(`Sliders (${where}): the line should be 8px tall and filled up to the knob (found: ${L.rules.track || 'no rule'})`);
+      if (!L.rules.darkThumb) failures.push(`Sliders (${where}): dark mode needs its own (light) knob so it shows on navy`);
+      if (!L.sliders.length) failures.push(`Sliders (${where}): no sliders found`);
+      L.sliders.forEach((sl) => {
+        if (sl.appearance !== 'none') failures.push(`Sliders (${where}): ${sl.id} is still drawn by the browser (appearance ${sl.appearance})`);
+        if (sl.fill !== sl.want) failures.push(`Sliders (${where}): ${sl.id} teal line is at ${sl.fill || 'nothing'}, the knob is at ${sl.want}`);
+      });
+    };
+    check('lender', await lender.evaluate(look));
+    await client.goto(BASE);
+    await client.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+    check('client, on opening', await client.evaluate(look));
+    const moved = await client.evaluate(() => {
+      const e = document.getElementById('client-hoa'); e.value = 1000; e.dispatchEvent(new Event('input', { bubbles: true }));
+      const dragged = e.style.getPropertyValue('--fill');
+      const p = document.getElementById('client-price'); const before = p.style.getPropertyValue('--fill');
+      p.value = 800000; p.dispatchEvent(new Event('input', { bubbles: true }));
+      return { dragged, price: p.style.getPropertyValue('--fill'), before };
+    });
+    if (moved.dragged !== '0.5000') failures.push(`Sliders: dragging HOA to $1,000 of $2,000 should fill the line to the middle (0.5000), got ${moved.dragged}`);
+    if (moved.price !== '0.5000' || moved.before === moved.price) failures.push(`Sliders: moving the price to $800K should move its teal line to 0.5000 (was ${moved.before}, now ${moved.price})`);
+    check('client, after moving', await client.evaluate(look));
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the
