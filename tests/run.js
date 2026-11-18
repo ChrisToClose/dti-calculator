@@ -42,6 +42,7 @@
      MC. My Clients: save / load / update / start new / remove (asks first) / 5 spots; only the profile is sent, with the PIN
      SL. Sliders: drawn by the page (28px navy knob, 8px line filled in teal up to the knob), light and dark; the line follows the knob
      MO. Motion: help pages, tax lookup and the help backdrop fade in; can be turned around mid-way; Reduce Motion switches all animation off
+     LS. Lender screen: The Borrower (steps 1-5) then The House (6-7), link (8); no link until the down payment and the price are set by hand
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -162,7 +163,7 @@ async function readScreen(page, pattern) {
   for (const sc of scenarios) {
     // Lender screen: reset to starting values, apply scenario, redraw.
     const run = await lender.evaluate(({ input, date }) => {
-      Object.assign(S, JSON.parse(JSON.stringify(window.__S0)), { clientName: 'Test' }, input);
+      Object.assign(S, JSON.parse(JSON.stringify(window.__S0)), { clientName: 'Test', priceTouched: true, downTouched: true }, input);
       refreshAll();
       const engine = calcAll({
         income: S.income, otherDebts: S.otherDebts, rate: S.rate, loanType: S.loanType,
@@ -524,13 +525,14 @@ async function readScreen(page, pattern) {
       };
       const type = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
       const names = () => Array.from(document.querySelectorAll('#mc-list .mc-name')).map((e) => e.textContent);
-      const screen = () => [S.clientName, S.coBorrowerName, S.income, S.debtList.join('+'), S.otherDebts, S.loanType, S.termYears, S.rate, S.ficoVal].join('|');
+      const screen = () => [S.clientName, S.coBorrowerName, S.income, S.debtList.join('+'), S.otherDebts, S.loanType, S.termYears, S.rate, S.ficoVal, S.downPct + (S.downTouched ? ' set' : ' not set')].join('|');
       const out = {};
       await loadMyClients();
       out.empty = document.querySelector('#mc-list .mc-empty') ? 'empty' : 'not empty';
       out.count0 = document.getElementById('mc-count').textContent;
       type('client-name', 'Sarah'); type('co-borrower-name', 'Mike'); type('income', '9000'); setDebtList([400, 24, 80, 119]);
       document.querySelector('.loan-btn[data-loan="FHA"]').click(); document.querySelector('.term-btn[data-term="15"]').click();
+      type('down-slider', '10');
       type('rate', '6.5'); const f = document.querySelector('input[name="fico"][value="700"]'); f.checked = true; f.dispatchEvent(new Event('change', { bubbles: true }));
       out.before = screen();
       document.getElementById('mc-save').click(); await new Promise((r) => setTimeout(r, 50));
@@ -563,12 +565,12 @@ async function readScreen(page, pattern) {
     else {
       const want = (k, v) => { if (M[k] !== v) failures.push(`My Clients: ${k} should be ${JSON.stringify(v)}, got ${JSON.stringify(M[k])}`); };
       want('empty', 'empty'); want('count0', '0 of 5 spots');
-      want('before', 'Sarah|Mike|9000|400+24+80+119|623|FHA|15|6.5|700');
-      want('sentClient', JSON.stringify({ nm: 'Sarah', nm2: 'Mike', inc: 9000, debts: [400, 24, 80, 119], lt: 'FHA', tm: 15, rt: 6.5, fco: 700, ren: false, grn: 0, pit: 0 }));
+      want('before', 'Sarah|Mike|9000|400+24+80+119|623|FHA|15|6.5|700|10 set');
+      want('sentClient', JSON.stringify({ nm: 'Sarah', nm2: 'Mike', inc: 9000, debts: [400, 24, 80, 119], lt: 'FHA', dp: 10, tm: 15, rt: 6.5, fco: 700, ren: false, grn: 0, pit: 0 }));
       want('sentHasPin', true);
       want('afterSave', 'Sarah & Mike'); want('saveLabel', 'Update Sarah & Mike'); want('msg', 'Sarah & Mike saved.');
-      want('cleared', '||0|0|0|CONV|30|6.5|760');
-      want('reloaded', 'Sarah|Mike|9000|400+24+80+119|623|FHA|15|6.5|700');
+      want('cleared', '||0|0|0|CONV|30|6.5|760|10 not set');
+      want('reloaded', 'Sarah|Mike|9000|400+24+80+119|623|FHA|15|6.5|700|10 set');
       want('updatedCount', 1); want('updatedIncome', 9500);
       want('fullLabel', 'All 5 spots full'); want('fullDisabled', true);
       want('confirmText', 'Remove Sarah & Mike?RemoveKeep'); want('keptCount', 5);
@@ -669,6 +671,44 @@ async function readScreen(page, pattern) {
     });
     if (!(R.drawer <= 0.001) || !(R.fill <= 0.001) || !(R.pulse <= 0.001) || R.pulseCount !== '1') failures.push(`Motion: with the phone set to Reduce Motion nothing should animate (${JSON.stringify(R)})`);
     await calm.close();
+  }
+
+  /* LS. Lender screen in two parts (Chris, Nov 18, 2026): The Borrower (what My Clients saves), then The House.
+         A link cannot be made until HE sets the down payment and the price — the starting 5% / $400,000 don't count. */
+  {
+    const L = await lender.evaluate(() => {
+      const out = {};
+      const order = Array.from(document.querySelectorAll('#setup-page .lender-part-title, #setup-page .card-step')).map((e) => e.textContent.trim());
+      out.order = order.join(' ');
+      const cardOf = (id) => { const c = document.getElementById(id).closest('.card'); return c.querySelector('.card-step') ? c.querySelector('.card-step').textContent.trim() : '?'; };
+      out.where = ['client-name', 'income', 'down-slider', 'rate', 'rental-toggle', 'zip-input', 'price-slider', 'hoa'].map((id) => id + ':' + cardOf(id)).join(' ');
+      out.termCard = cardOf(document.querySelector('.term-btn').id || (document.querySelector('.term-btn').id = 'tmp-term-btn'));
+      out.termsLocked = document.getElementById('card-loan-terms').classList.contains('card-locked');
+      const keep = JSON.stringify(S);
+      Object.assign(S, JSON.parse(JSON.stringify(window.__S0)), { clientName: 'Test', income: 9000 }); setLocation('Pinellas', COUNTIES['Pinellas']); refreshAll();
+      out.tags0 = [document.getElementById('down-req'), document.getElementById('price-req')].map((e) => getComputedStyle(e).display !== 'none').join(',');
+      out.blocked0 = validateSetup();
+      out.msgs0 = [document.getElementById('down-required-msg'), document.getElementById('price-required-msg')].map((e) => (e ? e.textContent : null));
+      const move = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+      move('down-slider', '5');                         // choosing the SAME 5% still counts as setting it
+      out.afterDown = validateSetup() + '|' + !!document.getElementById('down-required-msg') + '|' + !!document.getElementById('price-required-msg');
+      move('price-slider', '400000');
+      out.afterPrice = validateSetup() + '|' + !!document.getElementById('price-required-msg');
+      out.tags1 = [document.getElementById('down-req'), document.getElementById('price-req')].map((e) => getComputedStyle(e).display !== 'none').join(',');
+      S.priceTouched = false; refreshAll();
+      const ex = document.getElementById('price-override-input'); ex.value = '437500'; ex.dispatchEvent(new Event('input', { bubbles: true }));
+      out.typedPrice = S.priceTouched + '|' + S.purchasePrice;
+      Object.assign(S, JSON.parse(keep)); refreshAll();
+      ['down-required-msg', 'price-required-msg', 'income-required-msg', 'location-required-msg'].forEach((id) => { const m = document.getElementById(id); if (m) m.remove(); });
+      return out;
+    });
+    const want = (k, v) => { if (JSON.stringify(L[k]) !== JSON.stringify(v)) failures.push(`Lender screen: ${k} should be ${JSON.stringify(v)}, got ${JSON.stringify(L[k])}`); };
+    want('order', 'The Borrower 1 2 3 4 5 The House 6 7 8');
+    want('where', 'client-name:2 income:2 down-slider:3 rate:3 rental-toggle:4 zip-input:6 price-slider:7 hoa:7');
+    want('termCard', '3'); want('termsLocked', false);
+    want('tags0', 'true,true'); want('blocked0', false);
+    want('msgs0', ['Set the down payment before making the client link', 'Set the purchase price before making the client link — your best guess is fine if there is no house yet']);
+    want('afterDown', 'false|false|true'); want('afterPrice', 'true|false'); want('tags1', 'false,false'); want('typedPrice', 'true|437500');
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the

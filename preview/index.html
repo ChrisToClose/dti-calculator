@@ -479,6 +479,16 @@ body.dark-mode input[type="range"]::-webkit-slider-thumb { background: #fff; bor
 body.dark-mode input[type="range"]::-moz-range-track { background: rgba(255,255,255,.22); }
 body.dark-mode input[type="range"]::-moz-range-progress { background: #7CC4E3; }
 body.dark-mode input[type="range"]::-moz-range-thumb { background: #fff; border-color: var(--teal); box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,.5); }
+/* LENDER SPLIT (Chris, Nov 18, 2026): the lender screen is in two parts — The Borrower, then The House */
+.lender-part { margin: 22px 2px 10px; padding-left: 12px; border-left: 4px solid var(--yellow); }
+.lender-part-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: .05em; color: var(--navy); line-height: 1.1; }
+body.dark-mode .lender-part-title { color: #fff; }
+.lender-part-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.45; }
+#setup-page .slider-block-header { flex-wrap: wrap; row-gap: 4px; }
+#setup-page .slider-block-lhs { flex-wrap: wrap; min-width: 0; }
+.req-tag { display: inline-block; margin-left: 2px; padding: 2px 7px; border-radius: 20px; background: var(--amber); color: #1B3A6B; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+.req-tag.done { display: none; }
+.req-msg { font-size: 12px; color: var(--red); font-weight: 600; margin: 4px 0 8px; }
 /* My Clients (Nov 16, 2026) */
 .mc-count { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .04em; }
 .mc-list { display: flex; flex-direction: column; gap: 8px; }
@@ -1331,7 +1341,12 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <button type="button" id="mc-save" class="mc-btn">Save this client</button>
           <button type="button" id="mc-new" class="mc-btn mc-ghost">Start a new client</button>
         </div>
-        <div class="field-hint" style="margin-top:8px;">Saves the name(s), income, each debt, loan type, term, rate, credit score and departing-home rent &mdash; not the house.</div>
+        <div class="field-hint" style="margin-top:8px;">Saves the borrower: name(s), income, each debt, loan type, down payment, term, rate, credit score and departing-home rent &mdash; not the house.</div>
+      </div>
+
+      <div class="lender-part part-borrower">
+        <div class="lender-part-title">The Borrower</div>
+        <div class="lender-part-sub">Stays the same from house to house. This is what My Clients saves.</div>
       </div>
 
       <!-- ===================================================
@@ -1391,11 +1406,203 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       </div>
 
       <!-- ===================================================
+           CARD 3: LOAN TERMS (borrower side: down payment, term, rate) — LENDER SPLIT, Nov 18, 2026
+           =================================================== -->
+      <div class="card" id="card-loan-terms">
+        <div class="card-title"><div class="card-step">3</div> Loan Terms</div>
+
+        <!-- Down Payment -->
+        <div class="slider-block">
+          <div class="slider-block-header">
+            <div class="slider-block-lhs">
+              <span class="slider-block-label">Down Payment</span><span class="req-tag" id="down-req">Required</span>
+              <span class="tip-anchor">
+                <button class="info-btn" data-tip="tip-down">i</button>
+                <div class="tooltip-popup" id="tip-down">
+                  <button class="tooltip-close" data-close="tip-down">&times;</button>
+                  Your down payment is the portion of the purchase price you pay upfront. The rest becomes your loan. A larger down payment means a smaller loan and lower payment. At 20% or more, PMI disappears entirely. Watch your DTI as you move this slider.
+                </div>
+              </span>
+            </div>
+            <span class="slider-block-val" id="down-val"><span class="down-pct" id="down-pct-display">5%</span><span class="down-amt" id="down-amt-display">($20,000)</span></span>
+          </div>
+          <input type="range" id="down-slider" min="3" max="50" step="0.5" value="5">
+          <div class="slider-hint"><span id="down-min-label">3%</span><span>50%</span></div>
+        </div>
+
+        <!-- Loan Term -->
+        <div class="field" style="margin-bottom:16px;">
+          <div class="label-row">
+            <span class="field-label">Loan Term</span>
+            <span class="tip-anchor">
+              <button class="info-btn" data-tip="tip-term">i</button>
+              <div class="tooltip-popup" id="tip-term">
+                <button class="tooltip-close" data-close="tip-term">&times;</button>
+                How many years to repay the loan. 30 years = lowest monthly payment but more total interest. 15 years = higher payment but you build equity faster and pay far less interest over time. Most buyers choose 30 for flexibility. Try both and watch your DTI change.
+              </div>
+            </span>
+          </div>
+          <div class="term-group">
+            <button class="term-btn active" data-term="30">30 yr</button>
+            <button class="term-btn" data-term="25">25 yr</button>
+            <button class="term-btn" data-term="20">20 yr</button>
+            <button class="term-btn" data-term="15">15 yr</button>
+          </div>
+        </div>
+
+        <!-- Rate -->
+          <div class="field">
+            <label>Interest Rate</label>
+            <div class="slider-block" style="margin-bottom:0;">
+              <div class="slider-block-header" style="margin-bottom:6px;">
+                
+                <span class="slider-block-val" id="rate-val">7.000%</span>
+              </div>
+              <input type="range" id="rate" min="2" max="12" step="0.125" value="7">
+            </div>
+            <label class="rate-check-label">
+              <input type="checkbox" id="rate-reveal"> Show rate to client
+            </label>
+          </div>
+      </div>
+
+      <!-- ===================================================
+           CARD 5: DEPARTING PROPERTY (FM0132)
+           =================================================== -->
+      <div class="card">
+        <div class="card-title">
+          <div class="card-step">4</div>
+          Departing Property (FM0132)
+          <span class="tip-anchor">
+            <button class="info-btn" data-tip="tip-fm0132">i</button>
+            <div class="tooltip-popup" id="tip-fm0132">
+              <button class="tooltip-close" data-close="tip-fm0132">&times;</button>
+              FM0132 is the Fannie Mae guideline for clients keeping their current home as a rental. Lenders can only count 75% of gross rent to offset departing property expenses — the 25% haircut accounts for vacancy and maintenance. If 75% of rent doesn't cover expenses, the shortfall is added to back-end DTI as a monthly debt. Enter $0 rent if no lease is signed yet — full expenses still count.
+            </div>
+          </span>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="rental-toggle"><div class="toggle-track"></div></label>
+          <label for="rental-toggle">Client is keeping their current home as a rental</label>
+        </div>
+        <div class="rental-section" id="rental-section">
+          <div class="field-row">
+            <div class="field">
+              <label>Departing Property Total Expenses (PITIA)</label>
+              <div class="prefix-wrap">
+                <span class="prefix">$</span>
+                <input type="number" id="departing-pitia" value="0" min="0" step="50">
+              </div>
+              <span class="field-hint">P&amp;I + taxes + ins + HOA + HELOCs</span>
+            </div>
+          </div>
+          <!-- Rental slider only — no redundant text input -->
+          <div class="slider-block" style="margin-top:8px;">
+            <div class="slider-block-header">
+              <div class="slider-block-lhs">
+                <span class="slider-block-label">Gross Monthly Rental Income</span>
+              </div>
+              <span class="slider-block-val" id="rent-slider-val">$0/mo</span>
+            </div>
+            <input type="range" id="rent-slider" min="0" max="7500" step="100" value="0">
+            <div class="slider-hint"><span>$0</span><span>$7,500/mo</span></div>
+            <span class="field-hint" style="margin-top:4px;">Enter $0 if no lease signed yet</span>
+          </div>
+          <div class="info-box">
+            <strong>FM0132 Preview:</strong><br>
+            <span id="fm0132-text" style="font-size:13px;">Enter rent and expenses to see the shortfall calculation.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================================================
+           CARD 6: PMI ESTIMATOR (hidden when CONV + down >= 20%)
+           =================================================== -->
+      <div class="card" id="pmi-card">
+        <div class="card-title">
+          <div class="card-step">5</div>
+          <span id="pmi-card-title">PMI Estimator</span>
+          <span class="jumbo-badge" id="jumbo-badge">JUMBO</span>
+          <span class="tip-anchor" style="margin-left:4px;">
+            <button class="info-btn" data-tip="tip-pmi">i</button>
+            <div class="tooltip-popup" id="tip-pmi">
+              <button class="tooltip-close" data-close="tip-pmi">&times;</button>
+              PMI (Private Mortgage Insurance) is required on conventional loans when your down payment is below 20%. It protects the lender — not you — and is based on your loan amount, LTV ratio, and credit score. It cancels automatically at 78% LTV. Think of it as the cost of buying with less than 20% down — it disappears, unlike rent.
+              <div class="tooltip-example">On a $785k home with 15% down: 760+ FICO pays ~$100/mo PMI. A 680 score at the same price and down pays ~$394/mo. Credit score matters significantly.</div>
+            </div>
+          </span>
+        </div>
+
+        <!-- CONV PMI -->
+        <div id="conv-pmi">
+          <div class="field">
+            <label>Client FICO Tier</label>
+            <div class="fico-grid">
+              <div class="fico-opt"><input type="radio" name="fico" id="f760" value="760" checked><label for="f760">760+</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f740" value="740"><label for="f740">740&ndash;759</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f720" value="720"><label for="f720">720&ndash;739</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f700" value="700"><label for="f700">700&ndash;719</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f680" value="680"><label for="f680">680&ndash;699</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f660" value="660"><label for="f660">660&ndash;679</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f640" value="640"><label for="f640">640&ndash;659</label></div>
+              <div class="fico-opt"><input type="radio" name="fico" id="f620" value="620"><label for="f620">620&ndash;639</label></div>
+            </div>
+          </div>
+          <div class="pmi-box">
+            <div class="pmi-box-label">Estimated Monthly PMI</div>
+            <div class="pmi-box-value" id="pmi-est-val">$&mdash;</div>
+            <div class="pmi-box-sub" id="pmi-est-sub">Calculated from current loan amount</div>
+          </div>
+          <div class="field" style="margin-top:14px;">
+            <label>Manual PMI Override (actual MI quote)</label>
+            <div class="prefix-wrap">
+              <span class="prefix">$</span>
+              <input type="number" id="pmi-override" min="0" step="1" placeholder="Leave blank to use estimate">
+            </div>
+            <span class="field-hint">If entered, locks the PMI value in the client view</span>
+          </div>
+          <div id="jumbo-disclaimer" class="info-box" style="display:none;background:#fdf0f0;border-left-color:#e74c3c;color:#7a1010;margin-top:10px;">
+            &#9888; Loan exceeds $<span id="jumbo-limit-text"></span> (Jumbo). PMI shown is an estimate — obtain an actual MI quote.
+          </div>
+        </div>
+
+        <!-- FHA MIP -->
+        <div id="fha-mip" style="display:none;">
+          <div class="mi-note"><strong>FHA MIP:</strong> 0.55%/yr of loan amount. Monthly MIP = (Loan &times; 0.0055) &divide; 12<br><span style="font-size:12px;color:var(--text-light);">UFMIP 1.75% upfront — typically financed. Not in monthly payment.</span></div>
+          <div class="pmi-box" style="margin-top:12px;">
+            <div class="pmi-box-label">Estimated Monthly MIP</div>
+            <div class="pmi-box-value" id="mip-val">$&mdash;</div>
+            <div class="pmi-box-sub">Based on current loan amount</div>
+          </div>
+        </div>
+
+        <!-- VA -->
+        <div id="va-mi" style="display:none;">
+          <div class="mi-note"><strong>VA Loan:</strong> No monthly mortgage insurance. VA Funding Fee applies but is not included in the monthly payment here.</div>
+        </div>
+
+        <!-- USDA -->
+        <div id="usda-mi" style="display:none;">
+          <div class="mi-note"><strong>USDA Annual Guarantee Fee:</strong> 0.35%/yr. Monthly = (Loan &times; 0.0035) &divide; 12</div>
+          <div class="pmi-box" style="margin-top:12px;">
+            <div class="pmi-box-label">Estimated Monthly USDA Fee</div>
+            <div class="pmi-box-value" id="usda-val">$&mdash;</div>
+            <div class="pmi-box-sub">Based on current loan amount</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lender-part part-house">
+        <div class="lender-part-title">The House</div>
+        <div class="lender-part-sub">Changes with every house. A price is required, even if it is your best guess of what they are shopping for.</div>
+      </div>
+
+      <!-- ===================================================
            CARD 3: LOCATION + TAX & INSURANCE (folded)
            =================================================== -->
       <div class="card">
         <div class="card-title">
-          <div class="card-step">3</div>
+          <div class="card-step">6</div>
           Property Location, Tax &amp; Insurance
           <span class="tip-anchor">
             <button class="info-btn" data-tip="tip-location">i</button>
@@ -1577,20 +1784,20 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       </div><!-- /card 3 -->
 
       <!-- ===================================================
-           CARD 4: LOAN PARAMETERS (locked until location)
+           CARD 7: PRICE & HOA (locked until location)
            =================================================== -->
       <div class="card" id="card-loan-params">
-        <div class="card-title"><div class="card-step">4</div> Loan Parameters</div>
+        <div class="card-title"><div class="card-step">7</div> Price &amp; HOA</div>
 
         <div class="locked-overlay visible" id="params-lock-msg">
-          &#128274; Enter your ZIP or county in Step 3 to unlock loan parameters
+          &#128274; Enter the ZIP or county in Step 6 to unlock the price
         </div>
 
         <!-- Purchase Price -->
         <div class="slider-block">
           <div class="slider-block-header">
             <div class="slider-block-lhs">
-              <span class="slider-block-label">Purchase Price</span>
+              <span class="slider-block-label">Purchase Price</span><span class="req-tag" id="price-req">Required</span>
               <span class="tip-anchor">
                 <button class="info-btn" data-tip="tip-price">i</button>
                 <div class="tooltip-popup" id="tip-price">
@@ -1615,60 +1822,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
           <div class="slider-hint"><span>$100K</span><span>$1.5M</span></div>
         </div>
 
-        <!-- Down Payment -->
-        <div class="slider-block">
-          <div class="slider-block-header">
-            <div class="slider-block-lhs">
-              <span class="slider-block-label">Down Payment</span>
-              <span class="tip-anchor">
-                <button class="info-btn" data-tip="tip-down">i</button>
-                <div class="tooltip-popup" id="tip-down">
-                  <button class="tooltip-close" data-close="tip-down">&times;</button>
-                  Your down payment is the portion of the purchase price you pay upfront. The rest becomes your loan. A larger down payment means a smaller loan and lower payment. At 20% or more, PMI disappears entirely. Watch your DTI as you move this slider.
-                </div>
-              </span>
-            </div>
-            <span class="slider-block-val" id="down-val"><span class="down-pct" id="down-pct-display">5%</span><span class="down-amt" id="down-amt-display">($20,000)</span></span>
-          </div>
-          <input type="range" id="down-slider" min="3" max="50" step="0.5" value="5">
-          <div class="slider-hint"><span id="down-min-label">3%</span><span>50%</span></div>
-        </div>
-
-        <!-- Loan Term -->
-        <div class="field" style="margin-bottom:16px;">
-          <div class="label-row">
-            <span class="field-label">Loan Term</span>
-            <span class="tip-anchor">
-              <button class="info-btn" data-tip="tip-term">i</button>
-              <div class="tooltip-popup" id="tip-term">
-                <button class="tooltip-close" data-close="tip-term">&times;</button>
-                How many years to repay the loan. 30 years = lowest monthly payment but more total interest. 15 years = higher payment but you build equity faster and pay far less interest over time. Most buyers choose 30 for flexibility. Try both and watch your DTI change.
-              </div>
-            </span>
-          </div>
-          <div class="term-group">
-            <button class="term-btn active" data-term="30">30 yr</button>
-            <button class="term-btn" data-term="25">25 yr</button>
-            <button class="term-btn" data-term="20">20 yr</button>
-            <button class="term-btn" data-term="15">15 yr</button>
-          </div>
-        </div>
-
-        <!-- Rate + HOA -->
-        <div class="field-row">
-          <div class="field">
-            <label>Interest Rate</label>
-            <div class="slider-block" style="margin-bottom:0;">
-              <div class="slider-block-header" style="margin-bottom:6px;">
-                
-                <span class="slider-block-val" id="rate-val">7.000%</span>
-              </div>
-              <input type="range" id="rate" min="2" max="12" step="0.125" value="7">
-            </div>
-            <label class="rate-check-label">
-              <input type="checkbox" id="rate-reveal"> Show rate to client
-            </label>
-          </div>
+        <!-- HOA -->
           <div class="field">
             <div class="label-row">
               <span class="field-label">Monthly HOA</span>
@@ -1687,140 +1841,13 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
             </div>
             <span class="field-hint">Enter $0 if none</span>
           </div>
-        </div>
-      </div>
-
-      <!-- ===================================================
-           CARD 5: DEPARTING PROPERTY (FM0132)
-           =================================================== -->
-      <div class="card">
-        <div class="card-title">
-          <div class="card-step">5</div>
-          Departing Property (FM0132)
-          <span class="tip-anchor">
-            <button class="info-btn" data-tip="tip-fm0132">i</button>
-            <div class="tooltip-popup" id="tip-fm0132">
-              <button class="tooltip-close" data-close="tip-fm0132">&times;</button>
-              FM0132 is the Fannie Mae guideline for clients keeping their current home as a rental. Lenders can only count 75% of gross rent to offset departing property expenses — the 25% haircut accounts for vacancy and maintenance. If 75% of rent doesn't cover expenses, the shortfall is added to back-end DTI as a monthly debt. Enter $0 rent if no lease is signed yet — full expenses still count.
-            </div>
-          </span>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle"><input type="checkbox" id="rental-toggle"><div class="toggle-track"></div></label>
-          <label for="rental-toggle">Client is keeping their current home as a rental</label>
-        </div>
-        <div class="rental-section" id="rental-section">
-          <div class="field-row">
-            <div class="field">
-              <label>Departing Property Total Expenses (PITIA)</label>
-              <div class="prefix-wrap">
-                <span class="prefix">$</span>
-                <input type="number" id="departing-pitia" value="0" min="0" step="50">
-              </div>
-              <span class="field-hint">P&amp;I + taxes + ins + HOA + HELOCs</span>
-            </div>
-          </div>
-          <!-- Rental slider only — no redundant text input -->
-          <div class="slider-block" style="margin-top:8px;">
-            <div class="slider-block-header">
-              <div class="slider-block-lhs">
-                <span class="slider-block-label">Gross Monthly Rental Income</span>
-              </div>
-              <span class="slider-block-val" id="rent-slider-val">$0/mo</span>
-            </div>
-            <input type="range" id="rent-slider" min="0" max="7500" step="100" value="0">
-            <div class="slider-hint"><span>$0</span><span>$7,500/mo</span></div>
-            <span class="field-hint" style="margin-top:4px;">Enter $0 if no lease signed yet</span>
-          </div>
-          <div class="info-box">
-            <strong>FM0132 Preview:</strong><br>
-            <span id="fm0132-text" style="font-size:13px;">Enter rent and expenses to see the shortfall calculation.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===================================================
-           CARD 6: PMI ESTIMATOR (hidden when CONV + down >= 20%)
-           =================================================== -->
-      <div class="card" id="pmi-card">
-        <div class="card-title">
-          <div class="card-step">6</div>
-          <span id="pmi-card-title">PMI Estimator</span>
-          <span class="jumbo-badge" id="jumbo-badge">JUMBO</span>
-          <span class="tip-anchor" style="margin-left:4px;">
-            <button class="info-btn" data-tip="tip-pmi">i</button>
-            <div class="tooltip-popup" id="tip-pmi">
-              <button class="tooltip-close" data-close="tip-pmi">&times;</button>
-              PMI (Private Mortgage Insurance) is required on conventional loans when your down payment is below 20%. It protects the lender — not you — and is based on your loan amount, LTV ratio, and credit score. It cancels automatically at 78% LTV. Think of it as the cost of buying with less than 20% down — it disappears, unlike rent.
-              <div class="tooltip-example">On a $785k home with 15% down: 760+ FICO pays ~$100/mo PMI. A 680 score at the same price and down pays ~$394/mo. Credit score matters significantly.</div>
-            </div>
-          </span>
-        </div>
-
-        <!-- CONV PMI -->
-        <div id="conv-pmi">
-          <div class="field">
-            <label>Client FICO Tier</label>
-            <div class="fico-grid">
-              <div class="fico-opt"><input type="radio" name="fico" id="f760" value="760" checked><label for="f760">760+</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f740" value="740"><label for="f740">740&ndash;759</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f720" value="720"><label for="f720">720&ndash;739</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f700" value="700"><label for="f700">700&ndash;719</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f680" value="680"><label for="f680">680&ndash;699</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f660" value="660"><label for="f660">660&ndash;679</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f640" value="640"><label for="f640">640&ndash;659</label></div>
-              <div class="fico-opt"><input type="radio" name="fico" id="f620" value="620"><label for="f620">620&ndash;639</label></div>
-            </div>
-          </div>
-          <div class="pmi-box">
-            <div class="pmi-box-label">Estimated Monthly PMI</div>
-            <div class="pmi-box-value" id="pmi-est-val">$&mdash;</div>
-            <div class="pmi-box-sub" id="pmi-est-sub">Calculated from current loan amount</div>
-          </div>
-          <div class="field" style="margin-top:14px;">
-            <label>Manual PMI Override (actual MI quote)</label>
-            <div class="prefix-wrap">
-              <span class="prefix">$</span>
-              <input type="number" id="pmi-override" min="0" step="1" placeholder="Leave blank to use estimate">
-            </div>
-            <span class="field-hint">If entered, locks the PMI value in the client view</span>
-          </div>
-          <div id="jumbo-disclaimer" class="info-box" style="display:none;background:#fdf0f0;border-left-color:#e74c3c;color:#7a1010;margin-top:10px;">
-            &#9888; Loan exceeds $<span id="jumbo-limit-text"></span> (Jumbo). PMI shown is an estimate — obtain an actual MI quote.
-          </div>
-        </div>
-
-        <!-- FHA MIP -->
-        <div id="fha-mip" style="display:none;">
-          <div class="mi-note"><strong>FHA MIP:</strong> 0.55%/yr of loan amount. Monthly MIP = (Loan &times; 0.0055) &divide; 12<br><span style="font-size:12px;color:var(--text-light);">UFMIP 1.75% upfront — typically financed. Not in monthly payment.</span></div>
-          <div class="pmi-box" style="margin-top:12px;">
-            <div class="pmi-box-label">Estimated Monthly MIP</div>
-            <div class="pmi-box-value" id="mip-val">$&mdash;</div>
-            <div class="pmi-box-sub">Based on current loan amount</div>
-          </div>
-        </div>
-
-        <!-- VA -->
-        <div id="va-mi" style="display:none;">
-          <div class="mi-note"><strong>VA Loan:</strong> No monthly mortgage insurance. VA Funding Fee applies but is not included in the monthly payment here.</div>
-        </div>
-
-        <!-- USDA -->
-        <div id="usda-mi" style="display:none;">
-          <div class="mi-note"><strong>USDA Annual Guarantee Fee:</strong> 0.35%/yr. Monthly = (Loan &times; 0.0035) &divide; 12</div>
-          <div class="pmi-box" style="margin-top:12px;">
-            <div class="pmi-box-label">Estimated Monthly USDA Fee</div>
-            <div class="pmi-box-value" id="usda-val">$&mdash;</div>
-            <div class="pmi-box-sub">Based on current loan amount</div>
-          </div>
-        </div>
       </div>
 
       <!-- ===================================================
            CARD 7: GENERATE CLIENT LINK
            =================================================== -->
       <div class="card">
-        <div class="card-title"><div class="card-step">7</div> Generate Client Link</div>
+        <div class="card-title"><div class="card-step">8</div> Generate Client Link</div>
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">
           All values above are encoded into a private client link. Your client opens it and sees their
           personalized calculator. They <strong>cannot</strong> access this lender setup panel.
@@ -2525,7 +2552,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.53.0',
+  version: '8.54.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2948,6 +2975,7 @@ var S = {
   ficoVal:760, pmiOverride:null,
   rentalActive:false, grossRent:0, departingPitia:0,
   debtsTouched:false,
+  priceTouched:false, downTouched:false,   /* LENDER SPLIT: Chris must set both himself before a link can be made */
   clientName:'',
   coBorrowerName:'',
 };
@@ -3627,8 +3655,15 @@ function paintSliders(){
 }
 document.addEventListener('input', function(e){ if (e.target && e.target.type === 'range') paintSliders(); }, true);
 document.addEventListener('change', function(){ paintSliders(); }, true);
+function paintRequired(){
+  var pr = document.getElementById('price-req'), dr = document.getElementById('down-req');
+  if (pr) pr.classList.toggle('done', !!S.priceTouched);
+  if (dr) dr.classList.toggle('done', !!S.downTouched);
+  if (S.priceTouched) { var m1 = document.getElementById('price-required-msg'); if (m1) m1.remove(); }
+  if (S.downTouched)  { var m2 = document.getElementById('down-required-msg');  if (m2) m2.remove(); }
+}
 function refreshAll() {
-  try { return refreshAllInner(); } finally { paintSliders(); }
+  try { return refreshAllInner(); } finally { paintSliders(); paintRequired(); }
 }
 function refreshAllInner() {
   var price=S.purchasePrice, downAmt=Math.round(price*(S.downPct/100));
@@ -3821,7 +3856,7 @@ function downSliderMin(loanType){ return (loanType==='VA'||loanType==='USDA') ? 
    SECTION: SLIDERS
    ============================================================ */
 document.getElementById('price-slider').addEventListener('input',function(){
-  S.purchasePrice=parseInt(this.value);
+  S.purchasePrice=parseInt(this.value); S.priceTouched=true;
   clearTaxOverride(); clearInsOverride(); clearPriceOverride(); refreshAll();
 });
 document.getElementById('price-pencil').addEventListener('click',function(){
@@ -3834,7 +3869,7 @@ document.getElementById('price-override-input').addEventListener('focus',functio
 document.getElementById('price-override-input').addEventListener('input',function(){
   var val=parseFloat(this.value);
   if(!isNaN(val)&&val>0){
-    S.purchasePrice=val;
+    S.purchasePrice=val; S.priceTouched=true;
     document.getElementById('price-val').textContent='$'+Math.round(val).toLocaleString();
     var slider=document.getElementById('price-slider');
     slider.value=Math.min(Math.max(Math.round(val/5000)*5000,100000),1500000);
@@ -3848,7 +3883,7 @@ function clearPriceOverride(){
   document.getElementById('price-pencil').classList.remove('active');
 }
 document.getElementById('down-slider').addEventListener('input',function(){
-  S.downPct=parseFloat(this.value); refreshAll();
+  S.downPct=parseFloat(this.value); S.downTouched=true; refreshAll();
 });
 
 /* ============================================================
@@ -3973,7 +4008,7 @@ bindNum('departing-pitia','departingPitia',parseFloat,updateFm0132);
 var MC = { list: [], slots: 5, activeId: null, confirmId: null, busy: false };
 function mcProfileFromScreen(){
   return { nm: S.clientName, nm2: S.coBorrowerName, inc: S.income, debts: (S.debtList || []).filter(function(d){ return d > 0; }),
-           lt: S.loanType, tm: S.termYears, rt: S.rate, fco: S.ficoVal, ren: !!S.rentalActive, grn: S.grossRent, pit: S.departingPitia };
+           lt: S.loanType, dp: S.downTouched ? S.downPct : null, tm: S.termYears, rt: S.rate, fco: S.ficoVal, ren: !!S.rentalActive, grn: S.grossRent, pit: S.departingPitia };
 }
 function mcSet(id, value, evt){ var e = document.getElementById(id); if (!e) return; e.value = value; e.dispatchEvent(new Event(evt || 'input', { bubbles: true })); }
 function mcApply(c){
@@ -3985,6 +4020,9 @@ function mcApply(c){
   document.getElementById('other-debts').classList.remove('field-warn-border');
   var lb = document.querySelector('.loan-btn[data-loan="' + (c.lt || 'CONV') + '"]'); if (lb) lb.click();
   var tb = document.querySelector('.term-btn[data-term="' + (c.tm || 30) + '"]'); if (tb) tb.click();
+  var ds = document.getElementById('down-slider');     /* down payment: only a client saved with one brings it back */
+  if (c.dp != null && isFinite(+c.dp)) { ds.value = Math.min(Math.max(+c.dp, parseFloat(ds.min) || 0), 50); S.downPct = parseFloat(ds.value); S.downTouched = true; }
+  else { S.downTouched = false; }
   if (c.rt > 0) mcSet('rate', c.rt);
   var f = document.querySelector('input[name="fico"][value="' + (c.fco || 760) + '"]'); if (f) { f.checked = true; f.dispatchEvent(new Event('change', { bubbles: true })); }
   var rt = document.getElementById('rental-toggle');
@@ -3992,10 +4030,10 @@ function mcApply(c){
   if (c.ren) { mcSet('rent-slider', c.grn || 0); mcSet('departing-pitia', c.pit || 0); }
   refreshAll();
 }
-function mcBlank(){ return { nm: '', nm2: '', inc: 0, debts: [], lt: 'CONV', tm: 30, rt: 0, fco: 760, ren: false, grn: 0, pit: 0 }; }
+function mcBlank(){ return { nm: '', nm2: '', inc: 0, debts: [], lt: 'CONV', dp: null, tm: 30, rt: 0, fco: 760, ren: false, grn: 0, pit: 0 }; }
 function mcSub(c){
   var debt = (c.debts || []).reduce(function(a, b){ return a + b; }, 0);
-  return [c.lt || 'CONV', c.inc > 0 ? fmt(c.inc) + '/mo income' : 'no income yet', debt > 0 ? fmt(debt) + '/mo debts' : '$0 debts'].join(' · ');
+  return [(c.lt || 'CONV') + (c.dp != null ? ' ' + c.dp + '% down' : ''), c.inc > 0 ? fmt(c.inc) + '/mo income' : 'no income yet', debt > 0 ? fmt(debt) + '/mo debts' : '$0 debts'].join(' · ');
 }
 function mcMsg(text, kind){ var m = document.getElementById('mc-msg'); m.textContent = text || ''; m.className = 'mc-msg' + (kind ? ' ' + kind : ''); }
 function mcRender(){
@@ -4374,6 +4412,24 @@ function validateSetup() {
     var locMsg = document.getElementById('location-required-msg');
     if (locMsg) locMsg.remove();
   }
+
+  /* LENDER SPLIT (Chris, Nov 18, 2026): "require me to put a down payment before sending link" and
+     "it should be required that i put a number" for the price. The starting 5% / $400,000 don't count —
+     he has to set each one himself (or load a saved client, which brings its down payment). */
+  function need(flag, msgId, text, anchorId){
+    var m = document.getElementById(msgId);
+    if (flag) { if (m) m.remove(); return; }
+    var anchor = document.getElementById(anchorId);
+    if (!m) { m = document.createElement('div'); m.id = msgId; m.className = 'req-msg'; m.textContent = text;
+      var hint = anchor.nextElementSibling; (hint && hint.classList.contains('slider-hint') ? hint : anchor).insertAdjacentElement('afterend', m); }
+    if (ok) {
+      anchor.closest('.card').querySelector('.card-title').scrollIntoView({behavior:'smooth',block:'center'});
+      var b = document.getElementById('btn-copy-link'); b.classList.add('shake'); setTimeout(function(){ b.classList.remove('shake'); }, 500);
+    }
+    ok = false;
+  }
+  need(S.downTouched, 'down-required-msg', 'Set the down payment before making the client link', 'down-slider');
+  need(S.priceTouched, 'price-required-msg', 'Set the purchase price before making the client link \u2014 your best guess is fine if there is no house yet', 'price-slider');
 
   /* Soft required: debts — warn if never touched */
   if (!S.debtsTouched) {
