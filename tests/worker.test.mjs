@@ -486,6 +486,11 @@ async function post(env, path, body) {
   check('saved clients: anything else (email, address, tax, junk) is NOT stored', saved && saved.email === undefined && saved.address === undefined && saved.tax === undefined && saved.evil === undefined && !env.LOOKUP_KV.m.get('lo-clients').includes('leak@'), JSON.stringify(saved));
   r = await post(env, '/clients', { pin: PIN, action: 'save', id: saved.id, client: Object.assign({}, sarah, { inc: 9500, debts: [400, 30] }) });
   check('saved clients: saving with the same id updates, not adds', r.status === 200 && r.body.clients.length === 1 && r.body.clients[0].inc === 9500 && r.body.clients[0].debts.join(',') === '400,30', JSON.stringify(r.body));
+  {  /* down payment (Nov 18, 2026): kept to the half percent, 0-50; junk or missing = not set */
+    const d = async (dp) => { const e2 = baseEnv(); e2.LOOKUP_KV = fakeKV(); e2.LENDER_PIN = PIN; const x = await post(e2, '/clients', { pin: PIN, action: 'save', client: { nm: 'D', dp } }); return x.body.clients[0].dp; };
+    const got = [await d(10), await d(3.5), await d(0), await d('12.5'), await d(80), await d(-1), await d('abc'), await d(undefined)];
+    check('saved clients: down payment % kept (10, 3.5, 0, 12.5); out of range or junk = not set', JSON.stringify(got) === JSON.stringify([10, 3.5, 0, 12.5, null, null, null, null]), JSON.stringify(got));
+  }
   r = await post(env, '/clients', { pin: PIN, action: 'save', client: { inc: 5000 } });
   check('saved clients: a client with no name is refused', r.status === 400, JSON.stringify(r));
   r = await post(env, '/clients', { pin: PIN, action: 'save', client: { nm: '<b>Bob</b>', inc: 'lots', rt: 99, lt: 'JUMBO', tm: 7, fco: 1 } });

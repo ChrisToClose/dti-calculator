@@ -577,7 +577,7 @@ async function readJson(request) {
 // ─────────────────────────────────────────────────────────────────
 // SAVED CLIENTS (Chris, Nov 16, 2026: "prepopulate up to 5 current clients ... behind PIN")
 // One list in LOOKUP_KV under "lo-clients". Every call needs Chris's PIN (same lock-out as links).
-// Only the client's own profile is kept: names, income, each debt, loan type, term, rate, credit
+// Only the client's own profile is kept: names, income, each debt, loan type, down payment, term, rate, credit
 // score band, departing-home rent — never an address, email or tax bill.
 // ─────────────────────────────────────────────────────────────────
 const CLIENT_SLOTS = 5;
@@ -594,6 +594,7 @@ function cleanClient(c) {
     debts: Array.isArray(c.debts) ? c.debts.slice(0, 20).map((d) => money(d, 1000000)).filter((d) => d > 0) : [],
     lt: ['CONV', 'FHA', 'VA', 'USDA'].includes(c.lt) ? c.lt : 'CONV',
     tm: [15, 20, 25, 30].includes(Number(c.tm)) ? Number(c.tm) : 30,
+    dp: (() => { if (c.dp == null || c.dp === '') return null; const n = Number(c.dp); return isFinite(n) && n >= 0 && n <= 50 ? Math.round(n * 2) / 2 : null; })(),   // down payment % (Nov 18, 2026)
     rt: (() => { const n = Number(c.rt); return isFinite(n) && n > 0 && n < 25 ? Math.round(n * 1000) / 1000 : null; })(),
     fco: [620, 640, 660, 680, 700, 720, 740, 760].includes(Number(c.fco)) ? Number(c.fco) : 760,
     ren: c.ren === true || c.ren === '1' || c.ren === 1,
