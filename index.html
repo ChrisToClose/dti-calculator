@@ -445,6 +445,21 @@ select:focus {
   pointer-events: none; z-index: 2; user-select: none;
 }
 .prefix-wrap input { padding-left: 26px !important; }
+/* UX9 + UX11 (Chris's list of 20, items 9 and 11 — Nov 18, 2026: "build").
+   UX9 smooth fades: help pages, welcome pages, the tax lookup and the grey screen behind the help guide fade in
+   instead of popping; going from one calculator page to another crossfades where the browser supports it.
+   UX11 interruptible: all of these are transitions, so tapping again mid-way simply turns them around — nothing
+   has to finish first. And when the phone is set to "Reduce Motion", every animation on the page is switched off. */
+@view-transition { navigation: auto; }
+.fade-in { opacity: 0; transform: translateY(6px); }
+.fade-in.shown { opacity: 1; transform: none; transition: opacity .22s ease, transform .22s ease; }
+#help-overlay { opacity: 0; transition: opacity .25s ease; }
+#help-overlay.shown { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+  .fade-in { transform: none; }
+  @view-transition { navigation: none; }
+}
 /* SLIDERS (Chris, Nov 16-18, 2026: "these knobs / sliders are hard to read / see"). iPhones ignore accent-color and
    drew a white knob on a pale grey line. Every slider is now drawn by the page: a big navy knob with a white ring,
    and a teal line filled up to the knob (--fill is set by paintSliders()). */
@@ -2510,7 +2525,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.52.0',
+  version: '8.53.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -2943,11 +2958,19 @@ var watermarkTimer=null, watermarkActive=false;
    SECTION: LOCK / UNLOCK
    ============================================================ */
 /* ── Tax lookup panel (global) ── */
+/* UX9: fade something in. Calling it again mid-fade just starts over — nothing waits for an animation to end. */
+function fadeIn(el){
+  if (!el) return;
+  el.classList.remove('shown'); el.classList.add('fade-in');
+  void el.offsetWidth;            /* make the browser notice the start state */
+  el.classList.add('shown');
+}
 function toggleTaxLookup(){
   var panel = document.getElementById('tax-lookup-panel');
   var btn = document.getElementById('tax-lookup-toggle');
   var open = panel.style.display !== 'none';
   panel.style.display = open ? 'none' : 'block';
+  if (!open) fadeIn(panel);
   btn.style.background = open ? 'none' : 'var(--teal)';
   btn.style.color = open ? 'var(--teal)' : '#fff';
   btn.classList.toggle('open', !open);
@@ -5660,7 +5683,7 @@ function initClientView(p) {
     var obSteps = onboardEl.querySelectorAll('.ob-step');
     var obDots  = onboardEl.querySelectorAll('.ob-dot');
     function showObStep(n) {
-      obSteps.forEach(function(s, i) { s.style.display = i === n ? '' : 'none'; });
+      obSteps.forEach(function(s, i) { s.style.display = i === n ? '' : 'none'; if (i === n) fadeIn(s); });
       obDots.forEach(function(d, i) {
         if (i === n) {
           d.style.width = '20px'; d.style.borderRadius = '4px'; d.style.background = 'var(--yellow)';
@@ -5899,6 +5922,8 @@ function initClientView(p) {
         '<a class="help-cta-email" href="mailto:'+CONFIG.lender.emailParts[0]+'@'+CONFIG.lender.emailParts[1]+'" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;background:transparent;border:2px solid var(--teal);color:var(--teal);text-decoration:none;border-radius:var(--radius-sm);font-weight:700;font-size:15px;">&#9993; Email Chris</a>'+
         '</div>':'');
 
+    fadeIn(content);
+
     /* Dots */
     var dots = document.getElementById('help-dots');
     dots.innerHTML = helpSteps.map(function(_,i){
@@ -5921,8 +5946,9 @@ function initClientView(p) {
     helpCurrent=0; renderHelpStep();
     if (!ctcOpenPanel) pushPanel('help', closeHelp);
     helpDrawer.style.boxShadow='-4px 0 24px rgba(0,0,0,0.2)';
+    helpDrawer.style.transition='transform 0.35s cubic-bezier(.4,0,.2,1)';
     helpDrawer.style.transform='translateX(0)';
-    if(helpOverlay){helpOverlay.style.display='block';}
+    if(helpOverlay){ helpOverlay.style.pointerEvents=''; helpOverlay.style.display='block'; void helpOverlay.offsetWidth; helpOverlay.classList.add('shown'); }
   }
   function closeHelp(fromBack){
     if (fromBack !== true) panelClosedByHand('help');
@@ -5930,7 +5956,11 @@ function initClientView(p) {
     helpDrawer.style.transform='translateX(100%)';
     /* drop the shadow once it has slid away — otherwise it shades the right edge of the page */
     setTimeout(function(){ if (helpDrawer.style.transform==='translateX(100%)') helpDrawer.style.boxShadow='none'; }, 380);
-    if(helpOverlay){helpOverlay.style.display='none';}
+    if(helpOverlay){
+      helpOverlay.classList.remove('shown');     /* fades out; stops blocking taps right away */
+      helpOverlay.style.pointerEvents='none';
+      setTimeout(function(){ if (!helpOverlay.classList.contains('shown')) { helpOverlay.style.display='none'; } helpOverlay.style.pointerEvents=''; }, 260);
+    }
   }
   document.getElementById('help-close').addEventListener('click', function(){ closeHelp(); });
   if(helpOverlay) helpOverlay.addEventListener('click', function(){ closeHelp(); });
