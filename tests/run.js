@@ -44,6 +44,7 @@
      MO. Motion: help pages, tax lookup and the help backdrop fade in; can be turned around mid-way; Reduce Motion switches all animation off
      LS. Lender screen: The Borrower (steps 1-5) then The House (6-7), link (8); no link until the down payment and the price are set by hand
      QH. Back to My Quote: hidden for now (never shown, and nothing on the client screen or in the guide points to it)
+     EN. Email names: Save Scenario sends client_names ("Sarah & Mike") and the PDF shows "For: Sarah & Mike"; nothing extra when there are no names
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -727,6 +728,45 @@ async function readScreen(page, pattern) {
     if (Q.before !== 'none' || Q.after !== 'none') failures.push(`Back to My Quote: the side tab should stay hidden, even after the client moves the price (${JSON.stringify(Q)})`);
     if (Q.moved !== '$600,000') failures.push(`Back to My Quote test setup: the price did not move (${Q.moved})`);
     if (Q.mentions) failures.push('Back to My Quote: the client screen still tells people to tap a button that is hidden');
+  }
+
+  /* EN. Client names on the saved scenario (Chris, Nov 19, 2026): the email gets client_names and the PDF a "For:" line */
+  {
+    const save = async (qs) => {
+      await client.goto(BASE.replace('&nm=Test', '') + qs);
+      await client.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+      return client.evaluate(async () => {
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const texts = []; let sent = null;
+        window.qrcode = () => ({ addData() {}, make() {}, getModuleCount: () => 21, isDark: () => false });
+        const fakeDoc = new Proxy({}, { get: (t, k) => {
+          if (k === 'internal') return { pageSize: { getWidth: () => 215.9, getHeight: () => 279.4, width: 215.9, height: 279.4 }, getNumberOfPages: () => 1 };
+          if (k === 'splitTextToSize') return (txt) => [String(txt)];
+          if (k === 'getTextWidth' || k === 'getStringUnitWidth') return () => 10;
+          if (k === 'getNumberOfPages') return () => 1;
+          if (k === 'output') return () => 'blob:x';
+          if (k === 'then') return undefined;
+          if (k === 'text') return (txt) => { texts.push(String(txt)); return fakeDoc; };
+          return () => fakeDoc;
+        } });
+        window.jspdf = { jsPDF: function () { return fakeDoc; } };
+        window.fetch = async (u, o) => { try { sent = JSON.parse(o.body); } catch (e) {} return { ok: true, status: 200, json: async () => ({ ok: true }) }; };
+        CONFIG.turnstileSiteKey = 'test-site-key'; tsLoadFailed = false; tsWidgetId = 1;
+        window.turnstile = { reset() {}, execute() { setTimeout(() => { const p = tsPending; tsPending = null; p.resolve('T'); }, 10); } };
+        document.getElementById('save-email').value = 'a@example.com'; document.getElementById('save-label').value = 'x'; document.getElementById('save-address').value = '1 Main St';
+        const b = document.getElementById('btn-save-scenario'); b.disabled = false; b.style.display = ''; b.click();
+        await wait(1500);
+        const flat = JSON.stringify(sent || {});
+        return { names: (flat.match(/"client_names":"([^"]*)"/) || [])[1], hasField: /"client_names"/.test(flat), pdfFor: texts.filter((t) => /^For: /.test(t)) };
+      });
+    };
+    const both = await save('&nm=sarah&nm2=mike'), none = await save('');
+    if (!both.hasField) failures.push('Email names: the saved scenario does not send client_names');
+    else {
+      if (both.names !== 'Sarah & Mike') failures.push(`Email names: client_names should be "Sarah & Mike", got "${both.names}"`);
+      if (both.pdfFor.join('|') !== 'For: Sarah & Mike') failures.push(`Email names: the PDF should carry one line "For: Sarah & Mike", got ${JSON.stringify(both.pdfFor)}`);
+      if (none.names !== '' || none.pdfFor.length) failures.push(`Email names: with no names the field should be empty and the PDF should have no "For:" line (${JSON.stringify(none)})`);
+    }
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the

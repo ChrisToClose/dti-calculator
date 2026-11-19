@@ -50,7 +50,7 @@ const TURNSTILE_HOSTNAMES = ['christoclose.github.io', 'calc.christoclose.com'];
 
 // Only these template fields are accepted from the browser (anything else is dropped).
 const SCENARIO_FIELDS = [
-  'to_email', 'scenario_label', 'property_address', 'loan_type', 'purchase_price', 'down_payment',
+  'to_email', 'scenario_label', 'property_address', 'client_names', 'loan_type', 'purchase_price', 'down_payment',
   'rate', 'term', 'county', 'mill_rate', 'homestead', 'monthly_pi', 'monthly_tax', 'monthly_ins',
   'flood', 'hoa', 'cdd', 'pmi', 'rental_active', 'gross_rent', 'rental_shortfall', 'housing_payment',
   'other_debts', 'total_obligations', 'front_dti', 'back_dti', 'dti_status', 'pdf_note',

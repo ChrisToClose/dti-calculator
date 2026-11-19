@@ -159,6 +159,14 @@ const baseEnv = () => ({ GOOGLE_PLACES_KEY: 'gk', REALIE_API_KEY: 'rk', LOOKUP_K
   const r2 = await send(env, { ...p }, 'tok2');
   check('duplicate sent only once', r1.status === 200 && r2.status === 200 && r2.body.duplicate === true && emailsSent === 1, JSON.stringify([r1, r2, emailsSent]));
 }
+/* 8b. Client names in the email (Nov 19, 2026): passed through as plain text, capped at 200 characters */
+{
+  const env = baseEnv();
+  await send(env, params('names@example.com', { client_names: 'Sarah & Mike' }), 'tok');
+  check('client names reach the email', lastEmail.template_params.client_names === 'Sarah & Mike', JSON.stringify(lastEmail.template_params.client_names));
+  await send(env, params('names2@example.com', { client_names: 'x'.repeat(500) }), 'tok');
+  check('client names capped at 200 characters', lastEmail.template_params.client_names.length === 200);
+}
 /* 9. Lender CC is still forced by the Worker */
 {
   check('lender CC still set by the Worker', /params\.cc_email = EMAILJS_SETTINGS\.lenderEmail/.test(src));

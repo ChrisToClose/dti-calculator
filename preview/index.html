@@ -2552,7 +2552,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.55.0',
+  version: '8.56.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -6118,6 +6118,7 @@ function initClientView(p) {
       to_email:         email,   /* lender CC is added by the Worker, not the browser */
       scenario_label:   label,
       property_address: address,
+      client_names:     bothNames(CP.clientName, CP.coBorrowerName),   /* EMAIL-NAMES (Nov 19, 2026): "Sarah & Mike", or '' */
       loan_type:        CS.loanType,
       purchase_price:   fmt(CS.purchasePrice),
       down_payment:     CS.downPct+'% ('+fmt(Math.round(CS.purchasePrice*(CS.downPct/100)))+')',
@@ -6366,7 +6367,9 @@ function initClientView(p) {
     doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(navy[0],navy[1],navy[2]);
     doc.text(params.scenario_label || 'DTI Scenario', margin, y); y += 6;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(gray[0],gray[1],gray[2]);
-    doc.text((params.property_address || '') + '  •  Prepared by Chris Greenidge  •  ' + params.prepared_date, margin, y); y += 10;
+    doc.text((params.property_address || '') + '  •  Prepared by Chris Greenidge  •  ' + params.prepared_date, margin, y);
+    if (params.client_names) { y += 5; doc.text('For: ' + params.client_names, margin, y); }   /* EMAIL-NAMES */
+    y += 10;
 
     /* ---- DTI boxes ---- */
     var boxW = (contentW - 8) / 2;
