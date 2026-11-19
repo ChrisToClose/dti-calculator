@@ -43,6 +43,7 @@
      SL. Sliders: drawn by the page (28px navy knob, 8px line filled in teal up to the knob), light and dark; the line follows the knob
      MO. Motion: help pages, tax lookup and the help backdrop fade in; can be turned around mid-way; Reduce Motion switches all animation off
      LS. Lender screen: The Borrower (steps 1-5) then The House (6-7), link (8); no link until the down payment and the price are set by hand
+     QH. Back to My Quote: hidden for now (never shown, and nothing on the client screen or in the guide points to it)
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -711,6 +712,23 @@ async function readScreen(page, pattern) {
     want('afterDown', 'false|false|true'); want('afterPrice', 'true|false'); want('tags1', 'false,false'); want('typedPrice', 'true|437500');
   }
 
+  /* QH. Back to My Quote is hidden for now (Chris, Nov 19, 2026: the side tab "gets lost in dark mode ... hide it for now") */
+  {
+    await client.goto(BASE);
+    await client.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+    const Q = await client.evaluate(() => {
+      const tab = document.getElementById('client-reset-btn');
+      const o = document.getElementById('client-onboard'); if (o) o.style.display = 'none';
+      const move = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+      const before = getComputedStyle(tab).display;
+      move('client-price', 600000); move('client-down', 20);
+      return { before, after: getComputedStyle(tab).display, moved: document.getElementById('client-price-val').textContent, mentions: /Back to My Quote/.test(document.getElementById('client-page').innerText) };
+    });
+    if (Q.before !== 'none' || Q.after !== 'none') failures.push(`Back to My Quote: the side tab should stay hidden, even after the client moves the price (${JSON.stringify(Q)})`);
+    if (Q.moved !== '$600,000') failures.push(`Back to My Quote test setup: the price did not move (${Q.moved})`);
+    if (Q.mentions) failures.push('Back to My Quote: the client screen still tells people to tap a button that is hidden');
+  }
+
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the
          Save section — only when that box is empty or still holds an address filled this way. */
   await client.goto(BASE);
@@ -813,9 +831,10 @@ async function readScreen(page, pattern) {
   if (!O.open || O.welcomeShown) failures.push(`Help: "?" must open the full help guide, not the welcome popup (${JSON.stringify({ open: O.open, welcome: O.welcomeShown })})`);
   if (O.total < 10) failures.push(`Help: the guide should have at least 10 pages, has ${O.total} ("${O.label}")`);
   if (/Homestead Exemption box|Download PDF/i.test(O.text)) failures.push('Help: guide still mentions things that no longer exist (Homestead box / Download PDF)');
-  if (!/Look up the real tax bill/.test(O.text) || !/Back to My Quote/.test(O.text)) failures.push('Help: guide should cover the tax lookup and the Back to My Quote tab');
+  if (!/Look up the real tax bill/.test(O.text)) failures.push('Help: guide should cover the tax lookup');
+  if (/Back to My Quote/.test(O.text)) failures.push('Help: the guide still talks about the Back to My Quote tab, which is hidden for now');
   // Guide v2: pages follow the screen top to bottom (price before down payment before tax before save before share)
-  const order = ['Purchase price', 'Down payment', 'Loan term', 'HOA fee', 'Homeowners insurance', 'Property tax', 'Look up the real tax bill', 'Back to My Quote', 'Save your scenario', 'Share with someone'].map((w) => O.text.indexOf(w));
+  const order = ['Purchase price', 'Down payment', 'Loan term', 'HOA fee', 'Homeowners insurance', 'Property tax', 'Look up the real tax bill', 'Save your scenario', 'Share with someone'].map((w) => O.text.indexOf(w));
   if (order.some((x) => x < 0) || order.some((x, k) => k > 0 && x < order[k - 1])) failures.push(`Help: guide pages should follow the screen order (${order.join(',')})`);
 
   /* P. UX Release B: Back button closes the guide/welcome, swipe closes the guide, skeletons show while loading */

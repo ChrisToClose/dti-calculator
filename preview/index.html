@@ -1982,7 +1982,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="padding:18px 20px;">
         <p id="pmi-drift-msg" style="font-size:13px;line-height:1.6;color:var(--text);margin:0 0 12px;"></p>
         <p style="font-size:12px;line-height:1.6;color:var(--text-muted);margin:0 0 16px;">
-          We keep the rate from Chris's quote and apply it to your new loan amount. If your down payment moves you into a different PMI tier, we adjust for that too. Put 20% or more down and PMI goes away. For an exact PMI quote at your new numbers, reach out to Chris. Tap <strong>Back to My Quote</strong> anytime to return to his original quote.
+          We keep the rate from Chris's quote and apply it to your new loan amount. If your down payment moves you into a different PMI tier, we adjust for that too. Put 20% or more down and PMI goes away. For an exact PMI quote at your new numbers, reach out to Chris.
         </p>
         <!-- Acknowledge checkbox -->
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:var(--text-muted);margin-bottom:16px;">
@@ -2552,7 +2552,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.54.0',
+  version: '8.55.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5198,7 +5198,9 @@ function initClientView(p) {
     var resetBtn = document.getElementById('client-reset-btn');
     if(!resetBtn) return;
     var hasDrift = CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
-    resetBtn.style.display = hasDrift ? 'flex' : 'none';
+    /* QUOTE-HIDDEN (Chris, Nov 19, 2026): the side tab got lost in dark mode — "lets hide it for now ... its not
+       important now". The tab and its reset stay in the page, but it is never shown. To bring it back: 'flex' when hasDrift. */
+    resetBtn.style.display = 'none';
   }
 
   /* Floating reset button click handler */
@@ -5928,11 +5930,6 @@ function initClientView(p) {
       body:'Taxes are estimated from your county’s tax rate at this price — for a home you’ll live in, that includes Florida’s <strong>$50,000 homestead exemption</strong>. Know the bill? Tap the <strong>✎ pencil</strong>.',
       img2:'10-lookup.jpg',
       body2:'<strong>Have an address? Look up the real tax bill.</strong> Tap the button under Property Tax, start typing, and <strong>pick the address from the list</strong> — city and county fill in for you. Add the unit # for a condo, then tap <strong>Pull Tax Record</strong>.<br><br>If the record isn’t an exact match we’ll ask <strong>“Is this the right property?”</strong> first. In some counties you’ll see the <strong>current owner’s</strong> bill as a guide — yours will likely be higher after you buy.',
-    },
-    {
-      title:'Want to go back to Chris’s numbers?',
-      img:'12-reset.jpg',
-      body:'Playing with the price or down payment? Go for it — you can’t break anything. As soon as you move one, a small tab pops up on the <strong>left side of your screen</strong> that says <strong>Back to My Quote</strong>. Tap it and everything goes right back to the numbers Chris quoted you.',
     },
     {
       title:'Save your scenario',
