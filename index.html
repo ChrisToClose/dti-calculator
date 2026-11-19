@@ -445,6 +445,25 @@ select:focus {
   pointer-events: none; z-index: 2; user-select: none;
 }
 .prefix-wrap input { padding-left: 26px !important; }
+/* SLIDERS (Chris, Nov 16-18, 2026: "these knobs / sliders are hard to read / see"). iPhones ignore accent-color and
+   drew a white knob on a pale grey line. Every slider is now drawn by the page: a big navy knob with a white ring,
+   and a teal line filled up to the knob (--fill is set by paintSliders()). */
+input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; height: 28px !important; margin: 0; padding: 0; touch-action: pan-y; }
+input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px;
+  background: linear-gradient(to right, var(--teal) calc(14px + (100% - 28px) * var(--fill, 0)), #C3CEDD calc(14px + (100% - 28px) * var(--fill, 0))); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 28px; height: 28px; margin-top: -10px; border-radius: 50%;
+  background: var(--navy); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--navy), 0 2px 6px rgba(0,0,0,.3); cursor: pointer; }
+input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: #C3CEDD; }
+input[type="range"]::-moz-range-progress { height: 8px; border-radius: 4px; background: var(--teal); }
+input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--navy); border: 3px solid #fff; box-shadow: 0 0 0 2px var(--navy), 0 2px 6px rgba(0,0,0,.3); cursor: pointer; }
+input[type="range"]:focus { outline: none; }
+input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px var(--navy), 0 0 0 5px rgba(43,127,164,.45); }
+body.dark-mode input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #7CC4E3 calc(14px + (100% - 28px) * var(--fill, 0)), rgba(255,255,255,.22) calc(14px + (100% - 28px) * var(--fill, 0))); }
+body.dark-mode input[type="range"]::-webkit-slider-thumb { background: #fff; border-color: var(--teal); box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,.5); }
+body.dark-mode input[type="range"]::-moz-range-track { background: rgba(255,255,255,.22); }
+body.dark-mode input[type="range"]::-moz-range-progress { background: #7CC4E3; }
+body.dark-mode input[type="range"]::-moz-range-thumb { background: #fff; border-color: var(--teal); box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0,0,0,.5); }
 /* My Clients (Nov 16, 2026) */
 .mc-count { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .04em; }
 .mc-list { display: flex; flex-direction: column; gap: 8px; }
@@ -2491,7 +2510,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.51.0',
+  version: '8.52.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -3573,7 +3592,22 @@ function handleWatermark(isOver) {
 /* ============================================================
    SECTION: REFRESH ALL
    ============================================================ */
+/* SLIDERS: tells each slider how far along its knob is, so the teal line can be filled up to it */
+function paintSliders(){
+  var all = document.querySelectorAll('input[type="range"]');
+  for (var i = 0; i < all.length; i++) {
+    var e = all[i], min = parseFloat(e.min) || 0, max = parseFloat(e.max), v = parseFloat(e.value);
+    if (!isFinite(max)) max = 100;
+    var f = max > min && isFinite(v) ? (v - min) / (max - min) : 0;
+    e.style.setProperty('--fill', Math.min(1, Math.max(0, f)).toFixed(4));
+  }
+}
+document.addEventListener('input', function(e){ if (e.target && e.target.type === 'range') paintSliders(); }, true);
+document.addEventListener('change', function(){ paintSliders(); }, true);
 function refreshAll() {
+  try { return refreshAllInner(); } finally { paintSliders(); }
+}
+function refreshAllInner() {
   var price=S.purchasePrice, downAmt=Math.round(price*(S.downPct/100));
   var loanAmt=price-downAmt, ltv=100-S.downPct;
 
@@ -5585,6 +5619,7 @@ function initClientView(p) {
     });
     updateClientTaxDisplay(result);
     renderThermometer(result);
+    paintSliders();
   }
 
   /* ============================================================
