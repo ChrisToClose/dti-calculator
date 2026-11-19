@@ -43,6 +43,7 @@
      SL. Sliders: drawn by the page (28px navy knob, 8px line filled in teal up to the knob), light and dark; the line follows the knob
      MO. Motion: help pages, tax lookup and the help backdrop fade in; can be turned around mid-way; Reduce Motion switches all animation off
      LS. Lender screen: The Borrower (steps 1-5) then The House (6-7), link (8); no link until the down payment and the price are set by hand
+     QH. Back to My Quote: no side tab; a yellow button inside the ? help (and a dot on the ?) once the client moves price or down payment
      AF. Address fill: the tax-lookup address fills "Property Address" in the Save section (never over what the client typed)
      PH. Phones (ZOOM1): on a touch screen every box you can type in is 16px or more (an iPhone zooms the page in,
         and leaves it zoomed, for anything smaller), no box or "Clear" button sticks out of its row and the page
@@ -709,6 +710,36 @@ async function readScreen(page, pattern) {
     want('tags0', 'true,true'); want('blocked0', false);
     want('msgs0', ['Set the down payment before making the client link', 'Set the purchase price before making the client link — your best guess is fine if there is no house yet']);
     want('afterDown', 'false|false|true'); want('afterPrice', 'true|false'); want('tags1', 'false,false'); want('typedPrice', 'true|437500');
+  }
+
+  /* QH. Back to My Quote lives in the ? help (Chris, Nov 18, 2026: the side tab "gets lost in dark mode") */
+  {
+    await client.goto(BASE);
+    await client.waitForFunction(() => document.getElementById('client-page').style.display === 'block');
+    const Q = await client.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const row = document.getElementById('help-reset-row'), dot = document.getElementById('help-btn-dot'), tab = document.getElementById('client-reset-btn');
+      if (!row || !dot) return { missing: true };
+      const o = document.getElementById('client-onboard'); if (o) o.style.display = 'none';
+      const out = { start: row.style.display + '|' + dot.style.display + '|' + getComputedStyle(tab).display };
+      const now = () => document.getElementById('client-price').value + '|' + document.getElementById('client-down').value + '|' + document.getElementById('client-price-val').textContent;
+      const quoted = now();
+      const move = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); };
+      move('client-price', 600000); move('client-down', 20);
+      out.moved = (now() !== quoted) + '|' + dot.style.display + '|' + getComputedStyle(tab).display;
+      document.getElementById('help-btn').click(); await wait(450);
+      const btn = document.getElementById('help-reset-btn'), r = btn.getBoundingClientRect();
+      out.inHelp = row.style.display + '|' + btn.textContent.trim().replace(/^\W+/, '') + '|' + (r.height >= 44 && r.bottom <= innerHeight && r.right <= innerWidth);
+      btn.click(); await wait(500);
+      out.after = (now() === quoted) + '|' + row.style.display + '|' + dot.style.display + '|' + document.getElementById('help-drawer').style.transform;
+      return out;
+    });
+    if (Q.missing) failures.push('Back to My Quote: the button is missing from the ? help guide');
+    else {
+      const want = (k, v) => { if (Q[k] !== v) failures.push(`Back to My Quote: ${k} should be ${JSON.stringify(v)}, got ${JSON.stringify(Q[k])}`); };
+      want('start', 'none|none|none'); want('moved', 'true|block|none'); want('inHelp', 'block|Back to My Quote|true');
+      want('after', 'true|none|none|translateX(100%)');
+    }
   }
 
   /* AF. ADDR-FILL (Chris, Nov 16, 2026): the address from the tax lookup goes into "Property Address" in the

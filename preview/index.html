@@ -1276,7 +1276,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
   display:flex; align-items:center; justify-content:center;
   box-shadow:0 4px 16px rgba(0,0,0,0.25); z-index:900;
   transition:background 0.15s, transform 0.15s;
-">?</button>
+">?<span id="help-btn-dot" aria-hidden="true" style="display:none;position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:var(--yellow);border:2px solid #fff;"></span></button>
 
 <div id="setup-page-header">
   <!-- HEADER BANNER — scrolls normally -->
@@ -1982,7 +1982,7 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="padding:18px 20px;">
         <p id="pmi-drift-msg" style="font-size:13px;line-height:1.6;color:var(--text);margin:0 0 12px;"></p>
         <p style="font-size:12px;line-height:1.6;color:var(--text-muted);margin:0 0 16px;">
-          We keep the rate from Chris's quote and apply it to your new loan amount. If your down payment moves you into a different PMI tier, we adjust for that too. Put 20% or more down and PMI goes away. For an exact PMI quote at your new numbers, reach out to Chris. Tap <strong>Back to My Quote</strong> anytime to return to his original quote.
+          We keep the rate from Chris's quote and apply it to your new loan amount. If your down payment moves you into a different PMI tier, we adjust for that too. Put 20% or more down and PMI goes away. For an exact PMI quote at your new numbers, reach out to Chris. To return to his original quote anytime, tap the <strong>?</strong> button, then <strong>Back to My Quote</strong>.
         </p>
         <!-- Acknowledge checkbox -->
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:12px;color:var(--text-muted);margin-bottom:16px;">
@@ -2049,6 +2049,10 @@ body.dark-mode .breakdown-row.total .breakdown-val { color: var(--yellow); }
       <div style="display:flex;gap:4px;" id="help-dots"></div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:24px 20px;" id="help-content"></div>
+    <div id="help-reset-row" style="display:none;padding:12px 20px 0;border-top:1px solid var(--border);">
+      <button type="button" id="help-reset-btn" style="width:100%;min-height:44px;border:2px solid var(--yellow);border-radius:var(--radius-sm);background:var(--yellow);color:#1B3A6B;font-weight:800;font-size:14px;cursor:pointer;">&#8617; Back to My Quote</button>
+      <div style="font-size:12px;color:var(--text-muted);margin:6px 0 12px;line-height:1.45;">Puts the price and down payment back to the numbers Chris quoted you.</div>
+    </div>
     <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px;">
       <button id="help-prev" style="flex:1;height:44px;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text-muted);font-weight:700;cursor:pointer;">&#8592; Back</button>
       <button id="help-next" style="flex:2;height:44px;border:none;border-radius:var(--radius-sm);background:var(--navy);color:#fff;font-weight:700;cursor:pointer;">Next &#8594;</button>
@@ -2552,7 +2556,7 @@ var CONFIG = {
   /* ── VERSION — the ONLY place the version number is set. Bump it for every
      change; the header and footer read it from here, and "Publish preview to
      live" refuses to publish a change that still has the live version number. */
-  version: '8.54.0',
+  version: '8.55.0',
   /* ── LENDER IDENTITY ─────────────────────────────────────── */
   lender: {
     name:'Chris Greenidge', title:'Senior Loan Officer',
@@ -5198,7 +5202,11 @@ function initClientView(p) {
     var resetBtn = document.getElementById('client-reset-btn');
     if(!resetBtn) return;
     var hasDrift = CS.purchasePrice !== CP.purchasePrice || CS.downPct !== CP.downPct;
-    resetBtn.style.display = hasDrift ? 'flex' : 'none';
+    /* QUOTE-IN-HELP (Chris, Nov 18, 2026): the side tab got lost in dark mode, so "Back to My Quote" now lives
+       inside the ? help guide. The old tab stays in the page (its click still does the reset) but is never shown. */
+    resetBtn.style.display = 'none';
+    var row = document.getElementById('help-reset-row'); if (row) row.style.display = hasDrift ? 'block' : 'none';
+    var dot = document.getElementById('help-btn-dot'); if (dot) dot.style.display = hasDrift ? 'block' : 'none';
   }
 
   /* Floating reset button click handler */
@@ -5932,7 +5940,7 @@ function initClientView(p) {
     {
       title:'Want to go back to Chris’s numbers?',
       img:'12-reset.jpg',
-      body:'Playing with the price or down payment? Go for it — you can’t break anything. As soon as you move one, a small tab pops up on the <strong>left side of your screen</strong> that says <strong>Back to My Quote</strong>. Tap it and everything goes right back to the numbers Chris quoted you.',
+      body:'Playing with the price or down payment? Go for it — you can’t break anything. As soon as you move one, a yellow <strong>Back to My Quote</strong> button appears at the bottom of this help guide (a small yellow dot on the <strong>?</strong> button tells you it is there). Tap it and everything goes right back to the numbers Chris quoted you.',
     },
     {
       title:'Save your scenario',
@@ -6019,6 +6027,11 @@ function initClientView(p) {
     }
   }
   document.getElementById('help-close').addEventListener('click', function(){ closeHelp(); });
+  /* QUOTE-IN-HELP: the button in the help guide does what the old side tab did, then closes the guide */
+  document.getElementById('help-reset-btn').addEventListener('click', function(){
+    var old = document.getElementById('client-reset-btn'); if (old) old.click();
+    closeHelp();
+  });
   if(helpOverlay) helpOverlay.addEventListener('click', function(){ closeHelp(); });
 
   /* UX10: swipe the help guide to the right to close it (follows the finger; let go early and it springs back) */
